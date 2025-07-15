@@ -148,6 +148,7 @@ document.querySelector('.slides')?.addEventListener('touchend', (e) => {
 let products = {};
 onValue(ref(database, 'products'), (snapshot) => {
     products = snapshot.val() || {};
+    console.log('Products loaded:', products); // Логування для діагностики
     const productList = document.querySelector('.products');
     if (!productList) return;
     renderProducts('all');
@@ -160,6 +161,7 @@ function renderProducts(category) {
     const productList = document.querySelector('.products');
     if (!productList) return;
     productList.innerHTML = '';
+    console.log('Rendering products for category:', category); // Логування
     for (const key in products) {
         const product = products[key];
         if (category === 'all' || product.category === category) {
@@ -185,11 +187,26 @@ function renderProducts(category) {
     }
 }
 
+// Filters
+document.querySelectorAll('.filters button').forEach(button => {
+    button.addEventListener('click', () => {
+        const category = button.dataset.category || 'all';
+        renderProducts(category);
+        document.querySelectorAll('.filters button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+    });
+});
+
 // Cart logic
 function renderCart() {
     const cartItems = document.getElementById('cartItems');
+    if (!cartItems) {
+        console.error('cartItems element not found');
+        return;
+    }
     cartItems.innerHTML = '';
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    console.log('Cart loaded:', cart); // Логування
     if (cart.length === 0) {
         cartItems.innerHTML = '<p>Кошик порожній</p>';
         return;
@@ -197,10 +214,16 @@ function renderCart() {
     cart.forEach((item, index) => {
         const product = products[item.id];
         if (!product) {
+            console.warn(`Product not found for ID: ${item.id}`);
             cartItems.innerHTML += `<p>Товар (ID: ${item.id}) недоступний</p>`;
             return;
         }
         const size = product.sizes.find(s => s.size === item.size);
+        if (!size) {
+            console.warn(`Size ${item.size} not found for product ID: ${item.id}`);
+            cartItems.innerHTML += `<p>Розмір ${item.size} для товару (ID: ${item.id}) недоступний</p>`;
+            return;
+        }
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.innerHTML = `
@@ -225,6 +248,7 @@ window.removeFromCart = (index) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     cart.splice(index, 1);
     localStorage.setItem('cart', JSON.stringify(cart));
+    console.log('Cart after removal:', cart); // Логування
     renderCart();
     showNotification('Товар видалено з кошика');
 };
@@ -233,11 +257,17 @@ window.updateCartSize = (index, size) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     cart[index].size = size;
     localStorage.setItem('cart', JSON.stringify(cart));
+    console.log('Cart after size update:', cart); // Логування
+    renderCart();
 };
 
 document.getElementById('cartBtn')?.addEventListener('click', () => {
     const modal = document.getElementById('cartModal');
-    modal.style.display = 'block';
+    if (!modal) {
+        console.error('cartModal not found');
+        return;
+    }
+    modal.style.display = 'flex';
     renderCart();
 });
 
@@ -256,46 +286,63 @@ document.addEventListener('click', (e) => {
     if (e.target.classList.contains('addToCart') || e.target.classList.contains('buyNow')) {
         const productId = e.target.dataset.id;
         if (!products[productId]) {
+            console.warn('Product not found:', productId);
             showNotification('Товар недоступний');
             return;
         }
         const sizeSelect = document.getElementById(`size_select_${productId}`);
         if (!sizeSelect || !sizeSelect.value) {
+            console.warn('Size select not found or no value:', `size_select_${productId}`);
             showNotification('Будь ласка, виберіть розмір');
             return;
         }
         const size = sizeSelect.value;
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        cart.push({ id: productId, size });
-        localStorage.setItem('cart', JSON.stringify(cart));
         if (e.target.classList.contains('addToCart')) {
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            cart.push({ id: productId, size });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            console.log('Cart after adding:', cart); // Логування
             showNotification('Товар додано до кошика');
         }
         if (e.target.classList.contains('buyNow')) {
             const orderModal = document.getElementById('orderModal');
-            orderModal.style.display = 'block';
-            renderOrderItems();
+            if (!orderModal) {
+                console.error('orderModal not found');
+                return;
+            }
+            orderModal.style.display = 'flex';
+            renderOrderItems([{ id: productId, size }]);
             loadUserData();
         }
     }
 });
 
 // Render order items
-function renderOrderItems() {
-    const orderItems = document.getElementById('orderItems');
-    orderItems.innerHTML = '';
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    if (cart.length === 0) {
-        orderItems.innerHTML = '<p>Кошик порожній</p>';
+function renderOrderItems(orderItems) {
+    const orderItemsDiv = document.getElementById('orderItems');
+    if (!orderItemsDiv) {
+        console.error('orderItems element not found');
         return;
     }
-    cart.forEach((item, index) => {
+    orderItemsDiv.innerHTML = '';
+    console.log('Rendering order items:', orderItems); // Логування
+    if (!orderItems || orderItems.length === 0) {
+        orderItemsDiv.innerHTML = '<p>Кошик порожній</p>';
+        return;
+    }
+    orderItems.forEach((item, index) => {
         const product = products[item.id];
         if (!product) {
-            orderItems.innerHTML += `<p>Товар (ID: ${item.id}) недоступний</p>`;
+            console.warn(`Product not found for ID: ${item.id}`);
+            orderItemsDiv.innerHTML += `<p>Товар (ID: ${item.id}) недоступний</p>`;
             return;
         }
         const size = product.sizes.find(s => s.size === item.size);
+        if (!size) {
+            console.warn(`Size ${item.size} not found for product ID: ${item.id}`);
+            orderItemsDiv.innerHTML += `<p>Розмір ${item.size} для товару (ID: ${item.id}) недоступний</p>`;
+            return;
+        }
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.innerHTML = `
@@ -303,7 +350,7 @@ function renderOrderItems() {
             <h3>${product.name}</h3>
             <p>${product.description}</p>
             <div class="sizes">
-                <select class="size-select" onchange="updateCartSize(${index}, this.value); updatePrice('price_order_${index}', this.options[this.selectedIndex].dataset.price)">
+                <select class="size-select" onchange="updateOrderItemSize(${index}, this.value, ${JSON.stringify(orderItems)}); updatePrice('price_order_${index}', this.options[this.selectedIndex].dataset.price)">
                     ${product.sizes.map(s => `
                         <option value="${s.size}" data-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size} ▼</option>
                     `).join('')}
@@ -311,29 +358,48 @@ function renderOrderItems() {
             </div>
             <p>Ціна: <span id="price_order_${index}">${size.price}</span> грн</p>
         `;
-        orderItems.appendChild(productDiv);
+        orderItemsDiv.appendChild(productDiv);
     });
 }
+
+// Update order item size
+window.updateOrderItemSize = (index, size, orderItems) => {
+    orderItems[index].size = size;
+    console.log('Order items after size update:', orderItems); // Логування
+    renderOrderItems(orderItems);
+};
 
 // Checkout
 document.getElementById('checkout')?.addEventListener('click', () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    console.log('Checkout clicked, cart:', cart); // Логування
     if (cart.length === 0) {
         showNotification('Кошик порожній');
         return;
     }
     const orderModal = document.getElementById('orderModal');
-    orderModal.style.display = 'block';
-    renderOrderItems();
+    if (!orderModal) {
+        console.error('orderModal not found');
+        return;
+    }
+    orderModal.style.display = 'flex';
+    renderOrderItems(cart);
     loadUserData();
 });
 
 document.getElementById('orderForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
+    const submitButton = document.querySelector('#orderForm button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Зачекайте...';
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const validCart = cart.filter(item => products[item.id]);
+    console.log('Submitting order, cart:', cart); // Логування
+    const validCart = cart.filter(item => products[item.id] && products[item.id].sizes.find(s => s.size === item.size));
     if (validCart.length === 0) {
         showNotification('Кошик містить недоступні товари');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Оформити';
         return;
     }
     const name = document.getElementById('orderName').value;
@@ -345,10 +411,14 @@ document.getElementById('orderForm')?.addEventListener('submit', (e) => {
 
     if (!validateName(name)) {
         showNotification('Ім’я може містити лише літери та пробіли, до 50 символів');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Оформити';
         return;
     }
     if (!validatePhoneNumber(phone)) {
         showNotification('Номер телефону має починатися з "+" та містити коректний код країни (наприклад, +380)');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Оформити';
         return;
     }
 
@@ -365,6 +435,8 @@ document.getElementById('orderForm')?.addEventListener('submit', (e) => {
             return { name: product.name, size: item.size, price: size.price, photo: product.photo };
         })
     };
+
+    console.log('Order data:', JSON.stringify(order, null, 2)); // Логування
 
     fetch('https://project-mebli.onrender.com/sendOrder', {
         method: 'POST',
@@ -383,9 +455,13 @@ document.getElementById('orderForm')?.addEventListener('submit', (e) => {
         document.getElementById('orderRegion').value = '';
         document.getElementById('orderCity').value = '';
         document.getElementById('orderComment').value = '';
+        submitButton.disabled = false;
+        submitButton.textContent = 'Оформити';
     }).catch(err => {
         console.error('Fetch error:', err);
         showNotification('Помилка при оформленні замовлення. Спробуйте ще раз.');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Оформити';
     });
 });
 
@@ -546,6 +622,7 @@ function renderAdminProducts(category, search) {
     const productList = document.getElementById('productList');
     if (!productList) return;
     productList.innerHTML = '';
+    console.log('Rendering admin products, category:', category, 'search:', search); // Логування
     for (const key in products) {
         const product = products[key];
         if ((category === 'all' || product.category === category) && (!search || product.name.toLowerCase().includes(search.toLowerCase()))) {
@@ -603,7 +680,7 @@ window.editProduct = key => {
         </div>
     `).join('');
     document.getElementById('editModal').dataset.key = key;
-    document.getElementById('editModal').style.display = 'block';
+    document.getElementById('editModal').style.display = 'flex';
 };
 
 document.getElementById('editAddSize')?.addEventListener('click', () => {
@@ -657,16 +734,20 @@ document.getElementById('editModal')?.addEventListener('click', (e) => {
 // Accordion logic
 document.querySelectorAll('.accordion-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.accordion-content').forEach(content => {
-            if (content !== btn.nextElementSibling) content.style.display = 'none';
-        });
         const content = btn.nextElementSibling;
-        content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        const isActive = content.classList.contains('active');
+        document.querySelectorAll('.accordion-content').forEach(c => {
+            if (c !== content) {
+                c.classList.remove('active');
+            }
+        });
+        content.classList.toggle('active', !isActive);
     });
 });
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Page loaded, pathname:', window.location.pathname); // Логування
     if (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '') {
         const cartModal = document.getElementById('cartModal');
         const orderModal = document.getElementById('orderModal');
@@ -678,5 +759,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('admin.html')) {
         const editModal = document.getElementById('editModal');
         if (editModal) editModal.style.display = 'none';
+        document.querySelectorAll('.accordion-content').forEach(content => {
+            content.classList.remove('active');
+        });
     }
 });
