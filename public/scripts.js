@@ -72,6 +72,35 @@ window.updatePrice = (elementId, price) => {
     }
 };
 
+// Validate phone number
+function validatePhoneNumber(phone) {
+    const phoneRegex = /^\+[0-9]{1,3}[0-9]{9,12}$/;
+    const validCountryCodes = ['+1', '+44', '+380', '+48', '+33', '+49', '+7', '+81', '+86'];
+    const countryCode = phone.match(/^\+\d{1,3}/)?.[0];
+    return phoneRegex.test(phone) && validCountryCodes.includes(countryCode);
+}
+
+// Validate name
+function validateName(name) {
+    const nameRegex = /^[A-Za-zА-Яа-яЁёІіЇїЄєҐґ ]{1,50}$/;
+    return nameRegex.test(name);
+}
+
+// Load user data from localStorage
+function loadUserData() {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const orderName = document.getElementById('orderName');
+    const orderPhone = document.getElementById('orderPhone');
+    const orderCountry = document.getElementById('orderCountry');
+    const orderRegion = document.getElementById('orderRegion');
+    const orderCity = document.getElementById('orderCity');
+    if (userData.name && orderName) orderName.value = userData.name;
+    if (userData.phone && orderPhone) orderPhone.value = userData.phone;
+    if (userData.country && orderCountry) orderCountry.value = userData.country;
+    if (userData.region && orderRegion) orderRegion.value = userData.region;
+    if (userData.city && orderCity) orderCity.value = userData.city;
+}
+
 // Banner slider
 let currentSlide = 0;
 function showSlide(index) {
@@ -183,8 +212,7 @@ function renderCart() {
                     ${product.sizes.map(s => `
                         <option value="${s.size}" data-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size} ▼</option>
                     `).join('')}
-                </select>
-            </div>
+                </div>
             <p>Ціна: <span id="price_${index}">${size.price}</span> грн</p>
             <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
         `;
@@ -246,6 +274,7 @@ document.addEventListener('click', (e) => {
             const orderModal = document.getElementById('orderModal');
             orderModal.style.display = 'block';
             renderOrderItems();
+            loadUserData();
         }
     }
 });
@@ -295,6 +324,7 @@ document.getElementById('checkout')?.addEventListener('click', () => {
     const orderModal = document.getElementById('orderModal');
     orderModal.style.display = 'block';
     renderOrderItems();
+    loadUserData();
 });
 
 document.getElementById('orderForm')?.addEventListener('submit', (e) => {
@@ -305,30 +335,49 @@ document.getElementById('orderForm')?.addEventListener('submit', (e) => {
         showNotification('Кошик містить недоступні товари');
         return;
     }
+    const name = document.getElementById('orderName').value;
+    const phone = document.getElementById('orderPhone').value;
+    const country = document.getElementById('orderCountry').value;
+    const region = document.getElementById('orderRegion').value;
+    const city = document.getElementById('orderCity').value;
+    const comment = document.getElementById('orderComment').value;
+
+    if (!validateName(name)) {
+        showNotification('Ім’я може містити лише літери та пробіли, до 50 символів');
+        return;
+    }
+    if (!validatePhoneNumber(phone)) {
+        showNotification('Номер телефону має починатися з "+" та містити коректний код країни (наприклад, +380)');
+        return;
+    }
+
     const order = {
-        name: document.getElementById('orderName').value,
-        phone: document.getElementById('orderPhone').value,
-        country: document.getElementById('orderCountry').value,
-        region: document.getElementById('orderRegion').value,
-        city: document.getElementById('orderCity').value,
-        comment: document.getElementById('orderComment').value,
+        name,
+        phone,
+        country,
+        region,
+        city,
+        comment,
         products: validCart.map(item => {
             const product = products[item.id];
             const size = product.sizes.find(s => s.size === item.size);
             return { name: product.name, size: item.size, price: size.price, photo: product.photo };
         })
     };
-    fetch('http://localhost:3000/sendOrder', {
+
+    fetch('https://project-mebli.onrender.com/sendOrder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
-    }).then(() => {
+    }).then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        localStorage.setItem('userData', JSON.stringify({ name, phone, country, region, city }));
         document.getElementById('cartModal').style.display = 'none';
         document.getElementById('orderModal').style.display = 'none';
         document.getElementById('successModal').style.display = 'flex';
         localStorage.removeItem('cart');
         document.getElementById('orderName').value = '';
-        document.getElementById('orderPhone').value = '';
+        document.getElementById('orderPhone').value = '+380';
         document.getElementById('orderCountry').value = 'Україна';
         document.getElementById('orderRegion').value = '';
         document.getElementById('orderCity').value = '';

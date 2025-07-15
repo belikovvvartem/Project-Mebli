@@ -25,7 +25,7 @@
             <button data-category="wardrobes">🗄️ Шафи</button>
         </section>
         <section class="products"></section>
-        <div id="cartModal" class="modal">
+        <div id="cartModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <span class="close">×</span>
                 <h2>Кошик</h2>
@@ -33,13 +33,13 @@
                 <button id="checkout">Оформити замовлення</button>
             </div>
         </div>
-        <div id="orderModal" class="modal">
+        <div id="orderModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <span class="close">×</span>
                 <h2>Оформлення замовлення</h2>
                 <form id="orderForm">
-                    <input type="text" id="orderName" placeholder="Ім'я" required>
-                    <input type="tel" id="orderPhone" placeholder="Номер телефону" required>
+                    <input type="text" id="orderName" placeholder="Ім'я" pattern="[A-Za-zА-Яа-яЁёІіЇїЄєҐґ ]{1,50}" title="Ім'я може містити лише літери та пробіли, до 50 символів" required>
+                    <input type="tel" id="orderPhone" placeholder="Номер телефону" value="+380" pattern="\+[0-9]{1,3}[0-9]{9,12}" title="Номер телефону має починатися з '+' і містити від 10 до 15 цифр (наприклад, +380123456789)" required>
                     <input type="text" id="orderCountry" value="Україна" placeholder="Країна" required>
                     <input type="text" id="orderRegion" placeholder="Область" required>
                     <input type="text" id="orderCity" placeholder="Місто/Село" required>
