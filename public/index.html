@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин меблів</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="notification"></div>
+    <header>
+        <div class="logo">Магазин меблів</div>
+        <button id="cartBtn">🛒 Кошик</button>
+    </header>
+    <main>
+        <section class="slider">
+            <div class="slides"></div>
+            <button class="prev">❮</button>
+            <button class="next">❯</button>
+        </section>
+        <section class="filters">
+            <button data-category="all">Усі товари</button>
+            <button data-category="beds">🛏 Ліжка</button>
+            <button data-category="mirrors">🪞 Дзеркала</button>
+            <button data-category="wardrobes">🗄️ Шафи</button>
+        </section>
+        <section class="products"></section>
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <span class="close">×</span>
+                <h2>Кошик</h2>
+                <div id="cartItems" class="products"></div>
+                <button id="checkout">Оформити замовлення</button>
+            </div>
+        </div>
+        <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <span class="close">×</span>
+                <h2>Оформлення замовлення</h2>
+                <form id="orderForm">
+                    <input type="text" id="orderName" placeholder="Ім'я" required>
+                    <input type="tel" id="orderPhone" placeholder="Номер телефону" required>
+                    <input type="text" id="orderCountry" value="Україна" placeholder="Країна" required>
+                    <input type="text" id="orderRegion" placeholder="Область" required>
+                    <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                    <textarea id="orderComment" placeholder="Коментар (необов’язково)"></textarea>
+                    <h3>Товари у замовленні</h3>
+                    <div id="orderItems" class="products"></div>
+                    <button type="submit">Оформити</button>
+                </form>
+            </div>
+        </div>
+        <div id="successModal" class="modal">
+            <div class="modal-content success-message">
+                <span class="close">×</span>
+                <p>Ваше замовлення успішно оформлено, скоро з вами зв’яжуться наші продавці</p>
+                <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="scripts.js"></script>
+</body>
+</html>

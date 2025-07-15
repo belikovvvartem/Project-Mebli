@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Адмінпанель</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="notification"></div>
+    <h1>Адмінпанель</h1>
+    <button id="logout">Вийти</button>
+    <div class="accordion">
+        <button class="accordion-btn">Редагування банерів</button>
+        <div class="accordion-content">
+            <input type="text" id="bannerUrl" placeholder="Посилання на фото">
+            <button id="addBanner">Додати банер</button>
+            <ul id="bannerList"></ul>
+        </div>
+    </div>
+    <div class="accordion">
+        <button class="accordion-btn">Додавання товарів</button>
+        <div class="accordion-content">
+            <input type="text" id="productName" placeholder="Назва">
+            <input type="text" id="productDescription" placeholder="Опис">
+            <input type="text" id="productPhoto" placeholder="Фото (посилання)">
+            <select id="productCategory">
+                <option value="beds">🛏 Ліжка</option>
+                <option value="mirrors">🪞 Дзеркала</option>
+                <option value="wardrobes">🗄️ Шафи</option>
+            </select>
+            <div id="sizes">
+                <div class="size-row">
+                    <input type="text" class="size-input" placeholder="Розмір">
+                    <input type="number" class="price-input" placeholder="Ціна">
+                </div>
+            </div>
+            <button id="addSize">Додати розмір</button>
+            <button id="samePrice">Всі ціни однакові</button>
+            <button id="addProduct">Додати товар</button>
+        </div>
+    </div>
+    <div class="accordion">
+        <button class="accordion-btn">Список товарів</button>
+        <div class="accordion-content">
+            <input type="text" id="productSearch" placeholder="Пошук по назві">
+            <select id="productFilter">
+                <option value="all">Усі товари</option>
+                <option value="beds">🛏 Ліжка</option>
+                <option value="mirrors">🪞 Дзеркала</option>
+                <option value="wardrobes">🗄️ Шафи</option>
+            </select>
+            <div id="productList" class="products"></div>
+        </div>
+    </div>
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2>Редагувати товар</h2>
+            <input type="text" id="editProductName" placeholder="Назва">
+            <input type="text" id="editProductDescription" placeholder="Опис">
+            <input type="text" id="editProductPhoto" placeholder="Фото (посилання)">
+            <select id="editProductCategory">
+                <option value="beds">🛏 Ліжка</option>
+                <option value="mirrors">🪞 Дзеркала</option>
+                <option value="wardrobes">🗄️ Шафи</option>
+            </select>
+            <div id="editSizes">
+                <div class="size-row">
+                    <input type="text" class="edit-size-input" placeholder="Розмір">
+                    <input type="number" class="edit-price-input" placeholder="Ціна">
+                </div>
+            </div>
+            <button id="editAddSize">Додати розмір</button>
+            <button id="editSamePrice">Всі ціни однакові</button>
+            <button id="saveEdit">Зберегти</button>
+        </div>
+    </div>
+    <script type="module" src="scripts.js"></script>
+</body>
+</html>
