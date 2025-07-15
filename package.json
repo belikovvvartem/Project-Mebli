@@ -1,19 +1,19 @@
 {
   "name": "project-mebli",
   "version": "1.0.0",
-  "main": "firebaseConfig.js",
+  "description": "Furniture store backend",
+  "main": "server/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server/server.js",
+    "build": "yarn install"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "body-parser": "^2.2.0",
+    "express": "^4.17.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.0",
-    "express": "^5.1.0",
-    "node-telegram-bot-api": "^0.66.0"
-  }
+    "body-parser": "^1.19.0",
+    "node-telegram-bot-api": "^0.61.0",
+    "dotenv": "^16.0.0",
+    "request": "^2.88.2"
+  },
+  "packageManager": "yarn@1.22.22"
 }
