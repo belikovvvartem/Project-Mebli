@@ -23,18 +23,18 @@ const fakeBanners = [
 ];
 const fakeProducts = {
     "product1": {
-        name: "Ліжко Комфорт",
+        name: "454364756879p8",
         description: "Зручне ліжко",
-        photo: "https://via.placeholder.com/200x150?text=Bed",
+        photo: "https://picsum.photos/id/237/200/300",
         category: "beds",
-        sizes: [{ size: "160x200", price: "5000" }, { size: "180x200", price: "6000" }, { size: "200x200", price: "7000" }, { size: "220x200", price: "8000" }]
+        sizes: [{ size: "1222 * 134", price: "100" }]
     },
     "product2": {
-        name: "Дзеркало Елегант",
+        name: "Гайса2",
         description: "Стильне дзеркало",
-        photo: "https://via.placeholder.com/200x150?text=Mirror",
+        photo: "https://picsum.photos/seed/picsum/200/300",
         category: "mirrors",
-        sizes: [{ size: "60x90", price: "2000" }, { size: "80x120", price: "3000" }]
+        sizes: [{ size: "12+5", price: "200" }]
     }
 };
 
@@ -212,7 +212,8 @@ function renderCart() {
                     ${product.sizes.map(s => `
                         <option value="${s.size}" data-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size} ▼</option>
                     `).join('')}
-                </div>
+                </select>
+            </div>
             <p>Ціна: <span id="price_${index}">${size.price}</span> грн</p>
             <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
         `;
@@ -370,7 +371,7 @@ document.getElementById('orderForm')?.addEventListener('submit', (e) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
     }).then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         localStorage.setItem('userData', JSON.stringify({ name, phone, country, region, city }));
         document.getElementById('cartModal').style.display = 'none';
         document.getElementById('orderModal').style.display = 'none';
@@ -384,7 +385,7 @@ document.getElementById('orderForm')?.addEventListener('submit', (e) => {
         document.getElementById('orderComment').value = '';
     }).catch(err => {
         console.error('Fetch error:', err);
-        showNotification('Помилка при оформленні замовлення');
+        showNotification('Помилка при оформленні замовлення. Спробуйте ще раз.');
     });
 });
 
