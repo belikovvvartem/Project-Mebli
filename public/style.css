@@ -1,6 +1,6 @@
 /* General styles */
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', Arial, sans-serif;
     margin: 0;
     padding: 0;
     background: #f8f9fa;
@@ -28,6 +28,14 @@ header {
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
+#searchBar {
+    padding: 10px;
+    border: none;
+    border-radius: 25px;
+    width: 200px;
+    font-size: 0.95em;
+    background: #fff;
+}
 #cartBtn, #loginBtn, #logout {
     background: none;
     border: 2px solid white;
@@ -49,6 +57,81 @@ main {
     padding: 40px;
     max-width: 1280px;
     margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Category menu */
+.category-menu {
+    width: 200px;
+    margin-right: 20px;
+}
+.category-menu h3 {
+    font-size: 1.2em;
+    color: #1e3a8a;
+    margin-bottom: 10px;
+}
+.category-menu ul {
+    list-style: none;
+    padding: 0;
+}
+.category-menu li {
+    position: relative;
+    padding: 10px;
+    background: #3b82f6;
+    color: white;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.category-menu li:hover {
+    background: #2563eb;
+}
+.category-menu .subcategories {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: white;
+    color: #2d3436;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    min-width: 150px;
+    border-radius: 8px;
+    z-index: 10;
+}
+.category-menu li:hover .subcategories {
+    display: block;
+}
+.category-menu .subcategories li {
+    background: white;
+    color: #2d3436;
+    padding: 8px;
+    margin-bottom: 0;
+}
+.category-menu .subcategories li:hover {
+    background: #e5e7eb;
+}
+
+/* Sub-subcategories */
+.sub-subcategories {
+    list-style: none;
+    padding: 0;
+    margin-top: 5px;
+}
+#subcategoryList li:hover .sub-subcategories {
+    display: block;
+}
+.sub-subcategories li {
+    padding: 8px 15px;
+    background: #e5e7eb;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.sub-subcategories li:hover {
+    background: #d1d5db;
 }
 
 /* Slider */
@@ -116,17 +199,40 @@ main {
     background: #1e3a8a;
 }
 
+/* Homepage sections */
+.why-us, .products-by-room, .sale-products, .clearance-products, .brand-info {
+    margin: 40px 0;
+    width: 100%;
+}
+.why-us h2, .products-by-room h2, .sale-products h2, .clearance-products h2, .brand-info h2 {
+    color: #1e3a8a;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+}
+.view-all {
+    background: #3b82f6;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+.view-all:hover {
+    background: #2563eb;
+}
+
 /* Products */
 .products {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 25px;
     opacity: 0;
     animation: fadeIn 0.5s ease-out forwards;
 }
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; transform: none; }
 }
 #cartItems.products, #orderItems.products {
     display: flex;
@@ -136,10 +242,10 @@ main {
     overflow-y: auto;
     padding-bottom: 15px;
     animation: none;
-    opacity: 1; /* Забезпечення видимості */
+    opacity: 1;
 }
 .product {
-    background: #ffffff; /* Контрастний фон для видимості */
+    background: white;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -147,15 +253,15 @@ main {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    opacity: 1; /* Забезпечення видимості */
+    position: relative;
 }
 .product img {
     width: 100%;
     height: 200px;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 10px;
-    margin: 0 0 15px 0;
-    background: #e5e7eb; /* Фон для зображень у разі помилки завантаження */
+    margin-bottom: 15px;
+    background: #e5e7eb;
 }
 .product h3 {
     font-size: 1.4em;
@@ -189,7 +295,7 @@ main {
 }
 
 /* Product buttons */
-.product .addToCart, .product .buyNow, .product .remove-from-cart {
+.product button.addToCart, .product button.buyNow, .product button.remove-from-cart {
     width: 100%;
     padding: 12px;
     border: none;
@@ -223,6 +329,24 @@ main {
     background: #dc2626;
 }
 
+/* Product status */
+.promo {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #10b981;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+.promo.clearance {
+    background: #ef4444;
+}
+.availability {
+    margin: 10px 0;
+}
+
 /* Modal */
 .modal {
     display: none;
@@ -233,7 +357,6 @@ main {
     height: 100%;
     background: rgba(0,0,0,0.65);
     z-index: 1000;
-    display: flex;
     justify-content: center;
     align-items: center;
     overflow: auto;
@@ -251,7 +374,7 @@ main {
     position: relative;
     margin: 5vh auto;
 }
-#cartModal, #orderModal, #successModal, #editModal {
+#cartModal, #orderModal, #successModal, #editModal, #promoModal {
     display: none;
     justify-content: center;
     align-items: center;
@@ -259,7 +382,6 @@ main {
 #successModal .modal-content {
     text-align: center;
     animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
 }
 #successModal .modal-content::before {
     content: '✔';
@@ -360,6 +482,32 @@ main {
     margin: 10px 0;
 }
 
+/* Checkout button */
+#checkout {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1em;
+    text-transform: uppercase;
+    transition: background 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
+}
+#checkout:hover {
+    background: #059669;
+}
+#cartTotalPrice {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin: 15px 0;
+    text-align: right;
+}
+
 /* Notification */
 #notification {
     position: fixed;
@@ -441,6 +589,9 @@ main {
 .accordion-btn:hover {
     background: #2563eb;
 }
+.admin-html .category-menu {
+    width: 100%;
+}
 .accordion-content {
     max-height: 0;
     opacity: 0;
@@ -453,12 +604,13 @@ main {
     transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
 }
 .accordion-content.active {
-    max-height: 1000px; /* Достатньо великий, щоб вмістити весь контент */
+    max-height: none;
     opacity: 1;
     padding: 20px;
 }
 
 /* Admin panel */
+
 #bannerList, #productList {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -476,12 +628,12 @@ main {
 #bannerList img {
     width: 100%;
     max-width: 450px;
-    height: 220px;
-    object-fit: cover;
+    height: 300px;
+    object-fit: contain;
     border-radius: 10px;
     margin: 10px 0;
 }
-#bannerList button, #productList button, #addBanner, #addProduct, #editAddSize, #editSamePrice, #saveEdit {
+#bannerList button, #productList button, #addBanner, #addBanner, #addProduct, #addProduct, #editAddSize, #editSamePrice, #saveEdit {
     width: 100%;
     padding: 12px;
     border: none;
@@ -527,7 +679,7 @@ main {
     gap: 12px;
     margin-bottom: 20px;
 }
-.size-input, .price-input, .edit-size-input, .edit-price-input, #productName, #productDescription, #productPhoto, #editProductName, #editProductDescription, #editProductPhoto, #productCategory, #editProductCategory, #productSearch, #productFilter, #bannerUrl {
+.size-input, .price-input, .edit-size-input, .edit-price-input, #productName, #productDescription, #productPhoto, #editProductName, #editProductDescription, #editProductPhoto, #productCategory, #editProductCategory, #productSearch, #productFilter, #bannerUrl, #colorInput, #materialInput {
     width: 100%;
     padding: 12px;
     border: 1px solid #e5e7eb;
@@ -538,13 +690,13 @@ main {
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     margin-bottom: 20px;
 }
-.size-input:focus, .price-input:focus, .edit-size-input:focus, .edit-price-input:focus, #productName:focus, #productDescription:focus, #productPhoto:focus, #editProductName:focus, #editProductDescription:focus, #editProductPhoto:focus, #productCategory:focus, #editProductCategory:focus, #productSearch:focus, #productFilter:focus, #bannerUrl:focus {
+.size-input:focus, .price-input:focus, .edit-size-input:focus, .edit-price-input:focus, #productName:focus, #productDescription:focus, #productPhoto:focus, #editProductName:focus, #editProductDescription:focus, #editProductPhoto:focus, #productCategory:focus, #editProductCategory:focus, #productSearch:focus, #productFilter:focus, #bannerUrl:focus, #colorInput:focus, #materialInput:focus {
     border-color: #3b82f6;
     background: white;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     outline: none;
 }
-.size-input::placeholder, .price-input::placeholder, .edit-size-input::placeholder, .edit-price-input::placeholder, #productName::placeholder, #productDescription::placeholder, #productPhoto::placeholder, #editProductName::placeholder, #editProductDescription::placeholder, #editProductPhoto::placeholder, #productCategory::placeholder, #editProductCategory::placeholder, #productSearch::placeholder, #productFilter::placeholder, #bannerUrl::placeholder {
+.size-input::placeholder, .price-input::placeholder, .edit-size-input::placeholder, .edit-price-input::placeholder, #productName::placeholder, #productDescription::placeholder, #productPhoto::placeholder, #editProductName::placeholder, #editProductDescription::placeholder, #editProductPhoto::placeholder, #productCategory::placeholder, #editProductCategory::placeholder, #productSearch::placeholder, #productFilter::placeholder, #bannerUrl::placeholder, #colorInput::placeholder, #materialInput::placeholder {
     color: #9ca3af;
     font-style: italic;
 }
@@ -552,116 +704,18 @@ main {
     height: 140px;
     resize: vertical;
 }
-
-/* Responsive design */
-@media (max-width: 768px) {
-    main {
-        padding: 20px;
-    }
-    header {
-        padding: 10px 20px;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    .logo {
-        font-size: 1.5em;
-    }
-    #cartBtn, #loginBtn, #logout {
-        padding: 8px 16px;
-        font-size: 0.9em;
-    }
-    .slide {
-        height: 300px;
-        margin: 5px;
-    }
-    .products, #bannerList, #productList {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 20px;
-    }
-    .product {
-        min-height: 380px;
-    }
-    .modal-content {
-        width: 95%;
-        padding: 20px;
-        margin: 2vh auto;
-    }
-    .product img, #bannerList img, #orderItems .product img, #cartItems .product img {
-        height: 160px;
-        margin: 5px 0;
-    }
-    #orderForm {
-        padding: 15px;
-    }
-    #orderForm input, #orderForm textarea {
-        padding: 12px;
-        margin-bottom: 15px;
-    }
-    #orderForm button[type="submit"], .addToCart, .buyNow, .remove-from-cart, #bannerList button, #productList button, #addBanner, #addProduct, #editAddSize, #editSamePrice, #saveEdit {
-        padding: 10px;
-        font-size: 0.9em;
-        margin: 6px 0;
-    }
-    .size-input, .price-input, .edit-size-input, .edit-price-input, #productName, #productDescription, #productPhoto, #editProductName, #editProductDescription, #editProductPhoto, #productCategory, #editProductCategory, #productSearch, #productFilter, #bannerUrl {
-        margin-bottom: 15px;
-    }
-    .accordion-btn {
-        padding: 12px 16px;
-        font-size: 0.9em;
-    }
-    .accordion-content.active {
-        padding: 15px;
-    }
+#productSubcategory, #editProductSubcategory, #productMaterials, #editProductMaterials, #productColors, #editProductColors {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95em;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
-@media (max-width: 480px) {
-    main {
-        padding: 15px;
-    }
-    header {
-        padding: 8px 15px;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .slide {
-        height: 250px;
-    }
-    .products, #bannerList, #productList {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    .product {
-        min-height: 360px;
-    }
-    .modal-content {
-        width: 90%;
-        padding: 15px;
-        margin: 2vh auto;
-    }
-    .product img, #bannerList img, #orderItems .product img, #cartItems .product img {
-        height: 140px;
-    }
-    #orderForm input, #orderForm textarea {
-        padding: 10px;
-        margin-bottom: 12px;
-    }
-    .filters button, #orderForm button[type="submit"], .addToCart, .buyNow, .remove-from-cart, #bannerList button, #productList button, #addBanner, #addProduct, #editAddSize, #editSamePrice, #saveEdit {
-        padding: 10px 16px;
-        font-size: 0.85em;
-        margin: 5px 0;
-    }
-    .size-input, .price-input, .edit-size-input, .edit-price-input, #productName, #productDescription, #productPhoto, #editProductName, #editProductDescription, #editProductPhoto, #productCategory, #editProductCategory, #productSearch, #productFilter, #bannerUrl {
-        margin-bottom: 12px;
-    }
-    .size-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-    .accordion-btn {
-        padding: 10px 14px;
-        font-size: 0.85em;
-    }
-    .accordion-content.active {
-        padding: 10px;
-        max-height: 1200px;
-    }
+#productSubcategory:focus, #editProductSubcategory:focus, #productMaterials:focus, #editProductMaterials:focus, #productColors:focus, #focuseditProductColors:focus {
+    border-color: #3b82f6;
+    background: white;
 }
