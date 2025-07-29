@@ -2,18 +2,20 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вхід</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <main>
+        <h1>Вхід</h1>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Електронна пошта" required>
+            <input type="password" id="password" placeholder="Пароль" required>
+            <button type="button" id="loginBtn">Увійти</button>
+        </form>
+    </main>
     <div id="notification"></div>
-    <h1>Вхід</h1>
-    <form>
-        <input type="email" id="email" placeholder="Електронна пошта" required>
-        <input type="password" id="password" placeholder="Пароль" required>
-        <button type="button" id="loginBtn">Увійти</button>
-    </form>
     <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -1,95 +1,63 @@
 <!DOCTYPE html>
 <html lang="uk">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <title>Магазин меблів - Категорія</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин меблів</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .accordion-btn {
-            cursor: pointer;
-            padding: 10px;
-            background: #f1f1f1;
-            border: none;
-            width: 100%;
-            text-align: left;
-        }
-
-        .accordion-content {
-            display: none;
-            padding: 10px;
-        }
-
-        .accordion-content.active {
-            display: block;
-        }
-
-        #subcategoryList {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        #subcategoryList li {
-            cursor: pointer;
-            padding: 5px 10px;
-            background: #ddd;
-            border-radius: 5px;
-        }
-
-        #subcategoryList li:hover {
-            background: #bbb;
-        }
-    </style>
 </head>
-
 <body>
-    <div id="notification"></div>
     <header>
         <div class="logo">Магазин меблів</div>
-        <input type="text" id="searchBar" placeholder="Пошук...">
+        <input type="text" id="searchBar" placeholder="Пошук товарів...">
         <button id="cartBtn">🛒 Кошик</button>
     </header>
     <main>
-        <section class="content">
-            <h2>Підкатегорії</h2>
+        <div class="category-menu">
+            <h3>Підкатегорії</h3>
             <ul id="subcategoryList"></ul>
-            <div class="accordion">
-                <button class="accordion-btn">Фільтри</button>
-                <div class="accordion-content">
-                    <label>Підкатегорія: <select id="subcategory">
-                            <option value="">Всі</option>
-                        </select></label><br>
-                    <label>Ціна від: <input type="number" id="priceMin" min="0" placeholder="0"></label><br>
-                    <label>Ціна до: <input type="number" id="priceMax" min="0" placeholder="Без ліміту"></label><br>
-                    <label>Наявність: <input type="checkbox" id="availability"></label><br>
-                    <label>Колір: <select id="color">
-                            <option value="">Виберіть колір</option>
-                        </select></label><br>
-                    <label>Матеріал: <select id="material">
-                            <option value="">Виберіть матеріал</option>
-                        </select></label><br>
-                    <label>Кімната: <input type="text" id="room" placeholder="наприклад, вітальня"></label><br>
-                    <label>Тільки акційні: <input type="checkbox" id="onSaleOnly"></label><br>
-                    <button id="applyFilters">Застосувати</button>
+        </div>
+        <div class="content">
+            <button id="filterBtn">Фільтри</button>
+            <div id="filters" style="display: none;">
+                <select id="subcategory">
+                    <option value="">Підкатегорія: Всі</option>
+                </select>
+                <input type="checkbox" id="availability"> Наявність
+                <select id="color">
+                    <option value="">Колір: Виберіть колір</option>
+                </select>
+                <select id="material">
+                    <option value="">Матеріал: Виберіть матеріал</option>
+                </select>
+                <select id="room">
+                    <option value="">Кімната: Виберіть кімнату</option>
+                    <option value="Вітальня">Вітальня</option>
+                    <option value="Спальна кімната">Спальна кімната</option>
+                    <option value="Дитяча">Дитяча</option>
+                    <option value="Передпокій">Передпокій</option>
+                    <option value="Кухня", "Офіс">Кухня</option>
+                    <option value="Офіс">Офіс</option>
+                </select>
+                <input type="checkbox" id="onSaleOnly"> Тільки акційні
+                <button id="applyFilters">Застосувати</button>
+            </div>
+            <div id="roomProducts" class="products"></div>
+            <div id="cartModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Кошик</h2>
+                    <div id="cartItems" class="products"></div>
+                    <p id="cartTotalPrice"></p>
+                    <button id="checkout">Оформити</button>
                 </div>
             </div>
-            <section class="products" id="mainProducts"></section>
-        </section>
+        </div>
     </main>
     <footer>
         <p>© 2025 Магазин меблів. Усі права захищено.</p>
     </footer>
+    <div id="notification"></div>
     <script type="module" src="script.js"></script>
-    <script>
-        document.querySelector('.accordion-btn').addEventListener('click', () => {
-            const content = document.querySelector('.accordion-content');
-            content.classList.toggle('active');
-        });
-    </script>
 </body>
-
 </html>
