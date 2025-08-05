@@ -1,71 +1,95 @@
 <!DOCTYPE html>
-<html lang="uk" class="admin-html">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Адмінпанель</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
 </head>
-<body>
+<body class="admin-html">
     <header>
-        <div class="logo">Адмінпанель</div>
-        <button id="logout">Вийти</button>
-    </header>
-    <main>
-        <nav class="tab-menu">
-            <button class="tab-btn" data-tab="welcome">Головна</button>
+        <div class="logo">Адмін-Панель</div>
+        <nav class="category-menu">
+            <button class="tab-btn active" data-tab="welcome">Головна</button>
             <button class="tab-btn" data-tab="banners">Редагування банерів</button>
-            <button class="tab-btn" data-tab="add-product">Додавання товару</button>
-            <button class="tab-btn" data-tab="product-list">Список товарів</button>
+            <button class="tab-btn" data-tab="addProduct">Додавання товару</button>
+            <button class="tab-btn" data-tab="productList">Список товарів</button>
             <button class="tab-btn" data-tab="colors">Кольори</button>
             <button class="tab-btn" data-tab="materials">Матеріали</button>
-            <button class="tab-btn" data-tab="promos">Управління акціями</button>
+            <button class="tab-btn" data-tab="photo-processing">Фото</button>
         </nav>
-        <div class="tab-content" id="welcome">
+        <button id="logout">Вийти</button>
+    </header>
+
+    <main class="admin-m">
+
+        <section id="welcome" class="tab-content active">
             <h2>Вітаємо в адмінпанелі Омелян Меблі</h2>
             <p>Виберіть вкладку вище, щоб керувати товарами, банерами, кольорами, матеріалами чи акціями.</p>
-        </div>
-        <div class="tab-content" id="banners" style="display: none;">
-            <ul id="bannerList"></ul>
+        </section>
+
+        <section id="banners" class="tab-content">
+            <h2>Редагування банерів</h2>
             <input type="text" id="bannerUrl" placeholder="URL банера">
             <button id="addBanner">Додати банер</button>
-        </div>
-        <div class="tab-content" id="add-product" style="display: none;">
-            <input type="text" id="productName" placeholder="Назва товару">
-            <textarea id="productDescription" placeholder="Опис товару"></textarea>
-            <input type="text" id="productPhoto" placeholder="URL фото">
-            <select id="productCategory" onchange="updateSubcategoryOptions()">
-                <option value="beds">🛏 Ліжка</option>
-                <option value="sofas">🛋 Дивани</option>
-                <option value="wardrobes">🗄️ Шафи</option>
-                <option value="tables">🖥 Столи</option>
-                <option value="chairs">💺 Стільці</option>
-                <option value="mattresses">🛌 Матраци</option>
-            </select>
-            <select id="productSubcategory"></select>
-            <select multiple id="productMaterials"></select>
-            <select multiple id="productColors"></select>
-            <div id="rooms">
-                <label><input type="checkbox" value="Вітальня"> Вітальня</label>
-                <label><input type="checkbox" value="Спальна кімната"> Спальна кімната</label>
-                <label><input type="checkbox" value="Дитяча"> Дитяча</label>
-                <label><input type="checkbox" value="Передпокій"> Передпокій</label>
-                <label><input type="checkbox" value="Кухня"> Кухня</label>
-                <label><input type="checkbox" value="Офіс"> Офіс</label>
-            </div>
-            <label><input type="checkbox" id="availability"> В наявності</label>
-            <div id="sizes">
-                <div class="size-row">
-                    <input type="text" class="size-input" placeholder="Розмір">
-                    <input type="number" class="price-input" placeholder="Ціна">
-                    <button class="remove-size">Видалити</button>
+            <ul id="bannerList"></ul>
+        </section>
+
+        <section id="addProduct" class="tab-content">
+            <h2>Додати товар</h2>
+            <form id="addProductForm">
+                <input type="text" id="productName" placeholder="Назва товару">
+                <textarea id="productDescription" placeholder="Опис товару"></textarea>
+                <input type="text" id="productPhoto" placeholder="URL фото">
+                <select id="productCategory">
+                    <option value="beds">Ліжка</option>
+                    <option value="sofas">Дивани</option>
+                    <option value="wardrobes">Шафи</option>
+                    <option value="tables">Столи</option>
+                    <option value="chairs">Стільці</option>
+                    <option value="mattresses">Матраци</option>
+                </select>
+                <select id="productSubcategory">
+                    <option value="">Виберіть підкатегорію</option>
+                </select>
+                <select id="productSubSubcategory" style="display: none;">
+                    <option value="">Виберіть кількість дверей</option>
+                    <option value="2door">2-х дверна</option>
+                    <option value="3door">3-х дверна</option>
+                    <option value="4door">4-х дверна</option>
+                </select>
+                <select id="productMaterials" multiple>
+                    <option value="">Матеріал: Виберіть матеріал</option>
+                </select>
+                <select id="productColors" multiple>
+                    <option value="">Колір: Виберіть колір</option>
+                </select>
+                <div id="rooms">
+                    <label><input type="checkbox" value="living_room"> Вітальня</label>
+                    <label><input type="checkbox" value="bedroom"> Спальна кімната</label>
+                    <label><input type="checkbox" value="nursery"> Дитяча</label>
+                    <label><input type="checkbox" value="hallway"> Передпокій</label>
+                    <label><input type="checkbox" value="kitchen"> Кухня</label>
+                    <label><input type="checkbox" value="office"> Офіс</label>
                 </div>
-            </div>
-            <button id="addSize">Додати розмір</button>
-            <button id="samePrice">Всі ціни однакові</button>
-            <button id="addProduct">Додати товар</button>
-        </div>
-        <div class="tab-content" id="product-list" style="display: none;">
+                <label><input type="checkbox" id="availability"> В наявності</label>
+                <div id="sizes">
+                    <div class="size-row">
+                        <input type="text" class="size-input" placeholder="Розмір">
+                        <input type="number" class="price-input" placeholder="Ціна">
+                        <input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)">
+                        <button type="button" class="remove-size">Видалити</button>
+                    </div>
+                </div>
+                <button type="button" id="addSize">Додати розмір</button>
+                <button type="button" id="samePrice">Всі ціни однакові</button>
+                <button type="submit" id="addProduct">Додати товар</button>
+            </form>
+        </section>
+
+        <section id="productList" class="tab-content">
+            <h2>Список товарів</h2>
             <select id="productFilter">
                 <option value="all">Усі</option>
                 <option value="beds">🛏 Ліжка</option>
@@ -77,66 +101,90 @@
             </select>
             <input type="text" id="productSearch" placeholder="Пошук товарів...">
             <div id="productList" class="products"></div>
-        </div>
-        <div class="tab-content" id="colors" style="display: none;">
-            <input type="text" id="colorInput" placeholder="Новий колір">
+        </section>
+
+        <section id="colors" class="tab-content">
+            <h2>Кольори</h2>
+            <input type="text" id="colorInput" placeholder="Назва кольору">
             <button id="addColor">Додати</button>
-        </div>
-        <div class="tab-content" id="materials" style="display: none;">
-            <input type="text" id="materialInput" placeholder="Новий матеріал">
+        </section>
+
+        <section id="materials" class="tab-content">
+            <h2>Матеріали</h2>
+            <input type="text" id="materialInput" placeholder="Назва матеріалу">
             <button id="addMaterial">Додати</button>
-        </div>
-        <div class="tab-content" id="promos" style="display: none;">
-            <ul id="promoList"></ul>
-            <button id="addPromo">Додати акцію</button>
-        </div>
-    </main>
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Редагувати товар</h2>
-            <input type="text" id="editProductName" placeholder="Назва товару">
-            <textarea id="editProductDescription" placeholder="Опис товару"></textarea>
-            <input type="text" id="editProductPhoto" placeholder="URL фото">
-            <select id="editProductCategory" onchange="updateEditSubcategoryOptions()">
-                <option value="beds">🛏 Ліжка</option>
-                <option value="sofas">🛋 Дивани</option>
-                <option value="wardrobes">🗄️ Шафи</option>
-                <option value="tables">🖥 Столи</option>
-                <option value="chairs">💺 Стільці</option>
-                <option value="mattresses">🛌 Матраци</option>
-            </select>
-            <select id="editProductSubcategory"></select>
-            <select multiple id="editProductMaterials"></select>
-            <select multiple id="editProductColors"></select>
-            <div id="editRooms">
-                <label><input type="checkbox" value="Вітальня"> Вітальня</label>
-                <label><input type="checkbox" value="Спальна кімната"> Спальна кімната</label>
-                <label><input type="checkbox" value="Дитяча"> Дитяча</label>
-                <label><input type="checkbox" value="Передпокій"> Передпокій</label>
-                <label><input type="checkbox" value="Кухня"> Кухня</label>
-                <label><input type="checkbox" value="Офіс"> Офіс</label>
+        </section>
+
+        <section id="photo-processing" class="tab-content">
+            <iframe 
+  src="https://iimg.su/" 
+width="100%" 
+  height="500px" 
+  style="border: 1px solid #ccc; border-radius: 8px;">
+</iframe>
+        </section>
+
+        <div id="notification"></div>
+
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Редагувати товар</h2>
+                <form id="editProductForm">
+                    <input type="text" id="editProductName" placeholder="Назва товару">
+                    <textarea id="editProductDescription" placeholder="Опис товару"></textarea>
+                    <input type="text" id="editProductPhoto" placeholder="URL фото">
+                    <select id="editProductCategory">
+                        <option value="beds">Ліжка</option>
+                        <option value="sofas">Дивани</option>
+                        <option value="wardrobes">Шафи</option>
+                        <option value="tables">Столи</option>
+                        <option value="chairs">Стільці</option>
+                        <option value="mattresses">Матраци</option>
+                    </select>
+                    <select id="editProductSubcategory">
+                        <option value="">Виберіть підкатегорію</option>
+                    </select>
+                    <select id="editProductSubSubcategory" style="display: none;">
+                        <option value="">Виберіть кількість дверей</option>
+                        <option value="2door">2-х дверна</option>
+                        <option value="3door">3-х дверна</option>
+                        <option value="4door">4-х дверна</option>
+                    </select>
+                    <select id="editProductMaterials" multiple>
+                        <option value="">Матеріал: Виберіть матеріал</option>
+                    </select>
+                    <select id="editProductColors" multiple>
+                        <option value="">Колір: Виберіть колір</option>
+                    </select>
+                    <div id="editRooms">
+                        <label><input type="checkbox" value="living_room"> Вітальня</label>
+                        <label><input type="checkbox" value="bedroom"> Спальна кімната</label>
+                        <label><input type="checkbox" value="nursery"> Дитяча</label>
+                        <label><input type="checkbox" value="hallway"> Передпокій</label>
+                        <label><input type="checkbox" value="kitchen"> Кухня</label>
+                        <label><input type="checkbox" value="office"> Офіс</label>
+                    </div>
+                    <label><input type="checkbox" id="editAvailability"> В наявності</label>
+                    <label><input type="checkbox" id="editOnSale"> Акція</label>
+                    <label><input type="checkbox" id="editOnClearance"> Розпродаж</label>
+                    <div id="editSizes">
+                        <div class="size-row">
+                            <input type="text" class="edit-size-input" placeholder="Розмір">
+                            <input type="number" class="edit-price-input" placeholder="Ціна">
+                            <input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)">
+                            <button type="button" class="remove-size">Видалити</button>
+                        </div>
+                    </div>
+                    <button type="button" id="editAddSize">Додати розмір</button>
+                    <button type="button" id="editSamePrice">Всі ціни однакові</button>
+                    <button type="submit" id="saveEdit">Зберегти</button>
+                </form>
             </div>
-            <label><input type="checkbox" id="editAvailability"> В наявності</label>
-            <label><input type="checkbox" id="editOnSale" onchange="toggleDiscountInput()"> Акція</label>
-            <input type="number" id="discountInput" placeholder="Знижка (%)" min="0" max="100" style="display: none;">
-            <label><input type="checkbox" id="editOnClearance"> Розпродаж</label>
-            <div id="editSizes"></div>
-            <button id="editAddSize">Додати розмір</button>
-            <button id="editSamePrice">Всі ціни однакові</button>
-            <button id="saveEdit">Зберегти</button>
         </div>
-    </div>
-    <div id="promoModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Додати акцію</h2>
-            <input type="text" id="promoName" placeholder="Назва акції">
-            <input type="number" id="promoDiscount" placeholder="Знижка (%)" min="0" max="100">
-            <button id="savePromo">Зберегти</button>
-        </div>
-    </div>
-    <div id="notification"></div>
+
+    </main>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -5,112 +5,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магазин меблів</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
+    <script type="module" src="script.js"></script>
 </head>
 <body>
     <header>
         <div class="logo">Магазин меблів</div>
-        <input type="text" id="searchBar" placeholder="Пошук товарів...">
+        <input type="text" id="searchBar" placeholder="Пошук...">
         <button id="cartBtn">🛒 Кошик</button>
     </header>
+
     <main>
-        <div class="category-menu">
+        <div id="notification"></div>
+        <aside class="category-menu">
             <h3>Категорії</h3>
             <ul id="mainCategories"></ul>
+
             <h3>По кімнатах</h3>
-            <ul id="roomCategories">
-                <li data-tag="Вітальня">Меблі за кімнатами</li>
-                <ul class="subcategories">
-                    <li data-filter="room=Вітальня">Вітальня</li>
-                    <li data-filter="room=Спальна кімната">Спальна кімната</li>
-                    <li data-filter="room=Дитяча">Дитяча</li>
-                    <li data-filter="room=Передпокій">Передпокій</li>
-                    <li data-filter="room=Кухня">Кухня</li>
-                    <li data-filter="room=Офіс">Офіс</li>
+            <div class="products-by-room">
+                <h2>Меблі за кімнатами</h2>
+                <ul>
+                    <li data-tag="living_room"><a href="room.html?room=living_room">Вітальня</a></li>
+                    <li data-tag="bedroom"><a href="room.html?room=bedroom">Спальна кімната</a></li>
+                    <li data-tag="nursery"><a href="room.html?room=nursery">Дитяча</a></li>
+                    <li data-tag="hallway"><a href="room.html?room=hallway">Передпокій</a></li>
+                    <li data-tag="kitchen"><a href="room.html?room=kitchen">Кухня</a></li>
+                    <li data-tag="office"><a href="room.html?room=office">Офіс</a></li>
                 </ul>
-                <li data-filter="allRooms">Переглянути всі</li>
-            </ul>
+                <button class="view-all" onclick="window.location.href='room.html'">Переглянути всі</button>
+            </div>
+
             <h3>Спеціальні пропозиції</h3>
             <ul>
-            	<li data-filter="sale">Акційні</li>
-		<li data-filter="clearance">Розпродаж</li>
+                <li data-filter="sale"><a href="room.html?sale=true">Акційні</a></li>
+                <li data-filter="clearance"><a href="room.html?clearance=true">Розпродаж</a></li>
             </ul>
-        </div>
-        <div class="content">
+        </aside>
+
+        <section>
             <div class="slider">
                 <div class="slides"></div>
                 <button class="prev">❮</button>
                 <button class="next">❯</button>
             </div>
-            <section class="why-us">
+
+            <div class="why-us">
                 <h2>Чому ми</h2>
                 <p>Ми пропонуємо якісні меблі за доступними цінами.</p>
-            </section>
+            </div>
+
             <section class="products-by-room">
-                <h2>Товари по кімнатах</h2>
-                <div id="mainProducts" class="products"></div>
+                <h2>Товари за кімнатами</h2>
+                <ul id="roomCategoriesByRoom">
+                    <li data-tag="living_room">Вітальня</li>
+                    <li data-tag="bedroom">Спальна кімната</li>
+                    <li data-tag="nursery">Дитяча</li>
+                    <li data-tag="hallway">Передпокій</li>
+                    <li data-tag="kitchen">Кухня</li>
+                    <li data-tag="office">Офіс</li>
+                </ul>
             </section>
-            <section class="sale-products">
+
+            <div class="sale-products">
                 <h2>Акційні товари</h2>
                 <div id="saleProducts" class="products"></div>
                 <button class="view-all" onclick="window.location.href='room.html?sale=true'">Переглянути всі</button>
-            </section>
-            <section class="clearance-products">
+            </div>
+
+            <div class="clearance-products">
                 <h2>Товари на розпродажі</h2>
                 <div id="clearanceProducts" class="products"></div>
                 <button class="view-all" onclick="window.location.href='room.html?clearance=true'">Переглянути всі</button>
-            </section>
-            <section class="brand-info">
+            </div>
+
+            <div class="brand-info">
                 <h2>Про бренд</h2>
                 <p>Інформація про наш бренд.</p>
-            </section>
+            </div>
+        </section>
+
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Кошик</h2>
+                <div id="cartItems" class="products"></div>
+                <p id="cartTotalPrice"></p>
+                <button id="checkout">Оформити замовлення</button>
+            </div>
         </div>
+        <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Оформлення замовлення</h2>
+                <form id="orderForm">
+                    <input type="text" id="orderName" placeholder="ПІБ" required>
+                    <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
+                    <input type="text" id="orderCountry" placeholder="Країна" required>
+                    <input type="text" id="orderRegion" placeholder="Область" required>
+                    <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                    <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
+                    <h3>Товари у замовленні</h3>
+                    <div id="orderItems" class="products"></div>
+                    <button type="submit">Оформити</button>
+                </form>
+            </div>
+        </div>
+        <div id="successModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <p>Ваше замовлення успішно оформлено, скоро з вами зв’яжуться наші продавці</p>
+                <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
+            </div>
+        </div>
+
+        <div id="notification"></div>
     </main>
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Кошик</h2>
-            <div id="cartItems" class="products"></div>
-            <p id="cartTotalPrice"></p>
-            <button id="checkout">Оформити замовлення</button>
-        </div>
-    </div>
-    <div id="orderModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Оформлення замовлення</h2>
-            <form id="orderForm">
-                <input type="text" id="orderName" placeholder="ПІБ" required>
-                <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
-                <input type="text" id="orderCountry" placeholder="Країна" required>
-                <input type="text" id="orderRegion" placeholder="Область" required>
-                <input type="text" id="orderCity" placeholder="Місто/Село" required>
-                <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
-                <h3>Товари у замовленні</h3>
-                <div id="orderItems" class="products"></div>
-                <button type="submit">Оформити</button>
-            </form>
-        </div>
-    </div>
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <p>Ваше замовлення успішно оформлено, скоро з вами зв’яжуться наші продавці</p>
-            <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
-        </div>
-    </div>
-    <div id="promoModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Додати акцію</h2>
-            <input type="text" id="promoName" placeholder="Назва акції">
-            <input type="number" id="promoDiscount" placeholder="Знижка (%)" min="0" max="100">
-            <button id="savePromo">Зберегти</button>
-        </div>
-    </div>
+
     <footer>
         <p>© 2025 Магазин меблів. Усі права захищено.</p>
     </footer>
-    <div id="notification"></div>
-    <script type="module" src="script.js"></script>
 </body>
 </html>

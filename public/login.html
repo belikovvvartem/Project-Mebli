@@ -5,15 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вхід</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 </head>
-<body>
-    <main>
-        <h1>Вхід</h1>
-        <form id="loginForm">
-            <input type="email" id="email" placeholder="Електронна пошта" required>
-            <input type="password" id="password" placeholder="Пароль" required>
-            <button type="button" id="loginBtn">Увійти</button>
-        </form>
+<body class="login-b">
+    <main class="login-m">
+
+        <section class="login-to-admin">
+            <img src="./img/omelyan-logo.png" alt="">
+            <h1>Вхід <i class="material-icons">manage_accounts</i></h1>
+            <form id="loginForm">
+                <input type="email" id="email" placeholder="Електронна пошта" required>
+                <input type="password" id="password" placeholder="Пароль" required>
+                <button type="button" id="loginBtn">Увійти</button>
+            </form>
+        </section>
+
     </main>
     <div id="notification"></div>
     <script type="module" src="script.js"></script>

@@ -5,59 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магазин меблів</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
+    <script type="module" src="script.js"></script>
+    <!-- Add this style to hide filters by default -->
+    <style>
+        #filters {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <header>
         <div class="logo">Магазин меблів</div>
-        <input type="text" id="searchBar" placeholder="Пошук товарів...">
+        <input type="text" id="searchBar" placeholder="Пошук...">
         <button id="cartBtn">🛒 Кошик</button>
     </header>
+
     <main>
-        <div class="category-menu">
+        <aside class="category-menu">
             <h3>Підкатегорії</h3>
             <ul id="subcategoryList"></ul>
-        </div>
-        <div class="content">
+        </aside>
+
+        <section>
             <button id="filterBtn">Фільтри</button>
-            <div id="filters" style="display: none;">
-                <select id="subcategory">
-                    <option value="">Підкатегорія: Всі</option>
-                </select>
-                <input type="checkbox" id="availability"> Наявність
-                <select id="color">
-                    <option value="">Колір: Виберіть колір</option>
-                </select>
-                <select id="material">
-                    <option value="">Матеріал: Виберіть матеріал</option>
-                </select>
+            <div id="filters" class="filters">
+                <select id="subcategory">Підкатегорія: Всі</select>
+                <select id="subSubcategory">Кількість дверей: Виберіть</select>
+                <input type="number" id="priceMin" placeholder="Мін. ціна">
+                <input type="number" id="priceMax" placeholder="Макс. ціна">
+                <label><input type="checkbox" id="availability"> Наявність</label>
+                <select id="color">Колір: Виберіть колір</select>
+                <select id="material">Матеріал: Виберіть матеріал</select>
                 <select id="room">
                     <option value="">Кімната: Виберіть кімнату</option>
-                    <option value="Вітальня">Вітальня</option>
-                    <option value="Спальна кімната">Спальна кімната</option>
-                    <option value="Дитяча">Дитяча</option>
-                    <option value="Передпокій">Передпокій</option>
-                    <option value="Кухня", "Офіс">Кухня</option>
-                    <option value="Офіс">Офіс</option>
+                    <option value="living_room">Вітальня</option>
+                    <option value="bedroom">Спальна кімната</option>
+                    <option value="nursery">Дитяча</option>
+                    <option value="hallway">Передпокій</option>
+                    <option value="kitchen">Кухня</option>
+                    <option value="office">Офіс</option>
                 </select>
-                <input type="checkbox" id="onSaleOnly"> Тільки акційні
+                <label><input type="checkbox" id="onSaleOnly"> Тільки акційні</label>
                 <button id="applyFilters">Застосувати</button>
             </div>
             <div id="roomProducts" class="products"></div>
-            <div id="cartModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>Кошик</h2>
-                    <div id="cartItems" class="products"></div>
-                    <p id="cartTotalPrice"></p>
-                    <button id="checkout">Оформити</button>
-                </div>
+        </section>
+
+        <div id="cartModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Кошик</h2>
+                <div id="cartItems" class="products"></div>
+                <p id="cartTotalPrice"></p>
+                <button id="checkout">Оформити замовлення</button>
             </div>
         </div>
+        <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Оформлення замовлення</h2>
+                <form id="orderForm">
+                    <input type="text" id="orderName" placeholder="ПІБ" required>
+                    <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
+                    <input type="text" id="orderCountry" placeholder="Країна" required>
+                    <input type="text" id="orderRegion" placeholder="Область" required>
+                    <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                    <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
+                    <h3>Товари у замовленні</h3>
+                    <div id="orderItems" class="products"></div>
+                    <button type="submit">Оформити</button>
+                </form>
+            </div>
+        </div>
+        <div id="successModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <p>Ваше замовлення успішно оформлено, скоро з вами зв’яжуться наші продавці</p>
+                <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
+            </div>
+        </div>
+        <div id="notification"></div>
     </main>
+
     <footer>
         <p>© 2025 Магазин меблів. Усі права захищено.</p>
     </footer>
-    <div id="notification"></div>
-    <script type="module" src="script.js"></script>
 </body>
 </html>

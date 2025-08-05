@@ -8,13 +8,15 @@ const auth = getAuth();
 const database = getDatabase();
 
 let products = {}, banners = {}, promos = {}, colors = [], materials = [], subcategories = {};
+let currentFilters = { category: 'all', subcategory: null, subSubcategory: null, priceMin: null, priceMax: null, availability: null, color: null, material: null, room: null, sale: null, clearance: null };
+let isInitialLoad = true;
 
 const categoryTranslations = {
     beds: 'Ліжка', sofas: 'Дивани', wardrobes: 'Шафи', tables: 'Столи', chairs: 'Стільці', mattresses: 'Матраци'
 };
 
 const subcategoryTranslations = {
-    soft_beds: 'Мʼякі ліжка', wooden_beds: 'Деревʼяні ліжка', bedroom_sets: 'Спальні комплекти', dressers: 'Комоди', nightstands: 'Тумби',
+    all: 'Всі товари', soft_beds: 'Мʼякі ліжка', wooden_beds: 'Деревʼяні ліжка', bedroom_sets: 'Спальні комплекти', dressers: 'Комоди', nightstands: 'Тумби',
     corner: 'Кутові дивани', straight: 'Прямі дивани', armchairs: 'Крісла',
     sliding_wardrobes: 'Шафи-купе', sliding_wardrobes_with_carving: 'Шафи-купе з карнизами', art_matting: 'Художнє матування', tv_wardrobes: 'Шафи під телевізор',
     wooden: 'Деревʼяні', metal: 'Металеві', coffee: 'Журнальні столики',
@@ -22,48 +24,42 @@ const subcategoryTranslations = {
     '2door': '2-х дверна', '3door': '3-х дверна', '4door': '4-х дверна'
 };
 
+const roomTranslations = {
+    living_room: 'Вітальня',
+    bedroom: 'Спальна кімната',
+    nursery: 'Дитяча',
+    hallway: 'Передпокій',
+    kitchen: 'Кухня',
+    office: 'Офіс'
+};
+
 function initializeData() {
-    onValue(ref(database, 'banners'), (snapshot) => { 
-        banners = snapshot.val() || {}; 
-        updateBannerSlider(); 
-    });
+    onValue(ref(database, 'banners'), (snapshot) => { banners = snapshot.val() || {}; updateBannerSlider(); });
     onValue(ref(database, 'products'), (snapshot) => {
         products = snapshot.val() || {};
-        renderContent();
+        renderContent(currentFilters);
         if (document.getElementById('productList')) renderAdminProducts('all', '');
+        if (isInitialLoad && window.location.pathname.includes('room.html')) {
+            renderSubcategories(currentFilters.category, currentFilters.subcategory);
+            isInitialLoad = false;
+        }
     });
-    onValue(ref(database, 'promos'), (snapshot) => { 
-        promos = snapshot.val() || {}; 
-        applyPromos(); 
-    });
-    onValue(ref(database, 'colors'), (snapshot) => { 
-        colors = Object.values(snapshot.val() || []); 
-        updateColorSelects(); 
-    });
-    onValue(ref(database, 'materials'), (snapshot) => { 
-        materials = Object.values(snapshot.val() || []); 
-        updateMaterialSelects(); 
-    });
-    onValue(ref(database, 'subcategories'), (snapshot) => {
-        subcategories = snapshot.val() || {};
-        updateSubcategorySelects();
-        console.log('Subcategories loaded:', subcategories);
-    });
+    onValue(ref(database, 'promos'), (snapshot) => { promos = snapshot.val() || {}; applyPromos(); });
+    onValue(ref(database, 'colors'), (snapshot) => { colors = Object.values(snapshot.val() || []); updateColorSelects(); });
+    onValue(ref(database, 'materials'), (snapshot) => { materials = Object.values(snapshot.val() || []); updateMaterialSelects(); });
+    onValue(ref(database, 'subcategories'), (snapshot) => { subcategories = snapshot.val() || {}; updateSubcategorySelects(); });
 }
 
 initializeData();
 
-function showNotification(message) {
+function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
     if (!notification) return;
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'notification-message';
+    messageDiv.className = `notification-message ${type}`;
     messageDiv.textContent = message;
     notification.appendChild(messageDiv);
-    setTimeout(() => {
-        messageDiv.style.animation = 'slideOut 0.5s ease-in forwards';
-        setTimeout(() => messageDiv.remove(), 500);
-    }, 3000);
+    setTimeout(() => { messageDiv.style.animation = 'slideOut 0.5s ease-in forwards'; setTimeout(() => messageDiv.remove(), 500); }, 3000);
 }
 
 function validatePhoneNumber(phone) {
@@ -77,11 +73,9 @@ function validateName(name) {
 
 function loadUserData() {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-    ['orderName', 'orderPhone', 'orderCountry', 'orderRegion', 'orderCity'].forEach(id => {
+    ['orderName', 'orderPhone', 'orderCountry', 'orderRegion', 'orderCity', 'orderComment'].forEach(id => {
         const element = document.getElementById(id);
-        if (element) {
-            element.value = userData[id] || (id === 'orderPhone' ? '+380' : id === 'orderCountry' ? 'Україна' : '');
-        }
+        if (element) element.value = userData[id] || (id === 'orderPhone' ? '+380' : id === 'orderCountry' ? 'Україна' : '');
     });
 }
 
@@ -122,9 +116,9 @@ function renderCategories() {
     const mainCategories = document.getElementById('mainCategories');
     if (!mainCategories) return;
     mainCategories.innerHTML = '';
-    ['beds', 'sofas', 'wardrobes', 'tables', 'chairs', 'mattresses'].forEach(category => {
+    ['all', 'beds', 'sofas', 'wardrobes', 'tables', 'chairs', 'mattresses'].forEach(category => {
         const li = document.createElement('li');
-        li.textContent = categoryTranslations[category];
+        li.textContent = category === 'all' ? 'Всі товари' : categoryTranslations[category];
         li.addEventListener('click', () => window.location.href = `room.html?category=${category}`);
         mainCategories.appendChild(li);
     });
@@ -139,35 +133,34 @@ function renderCategories() {
 }
 
 document.querySelectorAll('#roomCategories li').forEach(li =>
-    li.addEventListener('click', () => window.location.href = `room.html?tag=${encodeURIComponent(li.dataset.tag)}`)
+    li.addEventListener('click', () => window.location.href = `room.html?room=${li.dataset.tag}`)
 );
 document.querySelectorAll('.category-menu ul li[data-filter]').forEach(li =>
     li.addEventListener('click', () => window.location.href = `room.html?${li.dataset.filter}=true`)
 );
 
-function renderContent({ category, subcategory, priceMin, priceMax, availability, color, material, room, sale, clearance } = {}) {
+function renderContent(filters) {
+    if (Object.keys(products).length === 0) return;
     ['mainProducts', 'roomProducts', 'saleProducts', 'clearanceProducts'].forEach(containerId => {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
         let filteredProducts = Object.entries(products).filter(([key, product]) => {
-            const matches = (!category || product.category === category) &&
-                           (!subcategory || product.subcategory === subcategory) &&
-                           (!priceMin || product.sizes[0].price >= priceMin) &&
-                           (!priceMax || product.sizes[0].price <= priceMax) &&
-                           (availability === undefined || availability === null || product.availability === availability) &&
-                           (!color || (product.colors && product.colors.includes(color))) &&
-                           (!material || (product.materials && product.materials.includes(material))) &&
-                           (!room || (product.rooms && product.rooms.includes(room))) &&
-                           (!sale || product.onSale) &&
-                           (!clearance || product.onClearance);
-            console.log(`Checking product ${product.name}: room=${room}, product.rooms=`, product.rooms, `matches=${matches}`);
-            return matches;
+            return (filters.category === 'all' || product.category === filters.category) &&
+                   (!filters.subcategory || product.subcategory === filters.subcategory) &&
+                   (!filters.subSubcategory || product.subSubcategory === filters.subSubcategory) &&
+                   (!filters.priceMin || product.sizes[0].price >= filters.priceMin) &&
+                   (!filters.priceMax || product.sizes[0].price <= filters.priceMax) &&
+                   (filters.availability === null || product.availability === filters.availability) &&
+                   (!filters.color || (product.colors && product.colors.includes(filters.color))) &&
+                   (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
+                   (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
+                   (!filters.sale || product.onSale) &&
+                   (!filters.clearance || product.onClearance);
         });
-        console.log(`Rendering ${filteredProducts.length} products for ${containerId} with filters:`, { category, subcategory, room });
         filteredProducts.forEach(([key, product]) => {
             if (containerId === 'mainProducts' ||
-                (containerId === 'roomProducts' && (!subcategory || product.subcategory === subcategory)) ||
+                (containerId === 'roomProducts' && (filters.category === 'all' || product.category === filters.category)) ||
                 (containerId === 'saleProducts' && product.onSale) ||
                 (containerId === 'clearanceProducts' && product.onClearance)) {
                 renderProductCard(container, key, product, containerId);
@@ -176,24 +169,21 @@ function renderContent({ category, subcategory, priceMin, priceMax, availability
     });
 }
 
-function filterProducts(filters) {
-    renderContent(filters);
-}
-
 function renderProductCard(container, key, product, sectionId) {
     const productDiv = document.createElement('div');
     productDiv.classList.add('product');
-    const discount = product.onSale && product.discount ? product.discount : promos[product.category]?.discount || 0;
+    const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
     const originalPrice = product.sizes[0].price;
-    const salePrice = discount ? (originalPrice * (1 - discount / 100)).toFixed(0) : originalPrice;
+    const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
     productDiv.innerHTML = `
         ${product.onSale ? '<span class="promo">Sale</span>' : ''}${product.onClearance ? '<span class="promo clearance">Clearance</span>' : ''}
         <img src="${product.photo}" alt="${product.name}">
         <h3>${product.name}</h3><p>${product.description}</p>
-        <div class="sizes"><select class="size-select" data-product-id="${key}" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price)">
-            ${product.sizes.map((size, index) => `<option value="${size.size}" data-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size} ▼</option>`).join('')}
+        <div class="sizes"><select class="size-select" data-product-id="${key}" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price, this.value, '${key}')">
+            ${product.sizes.map((size, index) => `<option value="${size.size}" data-price="${discountPrices[size.size] || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`).join('')}
         </select></div>
-        <p>Ціна: <span id="price_${key}">${salePrice}</span> грн${discount ? `<del>${originalPrice} грн</del>` : ''}</p>
+        <p>Ціна: <span id="price_${key}">${salePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del id="original_price_${key}">${originalPrice} грн</del>` : ''}</p>
+        ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
         <p class="availability">${product.availability ? '<span style="color: green;">В наявності</span>' : '<span style="color: red;">Немає в наявності</span>'}</p>
         <button class="addToCart" data-id="${key}">Додати в кошик</button>
         <button class="buyNow" data-id="${key}">Замовити</button>
@@ -201,9 +191,15 @@ function renderProductCard(container, key, product, sectionId) {
     container.appendChild(productDiv);
 }
 
-window.updatePrice = (priceId, newPrice) => {
+window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
     const priceElement = document.getElementById(priceId);
+    const originalPriceElement = document.getElementById(`original_price_${productId}`);
     if (priceElement) priceElement.textContent = newPrice;
+    if (products[productId] && products[productId].onSale && products[productId].discountPrices && selectedSize) {
+        const originalPrice = products[productId].sizes.find(s => s.size === selectedSize)?.price || '';
+        if (originalPriceElement) originalPriceElement.textContent = `${originalPrice} грн`;
+        else if (products[productId].discountPrices[selectedSize]) priceElement.insertAdjacentHTML('afterend', `<del id="original_price_${productId}">${originalPrice} грн</del>`);
+    } else if (originalPriceElement) originalPriceElement.remove();
 };
 
 document.getElementById('searchBar')?.addEventListener('input', e => {
@@ -212,9 +208,8 @@ document.getElementById('searchBar')?.addEventListener('input', e => {
     if (!container) return;
     container.innerHTML = '';
     Object.entries(products).forEach(([key, product]) => {
-        if (product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm)) {
+        if (product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm))
             renderProductCard(container, key, product, 'mainProducts');
-        }
     });
 });
 
@@ -234,17 +229,20 @@ function renderCart() {
             if (!product) return;
             const size = product.sizes.find(s => s.size === item.size);
             if (!size) return;
-            totalPrice += parseFloat(size.price);
+            const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
+            totalPrice += parseFloat(discountPrice || size.price);
             const productDiv = document.createElement('div');
             productDiv.classList.add('product');
+            productDiv.dataset.productId = item.id;
             productDiv.innerHTML = `
                 <img src="${product.photo}" alt="${product.name}">
                 <h3>${product.name}</h3>
                 <p>${product.description}</p>
-                <div class="sizes"><select class="size-select" onchange="updateCartSize(${index}, this.value); updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price)">
-                    ${product.sizes.map(s => `<option value="${s.size}" data-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size} ▼</option>`).join('')}
+                <div class="sizes"><select class="size-select" onchange="updateCartSize(${index}, this.value); updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price, this.value, '${item.id}')">
+                    ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
                 </select></div>
-                <p>Ціна: <span id="price_${index}">${size.price}</span> грн</p>
+                <p>Ціна: <span id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
+                ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
                 <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
             `;
             cartItems.appendChild(productDiv);
@@ -258,7 +256,7 @@ window.removeFromCart = (index) => {
     cart.splice(index, 1);
     localStorage.setItem('cart', JSON.stringify(cart));
     renderCart();
-    showNotification('Товар видалено з кошика');
+    showNotification('Товар видалено з кошика', 'success');
 };
 
 window.updateCartSize = (index, size) => {
@@ -287,12 +285,12 @@ document.addEventListener('click', e => {
     if (e.target.classList.contains('addToCart') || e.target.classList.contains('buyNow')) {
         const productId = e.target.dataset.id;
         if (!products[productId]) {
-            showNotification('Товар недоступний');
+            showNotification('Товар недоступний', 'error');
             return;
         }
         const sizeSelect = document.querySelector(`.size-select[data-product-id="${productId}"]`);
         if (!sizeSelect || !sizeSelect.value) {
-            showNotification('Будь ласка, виберіть розмір');
+            showNotification('Будь ласка, виберіть розмір', 'warning');
             return;
         }
         const size = sizeSelect.value;
@@ -300,14 +298,22 @@ document.addEventListener('click', e => {
             const cart = JSON.parse(localStorage.getItem('cart') || '[]');
             cart.push({ id: productId, size });
             localStorage.setItem('cart', JSON.stringify(cart));
-            showNotification('Товар додано до кошика');
+            showNotification('Товар додано до кошика', 'success');
         }
         if (e.target.classList.contains('buyNow')) {
+            const product = products[productId];
+            const sizeExists = product.sizes.some(s => s.size === size);
+            if (!sizeExists) {
+                showNotification('Вибраний розмір недоступний', 'error');
+                return;
+            }
             const orderModal = document.getElementById('orderModal');
             if (orderModal) {
                 orderModal.style.display = 'flex';
                 renderOrderItems([{ id: productId, size }]);
                 loadUserData();
+            } else {
+                showNotification('Форма замовлення недоступна на цій сторінці', 'error');
             }
         }
     }
@@ -319,47 +325,68 @@ function renderOrderItems(orderItems) {
     orderItemsDiv.innerHTML = '';
     if (!orderItems?.length) {
         orderItemsDiv.innerHTML = '<p>Кошик порожній</p>';
+        showNotification('Кошик порожній', 'warning');
         return;
     }
+    let validItems = 0;
     orderItems.forEach((item, index) => {
         const product = products[item.id];
         if (!product) return;
         const size = product.sizes.find(s => s.size === item.size);
         if (!size) return;
+        validItems++;
+        const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
+        productDiv.dataset.productId = item.id;
         productDiv.innerHTML = `
             <img src="${product.photo}" alt="${product.name}">
             <h3>${product.name}</h3>
             <p>${product.description}</p>
             <div class="sizes"><select class="size-select" onchange="updateOrderItemSize(${index}, this.value)">
-                ${product.sizes.map(s => `<option value="${s.size}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size} ▼</option>`).join('')}
+                ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
             </select></div>
-            <p>Ціна: <span>${size.price}</span> грн</p>
+            <p>Ціна: <span id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
+            ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
+            ${product.rooms?.length ? `<p>Кімнати: ${product.rooms.map(room => roomTranslations[room] || room).join(', ')}</p>` : ''}
         `;
+        productDiv.querySelector('.size-select')?.addEventListener('change', (e) => {
+            updatePrice(`price_${index}`, e.target.options[e.target.selectedIndex].dataset.price, e.target.value, item.id);
+        });
         orderItemsDiv.appendChild(productDiv);
     });
+    if (validItems === 0) {
+        orderItemsDiv.innerHTML = '<p>Немає доступних товарів у замовленні</p>';
+        showNotification('Немає доступних товарів у замовленні', 'error');
+    }
 }
 
 window.updateOrderItemSize = (index, size) => {
-    const orderItems = Array.from(document.querySelectorAll('#orderItems .product')).map((product, i) => {
-        const sizeSelect = product.querySelector('.size-select');
-        return { id: Object.keys(products).find(key => products[key].name === product.querySelector('img').alt), size: i === index ? size : sizeSelect.value };
-    });
+    const orderItems = Array.from(document.querySelectorAll('#orderItems .product')).map((product, i) => ({
+        id: product.dataset.productId,
+        size: i === index ? size : product.querySelector('.size-select').value
+    }));
     renderOrderItems(orderItems);
 };
 
 document.getElementById('checkout')?.addEventListener('click', () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     if (!cart.length) {
-        showNotification('Кошик порожній');
+        showNotification('Кошик порожній', 'warning');
+        return;
+    }
+    const validCartItems = cart.filter(item => products[item.id] && products[item.id].sizes.some(s => s.size === item.size));
+    if (!validCartItems.length) {
+        showNotification('Кошик містить недоступні товари', 'error');
         return;
     }
     const orderModal = document.getElementById('orderModal');
     if (orderModal) {
         orderModal.style.display = 'flex';
-        renderOrderItems(cart);
+        renderOrderItems(validCartItems);
         loadUserData();
+    } else {
+        showNotification('Форма замовлення недоступна на цій сторінці', 'error');
     }
 });
 
@@ -369,14 +396,14 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
     if (!submitButton) return;
     submitButton.disabled = true;
     submitButton.textContent = 'Зачекайте...';
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const orderItems = Array.from(document.querySelectorAll('#orderItems .product')).map(product => {
-        const id = Object.keys(products).find(key => products[key].name === product.querySelector('img').alt);
+        const id = product.dataset.productId;
         const sizeSelect = product.querySelector('.size-select');
+        if (!products[id] || !sizeSelect) return null;
         return { id, size: sizeSelect.value };
-    }).filter(item => products[item.id] && products[item.id].sizes.some(s => s.size === item.size));
+    }).filter(item => item && products[item.id] && products[item.id].sizes.some(s => s.size === item.size));
     if (!orderItems.length) {
-        showNotification('Кошик містить недоступні товари');
+        showNotification('Кошик містить недоступні товари', 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Оформити';
         return;
@@ -387,20 +414,24 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
     const { value: region } = document.getElementById('orderRegion') || { value: '' };
     const { value: city } = document.getElementById('orderCity') || { value: '' };
     const { value: comment } = document.getElementById('orderComment') || { value: '' };
-
     if (!validateName(name)) {
-        showNotification('Ім’я може містити лише літери та пробіли, до 50 символів');
+        showNotification('Ім’я може містити лише літери та пробіли, до 50 символів', 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Оформити';
         return;
     }
     if (!validatePhoneNumber(phone)) {
-        showNotification('Номер телефону має починатися з "+" та містити коректний код країни');
+        showNotification('Номер телефону має починатися з "+" та містити коректний код країни', 'error');
         submitButton.disabled = false;
         submitButton.textContent = 'Оформити';
         return;
     }
-
+    if (!country || !region || !city) {
+        showNotification('Заповніть усі поля адреси', 'error');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Оформити';
+        return;
+    }
     const order = {
         name, phone, country, region, city, comment,
         products: orderItems.map(item => {
@@ -409,14 +440,14 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
             return {
                 name: product.name,
                 size: item.size,
-                price: size.price,
+                price: product.onSale && product.discountPrices && product.discountPrices[item.size] ? product.discountPrices[item.size] : size.price,
                 photo: product.photo,
                 availability: product.availability,
-                rooms: product.rooms || []
+                rooms: product.rooms || [],
+                subSubcategory: product.subSubcategory || null
             };
         })
     };
-
     fetch('https://project-mebli.onrender.com/sendOrder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -427,16 +458,18 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
             return response.json();
         })
         .then(() => {
-            localStorage.setItem('userData', JSON.stringify({ name, phone, country, region, city }));
-            document.getElementById('cartModal').style.display = 'none';
-            document.getElementById('orderModal').style.display = 'none';
-            document.getElementById('successModal').style.display = 'flex';
+            localStorage.setItem('userData', JSON.stringify({ name, phone, country, region, city, comment }));
+            const cartModal = document.getElementById('cartModal');
+            const orderModal = document.getElementById('orderModal');
+            const successModal = document.getElementById('successModal');
+            if (cartModal) cartModal.style.display = 'none';
+            if (orderModal) orderModal.style.display = 'none';
+            if (successModal) successModal.style.display = 'flex';
+            else showNotification('Помилка: модальне вікно успіху не знайдено', 'error');
             localStorage.removeItem('cart');
+            showNotification('Замовлення успішно оформлено', 'success');
         })
-        .catch(err => {
-            console.error('Fetch error:', err);
-            showNotification('Помилка при оформленні замовлення');
-        })
+        .catch(err => showNotification('Помилка при оформленні замовлення', 'error'))
         .finally(() => {
             submitButton.disabled = false;
             submitButton.textContent = 'Оформити';
@@ -448,13 +481,13 @@ document.getElementById('loginBtn')?.addEventListener('click', () => {
     const password = document.getElementById('password')?.value || '';
     signInWithEmailAndPassword(auth, email, password)
         .then(() => window.location.href = 'admin.html')
-        .catch(error => showNotification('Помилка входу: ' + error.message));
+        .catch(error => showNotification('Помилка входу: ' + error.message, 'error'));
 });
 
 document.getElementById('logout')?.addEventListener('click', () =>
     signOut(auth)
         .then(() => window.location.href = 'login.html')
-        .catch(error => console.error('Logout error:', error))
+        .catch(error => showNotification('Помилка виходу: ' + error.message, 'error'))
 );
 
 onAuthStateChanged(auth, user => {
@@ -469,16 +502,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (document.getElementById('mainCategories')) renderCategories();
     const urlParams = new URLSearchParams(window.location.search);
-    const category = urlParams.get('category');
-    const sale = urlParams.get('sale') === 'true';
-    const clearance = urlParams.get('clearance') === 'true';
-    if (category) {
-        renderSubcategories(category);
-        filterProducts({ category });
-    } else if (sale) {
-        filterProducts({ sale: true });
-    } else if (clearance) {
-        filterProducts({ clearance: true });
+    currentFilters.category = urlParams.get('category') || 'all';
+    currentFilters.subcategory = urlParams.get('subcategory') || null;
+    currentFilters.subSubcategory = urlParams.get('subSubcategory') || null;
+    currentFilters.sale = urlParams.get('sale') === 'true' || null;
+    currentFilters.clearance = urlParams.get('clearance') === 'true' || null;
+    currentFilters.room = urlParams.get('room') || null;
+    if (window.location.pathname.includes('room.html') && currentFilters.room) {
+        const roomSelect = document.getElementById('room');
+        if (roomSelect) {
+            roomSelect.value = currentFilters.room;
+            renderContent(currentFilters);
+        }
     }
     if (document.getElementById('cartBtn')) {
         document.getElementById('cartBtn').addEventListener('click', () => {
@@ -489,25 +524,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    document.querySelectorAll('.room-filter').forEach(button => {
-        button.addEventListener('click', () => {
-            const room = button.dataset.room;
-            document.querySelectorAll('.room-filter').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            filterProducts({ room });
-        });
-    });
     if (document.getElementById('filterBtn')) {
         document.getElementById('filterBtn').addEventListener('click', () => {
             const filters = document.getElementById('filters');
             filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
         });
     }
-    // Ініціалізація вкладок
     document.querySelectorAll('.tab-btn').forEach(button => {
         button.addEventListener('click', () => {
             const tabId = button.dataset.tab;
-            console.log('Tab clicked:', tabId);
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.style.display = 'none';
                 content.classList.remove('active');
@@ -518,13 +543,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 content.style.display = 'block';
                 content.classList.add('active');
                 button.classList.add('active');
-                console.log('Tab opened:', tabId);
-            } else {
-                console.error('Tab content not found for:', tabId);
             }
         });
     });
-    // Відображення вкладки "welcome" за замовчуванням
     const welcomeTab = document.getElementById('welcome');
     const welcomeBtn = document.querySelector('.tab-btn[data-tab="welcome"]');
     if (welcomeTab && welcomeBtn) {
@@ -532,22 +553,39 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeTab.classList.add('active');
         welcomeBtn.classList.add('active');
     }
+    if (document.getElementById('productCategory')) {
+        updateSubcategoryOptions();
+        document.getElementById('productCategory').addEventListener('change', updateSubcategoryOptions);
+        document.getElementById('productSubcategory').addEventListener('change', updateSubSubcategoryOptions);
+    }
+    if (document.getElementById('editProductCategory')) {
+        updateEditSubcategoryOptions();
+        document.getElementById('editProductCategory').addEventListener('change', updateEditSubcategoryOptions);
+        document.getElementById('editProductSubcategory').addEventListener('change', updateEditSubSubcategoryOptions);
+    }
+    if (document.getElementById('addProduct')) {
+        document.querySelectorAll('#addProduct input, #addProduct textarea, #sizes input').forEach(input => {
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') e.preventDefault();
+            });
+        });
+    }
 });
 
-function renderSubcategories(category) {
+function renderSubcategories(category, selectedSubcategory) {
     const subcategoryList = document.getElementById('subcategoryList');
     const subcategorySelect = document.getElementById('subcategory');
     if (!subcategoryList && !subcategorySelect) return;
     if (subcategoryList) {
         subcategoryList.innerHTML = '';
-        const subs = {
+        const subs = category === 'all' ? ['all'] : {
             beds: ['all', 'soft_beds', 'wooden_beds', 'bedroom_sets', 'dressers', 'nightstands'],
             sofas: ['all', 'corner', 'straight', 'armchairs'],
             wardrobes: ['all', 'sliding_wardrobes', 'sliding_wardrobes_with_carving', 'art_matting', 'tv_wardrobes'],
             tables: ['all', 'wooden', 'metal', 'coffee'],
             chairs: ['all', 'wooden', 'soft'],
             mattresses: ['all', 'standard']
-        }[category] || [];
+        }[category] || ['all'];
         const wardrobeSubSubs = {
             sliding_wardrobes: ['2door', '3door', '4door'],
             sliding_wardrobes_with_carving: ['2door', '3door', '4door']
@@ -555,10 +593,14 @@ function renderSubcategories(category) {
         subs.forEach(sub => {
             const li = document.createElement('li');
             li.textContent = subcategoryTranslations[sub] || sub;
+            li.dataset.subcategory = sub;
+            if (sub === selectedSubcategory || (!selectedSubcategory && sub === 'all')) li.classList.add('selected');
             li.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (subcategorySelect) subcategorySelect.value = sub === 'all' ? '' : sub;
-                filterProducts({ category, subcategory: sub === 'all' ? null : sub });
+                document.querySelectorAll('#subcategoryList li').forEach(item => item.classList.remove('selected'));
+                li.classList.add('selected');
+                currentFilters.subcategory = sub === 'all' ? null : sub;
+                renderContent(currentFilters);
             });
             if (wardrobeSubSubs[sub]) {
                 const ul = document.createElement('ul');
@@ -568,8 +610,8 @@ function renderSubcategories(category) {
                     subLi.textContent = subcategoryTranslations[subSub] || subSub;
                     subLi.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        if (subcategorySelect) subcategorySelect.value = subSub;
-                        filterProducts({ category, subcategory: subSub });
+                        currentFilters.subSubcategory = subSub;
+                        renderContent(currentFilters);
                     });
                     ul.appendChild(subLi);
                 });
@@ -593,7 +635,7 @@ onValue(ref(database, 'banners'), (snapshot) => {
     }
 });
 
-window.removeBanner = key => remove(ref(database, 'banners/' + key)).then(() => showNotification('Банер видалено'));
+window.removeBanner = key => remove(ref(database, 'banners/' + key)).then(() => showNotification('Банер видалено', 'success'));
 
 window.moveBanner = (key, newIndex) => {
     onValue(ref(database, 'banners'), (snapshot) => {
@@ -604,7 +646,7 @@ window.moveBanner = (key, newIndex) => {
             const reordered = {};
             bannerKeys.filter(k => k !== key).forEach((k, i) => reordered[`banner_${i < oldIndex && i >= newIndex ? i : i + 1}`] = currentBanners[k]);
             reordered[`banner_${newIndex}`] = currentBanners[key];
-            update(ref(database, 'banners'), reordered).then(() => showNotification('Банер переміщено'));
+            update(ref(database, 'banners'), reordered).then(() => showNotification('Банер переміщено', 'success'));
         }
     }, { onlyOnce: true });
 };
@@ -613,14 +655,15 @@ document.getElementById('addBanner')?.addEventListener('click', () => {
     const url = document.getElementById('bannerUrl')?.value || '';
     if (url) push(ref(database, 'banners'), { url }).then(() => {
         document.getElementById('bannerUrl').value = '';
-        showNotification('Банер додано');
-    }).catch(error => showNotification('Помилка додавання банера: ' + error.message));
-    else showNotification('Введіть URL банера');
+        showNotification('Банер додано', 'success');
+    }).catch(error => showNotification('Помилка додавання банера: ' + error.message, 'error'));
+    else showNotification('Введіть URL банера', 'warning');
 });
 
 function updateSubcategoryOptions() {
     const category = document.getElementById('productCategory')?.value || 'beds';
     const subcategorySelect = document.getElementById('productSubcategory');
+    const subSubcategorySelect = document.getElementById('productSubSubcategory');
     if (!subcategorySelect) return;
     subcategorySelect.innerHTML = '<option value="">Виберіть підкатегорію</option>';
     const subs = {
@@ -637,12 +680,14 @@ function updateSubcategoryOptions() {
         option.textContent = subcategoryTranslations[sub] || sub;
         subcategorySelect.appendChild(option);
     });
+    updateSubSubcategoryOptions();
 }
 
 function updateEditSubcategoryOptions() {
     const category = document.getElementById('editProductCategory')?.value || 'beds';
     const subcategorySelect = document.getElementById('editProductSubcategory');
     if (!subcategorySelect) return;
+    const currentSubcategory = subcategorySelect.value;
     subcategorySelect.innerHTML = '<option value="">Виберіть підкатегорію</option>';
     const subs = {
         beds: ['soft_beds', 'wooden_beds', 'bedroom_sets', 'dressers', 'nightstands'],
@@ -658,79 +703,90 @@ function updateEditSubcategoryOptions() {
         option.textContent = subcategoryTranslations[sub] || sub;
         subcategorySelect.appendChild(option);
     });
+    if (currentSubcategory && subs.includes(currentSubcategory)) subcategorySelect.value = currentSubcategory;
+    updateEditSubSubcategoryOptions();
 }
 
-document.getElementById('addProduct')?.addEventListener('click', () => {
-    console.log('Add product button clicked');
+function updateSubSubcategoryOptions() {
+    const category = document.getElementById('productCategory')?.value || 'beds';
+    const subcategory = document.getElementById('productSubcategory')?.value || '';
+    const subSubcategorySelect = document.getElementById('productSubSubcategory');
+    if (!subSubcategorySelect) return;
+    subSubcategorySelect.innerHTML = '<option value="">Виберіть кількість дверей</option>';
+    subSubcategorySelect.style.display = (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving')) ? 'block' : 'none';
+    if (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving')) {
+        ['2door', '3door', '4door'].forEach(subSub => {
+            const option = document.createElement('option');
+            option.value = subSub;
+            option.textContent = subcategoryTranslations[subSub] || subSub;
+            subSubcategorySelect.appendChild(option);
+        });
+    } else subSubcategorySelect.value = '';
+}
+
+function updateEditSubSubcategoryOptions() {
+    const category = document.getElementById('editProductCategory')?.value || 'beds';
+    const subcategory = document.getElementById('editProductSubcategory')?.value || '';
+    const subSubcategorySelect = document.getElementById('editProductSubSubcategory');
+    if (!subSubcategorySelect) return;
+    subSubcategorySelect.innerHTML = '<option value="">Виберіть кількість дверей</option>';
+    subSubcategorySelect.style.display = (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving')) ? 'block' : 'none';
+    if (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving')) {
+        ['2door', '3door', '4door'].forEach(subSub => {
+            const option = document.createElement('option');
+            option.value = subSub;
+            option.textContent = subcategoryTranslations[subSub] || subSub;
+            subSubcategorySelect.appendChild(option);
+        });
+    } else subSubcategorySelect.value = '';
+}
+
+document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
     const name = document.getElementById('productName')?.value.trim() || '';
     const description = document.getElementById('productDescription')?.value.trim() || '';
     const photo = document.getElementById('productPhoto')?.value.trim() || '';
     const category = document.getElementById('productCategory')?.value || 'beds';
     const subcategory = document.getElementById('productSubcategory')?.value || '';
+    const subSubcategory = document.getElementById('productSubSubcategory')?.value || '';
     const materialsSelected = Array.from(document.getElementById('productMaterials')?.selectedOptions || []).map(opt => opt.value);
     const colorsSelected = Array.from(document.getElementById('productColors')?.selectedOptions || []).map(opt => opt.value);
     const availability = document.getElementById('availability')?.checked || false;
-    const rooms = Array.from(document.querySelectorAll('#rooms input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
-    const sizes = Array.from(document.querySelectorAll('#sizes .size-input')).map((input, i) => ({
-        size: input.value.trim(),
-        price: parseFloat(document.querySelectorAll('#sizes .price-input')[i]?.value) || 0
+    const roomsContainer = document.getElementById('rooms');
+    const rooms = roomsContainer ? Array.from(roomsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value) : [];
+    const sizes = Array.from(document.querySelectorAll('#sizes .size-row')).map(row => ({
+        size: row.querySelector('.size-input').value.trim(),
+        price: parseFloat(row.querySelector('.price-input').value) || 0,
+        discountPrice: parseFloat(row.querySelector('.discount-price-input')?.value) || null
     })).filter(s => s.size && s.price > 0);
-
-    console.log('Form data:', { name, description, photo, category, subcategory, materialsSelected, colorsSelected, availability, rooms, sizes });
-
-    if (!name) {
-        showNotification('Введіть назву товару');
-        console.error('Validation failed: Name is empty');
-        return;
-    }
-    if (!description) {
-        showNotification('Введіть опис товару');
-        console.error('Validation failed: Description is empty');
-        return;
-    }
-    if (!photo) {
-        showNotification('Введіть URL фото');
-        console.error('Validation failed: Photo URL is empty');
-        return;
-    }
-    if (!category) {
-        showNotification('Виберіть категорію');
-        console.error('Validation failed: Category is empty');
-        return;
-    }
-    if (!subcategory) {
-        showNotification('Виберіть підкатегорію');
-        console.error('Validation failed: Subcategory is empty');
-        return;
-    }
-    if (!sizes.length) {
-        showNotification('Додайте хоча б один розмір та ціну');
-        console.error('Validation failed: No valid sizes');
-        return;
-    }
-
+    if (!name) return showNotification('Введіть назву товару', 'error');
+    if (!description) return showNotification('Введіть опис товару', 'error');
+    if (!photo) return showNotification('Введіть URL фото', 'error');
+    if (!category) return showNotification('Виберіть категорію', 'error');
+    if (!subcategory) return showNotification('Виберіть підкатегорію', 'error');
+    if (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving') && !subSubcategory)
+        return showNotification('Виберіть кількість дверей', 'error');
+    if (!sizes.length) return showNotification('Додайте хоча б один розмір та ціну', 'error');
+    if (sizes.some(s => s.discountPrice && s.discountPrice >= s.price))
+        return showNotification('Акційна ціна має бути меншою за звичайну ціну', 'error');
     const productData = {
         name, description, photo, category, subcategory,
+        subSubcategory: subSubcategory || null,
         materials: materialsSelected, colors: colorsSelected,
-        sizes, availability, rooms
+        sizes: sizes.map(s => ({ size: s.size, price: s.price })),
+        availability, rooms,
+        onSale: sizes.some(s => s.discountPrice),
+        discountPrices: sizes.reduce((acc, s) => (s.discountPrice ? { ...acc, [s.size]: s.discountPrice } : acc), {})
     };
-
-    console.log('Sending product data to Firebase:', productData);
-
     push(ref(database, 'products'), productData)
         .then(() => {
-            console.log('Product added successfully');
-            ['productName', 'productDescription', 'productPhoto'].forEach(id => {
+            ['productName', 'productDescription', 'productPhoto', 'productSubcategory', 'productSubSubcategory'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
             ['productCategory'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = 'beds';
-            });
-            ['productSubcategory'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
             });
             ['productMaterials', 'productColors'].forEach(id => {
                 const el = document.getElementById(id);
@@ -741,14 +797,12 @@ document.getElementById('addProduct')?.addEventListener('click', () => {
                 if (el) el.checked = false;
             });
             document.querySelectorAll('#rooms input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
-            document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><button class="remove-size">Видалити</button></div>';
-            showNotification('Товар додано успішно');
+            document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size">Видалити</button></div>';
+            document.getElementById('productSubSubcategory').style.display = 'none';
+            showNotification('Товар додано успішно', 'success');
             renderAdminProducts('all', '');
         })
-        .catch(error => {
-            console.error('Error adding product:', error);
-            showNotification('Помилка додавання товару: ' + error.message);
-        });
+        .catch(error => showNotification('Помилка додавання товару: ' + error.message, 'error'));
 });
 
 document.getElementById('samePrice')?.addEventListener('click', () => {
@@ -756,16 +810,17 @@ document.getElementById('samePrice')?.addEventListener('click', () => {
     if (priceInputs.length) {
         const firstPrice = priceInputs[0].value;
         priceInputs.forEach(input => input.value = firstPrice);
-        showNotification('Ціни вирівняно');
+        showNotification('Ціни вирівняно', 'success');
     }
 });
 
-document.getElementById('addSize')?.addEventListener('click', () => {
+document.getElementById('addSize')?.addEventListener('click', (e) => {
+    e.preventDefault();
     const sizesDiv = document.getElementById('sizes');
     if (sizesDiv) {
         const newSizeRow = document.createElement('div');
         newSizeRow.className = 'size-row';
-        newSizeRow.innerHTML = '<input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><button class="remove-size">Видалити</button>';
+        newSizeRow.innerHTML = '<input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size">Видалити</button>';
         sizesDiv.appendChild(newSizeRow);
     }
 });
@@ -775,10 +830,8 @@ document.addEventListener('click', e => {
         const sizeRow = e.target.closest('.size-row');
         if (sizeRow && document.querySelectorAll('#sizes .size-row').length > 1) {
             sizeRow.remove();
-            showNotification('Розмір видалено');
-        } else {
-            showNotification('Має бути принаймні один розмір');
-        }
+            showNotification('Розмір видалено', 'success');
+        } else showNotification('Має бути принаймні один розмір', 'warning');
     }
 });
 
@@ -801,7 +854,6 @@ function renderAdminProducts(category, search) {
         (category === 'all' || product.category === category) &&
         (!search || product.name.toLowerCase().includes(search.toLowerCase()))
     );
-    console.log(`Rendering ${filteredProducts.length} products for admin list`);
     if (!filteredProducts.length) {
         productList.innerHTML = '<p>Немає товарів. Додайте товар через форму.</p>';
         return;
@@ -815,16 +867,14 @@ function renderAdminProducts(category, search) {
             <p>${product.description}</p>
             <p>Категорія: ${categoryTranslations[product.category] || product.category}</p>
             <p>Підкатегорія: ${subcategoryTranslations[product.subcategory] || product.subcategory}</p>
-            <p>Матеріали: ${product.materials?.join(', ') || 'Немає'}</p>
-            <p>Кольори: ${product.colors?.join(', ') || 'Немає'}</p>
-            <p>Кімнати: ${product.rooms?.join(', ') || 'Немає'}</p>
+            ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
+            <p>Матеріали: ${(product.materials && product.materials.length ? product.materials.join(', ') : 'Немає')}</p>
+            <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
+            <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
             <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p>
-            <p>Акція: ${product.onSale ? `Так (${product.discount}%)` : 'Ні'}</p>
+            <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
             <p>Розпродаж: ${product.onClearance ? 'Так' : 'Ні'}</p>
-            <div class="sizes"><select class="size-select" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price)">
-                ${product.sizes.map((size, index) => `<option value="${size.size}" data-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size} ▼</option>`).join('')}
-            </select></div>
-            <p>Ціна: <span id="price_${key}">${product.sizes[0].price}</span> грн</p>
+            <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
             <button onclick="editProduct('${key}')">Редагувати</button>
             <button onclick="removeProduct('${key}')">Видалити</button>
         `;
@@ -832,178 +882,128 @@ function renderAdminProducts(category, search) {
     });
 }
 
-window.removeProduct = key => remove(ref(database, 'products/' + key)).then(() => showNotification('Товар видалено'));
+window.removeProduct = key => remove(ref(database, 'products/' + key)).then(() => showNotification('Товар видалено', 'success'));
 
 window.editProduct = key => {
     const product = products[key];
     if (!product) {
-        showNotification('Товар не знайдено');
-        console.error('Edit product failed: Product not found for key', key);
+        showNotification('Товар не знайдено', 'error');
         return;
     }
-    console.log('Editing product:', product);
     const fields = [
         { id: 'editProductName', value: product.name || '' },
         { id: 'editProductDescription', value: product.description || '' },
         { id: 'editProductPhoto', value: product.photo || '' },
         { id: 'editProductCategory', value: product.category || 'beds' },
         { id: 'editProductSubcategory', value: product.subcategory || '' },
+        { id: 'editProductSubSubcategory', value: product.subSubcategory || '' },
         { id: 'editAvailability', value: product.availability || false },
         { id: 'editOnSale', value: product.onSale || false },
         { id: 'editOnClearance', value: product.onClearance || false }
     ];
     fields.forEach(field => {
         const el = document.getElementById(field.id);
-        if (!el) {
-            console.warn(`Element ${field.id} not found`);
-            return;
-        }
-        if (field.id.includes('Availability') || field.id.includes('OnSale') || field.id.includes('OnClearance')) {
-            el.checked = field.value;
-        } else {
-            el.value = field.value;
-        }
+        if (!el) return;
+        if (field.id.includes('Availability') || field.id.includes('OnSale') || field.id.includes('OnClearance')) el.checked = field.value;
+        else el.value = field.value;
     });
     const materialsSelect = document.getElementById('editProductMaterials');
-    if (materialsSelect) {
-        Array.from(materialsSelect.options).forEach(opt => opt.selected = product.materials?.includes(opt.value));
-    }
+    if (materialsSelect) Array.from(materialsSelect.options).forEach(opt => opt.selected = product.materials?.includes(opt.value));
     const colorsSelect = document.getElementById('editProductColors');
-    if (colorsSelect) {
-        Array.from(colorsSelect.options).forEach(opt => opt.selected = product.colors?.includes(opt.value));
-    }
+    if (colorsSelect) Array.from(colorsSelect.options).forEach(opt => opt.selected = product.colors?.includes(opt.value));
     const roomsCheckboxes = document.querySelectorAll('#editRooms input[type="checkbox"]');
-    roomsCheckboxes.forEach(checkbox => {
-        checkbox.checked = product.rooms?.includes(checkbox.value);
-    });
-    const onSaleCheckbox = document.getElementById('editOnSale');
-    const discountInput = document.getElementById('discountInput');
-    if (product.onSale) {
-        discountInput.style.display = 'block';
-        discountInput.value = product.discount || 0;
-    } else {
-        discountInput.style.display = 'none';
-    }
+    roomsCheckboxes.forEach(checkbox => checkbox.checked = product.rooms && product.rooms.includes(checkbox.value));
     const editSizes = document.getElementById('editSizes');
     if (editSizes) {
-        editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="number" class="edit-price-input" value="${s.price}"><button class="remove-size">Видалити</button></div>`).join('');
+        editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="number" class="edit-price-input" value="${s.price}"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" value="${product.onSale && product.discountPrices && product.discountPrices[s.size] || ''}"><button class="remove-size">Видалити</button></div>`).join('');
     }
     const editModal = document.getElementById('editModal');
     if (editModal) {
         editModal.dataset.key = key;
         editModal.style.display = 'flex';
-        console.log('Edit modal opened for product key:', key);
-    } else {
-        console.error('Edit modal not found');
+        updateEditSubcategoryOptions();
+        const subcategorySelect = document.getElementById('editProductSubcategory');
+        if (subcategorySelect && product.subcategory) subcategorySelect.value = product.subcategory;
+        updateEditSubSubcategoryOptions();
+        toggleDiscountInput();
+        document.querySelectorAll('#editModal input, #editModal textarea, #editSizes input').forEach(input => {
+            input.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+        });
     }
 };
 
-document.getElementById('saveEdit')?.addEventListener('click', () => {
+document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
     const editModal = document.getElementById('editModal');
-    if (!editModal) {
-        console.error('Edit modal not found');
-        showNotification('Помилка: модальне вікно не знайдено');
-        return;
-    }
+    if (!editModal) return showNotification('Помилка: модальне вікно не знайдено', 'error');
     const key = editModal.dataset.key;
-    if (!key || !products[key]) {
-        console.error('Invalid product key or product not found:', key);
-        showNotification('Помилка: товар не знайдено');
-        return;
-    }
-
-    console.log('Save edit button clicked for product key:', key);
-
+    if (!key || !products[key]) return showNotification('Помилка: товар не знайдено', 'error');
     const name = document.getElementById('editProductName')?.value.trim() || '';
     const description = document.getElementById('editProductDescription')?.value.trim() || '';
     const photo = document.getElementById('editProductPhoto')?.value.trim() || '';
     const category = document.getElementById('editProductCategory')?.value || 'beds';
     const subcategory = document.getElementById('editProductSubcategory')?.value || '';
+    const subSubcategory = document.getElementById('editProductSubSubcategory')?.value || '';
     const materialsSelected = Array.from(document.getElementById('editProductMaterials')?.selectedOptions || []).map(opt => opt.value);
     const colorsSelected = Array.from(document.getElementById('editProductColors')?.selectedOptions || []).map(opt => opt.value);
     const availability = document.getElementById('editAvailability')?.checked || false;
-    const rooms = Array.from(document.querySelectorAll('#editRooms input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
     const onSale = document.getElementById('editOnSale')?.checked || false;
-    const discount = onSale ? parseInt(document.getElementById('discountInput')?.value) || 0 : 0;
-    const sizes = Array.from(document.querySelectorAll('#editSizes .edit-size-input')).map((input, i) => ({
-        size: input.value.trim(),
-        price: parseFloat(document.querySelectorAll('#editSizes .edit-price-input')[i]?.value) || 0
+    const onClearance = document.getElementById('editOnClearance')?.checked || false;
+    const roomsContainer = document.getElementById('editRooms');
+    const rooms = roomsContainer ? Array.from(roomsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value) : [];
+    const sizes = Array.from(document.querySelectorAll('#editSizes .size-row')).map(row => ({
+        size: row.querySelector('.edit-size-input').value.trim(),
+        price: parseFloat(row.querySelector('.edit-price-input').value) || 0,
+        discountPrice: parseFloat(row.querySelector('.edit-discount-price-input')?.value) || null
     })).filter(s => s.size && s.price > 0);
-
-    console.log('Edit form data:', { name, description, photo, category, subcategory, materialsSelected, colorsSelected, availability, rooms, onSale, discount, sizes });
-
-    if (!name) {
-        showNotification('Введіть назву товару');
-        console.error('Validation failed: Name is empty');
-        return;
-    }
-    if (!description) {
-        showNotification('Введіть опис товару');
-        console.error('Validation failed: Description is empty');
-        return;
-    }
-    if (!photo) {
-        showNotification('Введіть URL фото');
-        console.error('Validation failed: Photo URL is empty');
-        return;
-    }
-    if (!category) {
-        showNotification('Виберіть категорію');
-        console.error('Validation failed: Category is empty');
-        return;
-    }
-    if (!subcategory) {
-        showNotification('Виберіть підкатегорію');
-        console.error('Validation failed: Subcategory is empty');
-        return;
-    }
-    if (!sizes.length) {
-        showNotification('Додайте хоча б один розмір та ціну');
-        console.error('Validation failed: No valid sizes');
-        return;
-    }
-    if (onSale && (discount < 0 || discount > 100)) {
-        showNotification('Знижка має бути від 0 до 100%');
-        console.error('Validation failed: Invalid discount value');
-        return;
-    }
-
+    if (!name) return showNotification('Введіть назву товару', 'error');
+    if (!description) return showNotification('Введіть опис товару', 'error');
+    if (!photo) return showNotification('Введіть URL фото', 'error');
+    if (!category) return showNotification('Виберіть категорію', 'error');
+    if (!subcategory) return showNotification('Виберіть підкатегорію', 'error');
+    if (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving') && !subSubcategory)
+        return showNotification('Виберіть кількість дверей', 'error');
+    if (!sizes.length) return showNotification('Додайте хоча б один розмір та ціну', 'error');
+    if (onSale && sizes.some(s => s.discountPrice && s.discountPrice >= s.price))
+        return showNotification('Акційна ціна має бути меншою за звичайну ціну', 'error');
     const productData = {
         name, description, photo, category, subcategory,
+        subSubcategory: subSubcategory || null,
         materials: materialsSelected, colors: colorsSelected,
-        sizes, availability, rooms, onSale, discount
+        sizes: sizes.map(s => ({ size: s.size, price: s.price })),
+        availability, rooms, onSale, onClearance,
+        discountPrices: sizes.reduce((acc, s) => (s.discountPrice ? { ...acc, [s.size]: s.discountPrice } : acc), {})
     };
-
-    console.log('Updating product in Firebase:', productData);
-
     update(ref(database, 'products/' + key), productData)
         .then(() => {
-            console.log('Product updated successfully');
             editModal.style.display = 'none';
-            showNotification('Товар успішно оновлено');
+            showNotification('Товар успішно оновлено', 'success');
             renderAdminProducts('all', '');
         })
-        .catch(error => {
-            console.error('Error updating product:', error);
-            showNotification('Помилка оновлення товару: ' + error.message);
-        });
+        .catch(error => showNotification('Помилка оновлення товару: ' + error.message, 'error'));
 });
 
 function toggleDiscountInput() {
     const onSaleCheckbox = document.getElementById('editOnSale');
-    const discountInput = document.getElementById('discountInput');
-    if (onSaleCheckbox && discountInput) {
-        discountInput.style.display = onSaleCheckbox.checked ? 'block' : 'none';
+    const editSizes = document.getElementById('editSizes');
+    if (onSaleCheckbox && editSizes) {
+        const discountInputs = editSizes.querySelectorAll('.edit-discount-price-input');
+        discountInputs.forEach(input => {
+            input.classList.toggle('active', onSaleCheckbox.checked);
+            input.style.display = onSaleCheckbox.checked ? 'block' : 'none';
+        });
     }
 }
 
-document.getElementById('editAddSize')?.addEventListener('click', () => {
+document.getElementById('editAddSize')?.addEventListener('click', (e) => {
+    e.preventDefault();
     const editSizes = document.getElementById('editSizes');
     if (editSizes) {
         const newSizeRow = document.createElement('div');
         newSizeRow.className = 'size-row';
-        newSizeRow.innerHTML = '<input type="text" class="edit-size-input" placeholder="Розмір"><input type="number" class="edit-price-input" placeholder="Ціна"><button class="remove-size">Видалити</button>';
+        newSizeRow.innerHTML = '<input type="text" class="edit-size-input" placeholder="Розмір"><input type="number" class="edit-price-input" placeholder="Ціна"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" style="display: none;"><button class="remove-size">Видалити</button>';
         editSizes.appendChild(newSizeRow);
+        toggleDiscountInput();
     }
 });
 
@@ -1012,19 +1012,18 @@ document.getElementById('editSamePrice')?.addEventListener('click', () => {
     if (priceInputs.length) {
         const firstPrice = priceInputs[0].value;
         priceInputs.forEach(input => input.value = firstPrice);
-        showNotification('Ціни вирівняно');
+        showNotification('Ціни вирівняно', 'success');
     }
 });
 
 document.addEventListener('click', e => {
     if (e.target.classList.contains('remove-size')) {
         const sizeRow = e.target.closest('.size-row');
-        if (sizeRow && document.querySelectorAll('#editSizes .size-row').length > 1) {
+        const sizesContainer = e.target.closest('#sizes') || e.target.closest('#editSizes');
+        if (sizeRow && document.querySelectorAll(`#${sizesContainer.id} .size-row`).length > 1) {
             sizeRow.remove();
-            showNotification('Розмір видалено');
-        } else {
-            showNotification('Має бути принаймні один розмір');
-        }
+            showNotification('Розмір видалено', 'success');
+        } else showNotification('Має бути принаймні один розмір', 'warning');
     }
 });
 
@@ -1035,15 +1034,13 @@ document.getElementById('addPromo')?.addEventListener('click', () => {
 
 document.getElementById('savePromo')?.addEventListener('click', () => {
     const name = document.getElementById('promoName')?.value || '';
-    const discount = parseInt(document.getElementById('promoDiscount')?.value) || 0;
-    if (name && discount >= 0 && discount <= 100) {
-        push(ref(database, 'promos'), { name, discount }).then(() => {
+    if (name) {
+        push(ref(database, 'promos'), { name }).then(() => {
             document.getElementById('promoModal').style.display = 'none';
             document.getElementById('promoName').value = '';
-            document.getElementById('promoDiscount').value = '';
-            showNotification('Акцію додано');
+            showNotification('Акцію додано', 'success');
         });
-    } else showNotification('Введіть коректну назву та знижку (0-100%)');
+    } else showNotification('Введіть коректну назву акції', 'error');
 });
 
 onValue(ref(database, 'promos'), (snapshot) => {
@@ -1053,10 +1050,10 @@ onValue(ref(database, 'promos'), (snapshot) => {
         promoList.innerHTML = '';
         Object.entries(promos).forEach(([key, promo]) => {
             const li = document.createElement('li');
-            li.textContent = `${promo.name}: ${promo.discount}%`;
+            li.textContent = `${promo.name}`;
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = 'Видалити';
-            deleteBtn.onclick = () => remove(ref(database, 'promos/' + key)).then(() => showNotification('Акцію видалено'));
+            deleteBtn.onclick = () => remove(ref(database, 'promos/' + key)).then(() => showNotification('Акцію видалено', 'success'));
             li.appendChild(deleteBtn);
             promoList.appendChild(li);
         });
@@ -1069,27 +1066,30 @@ function applyPromos() {
         if (!name) return;
         const productKey = Object.keys(products).find(key => products[key].name === name);
         if (!productKey) return;
-        const discount = promos[products[productKey].category]?.discount || 0;
+        const discountPrices = products[productKey].onSale && products[productKey].discountPrices ? products[productKey].discountPrices : {};
         const priceSpan = product.querySelector('span[id^="price_"]');
-        const originalPrice = products[productKey].sizes[0].price;
+        const sizeSelect = product.querySelector('.size-select');
+        const selectedSize = sizeSelect ? sizeSelect.value : products[productKey].sizes[0].size;
         if (priceSpan) {
-            const salePrice = discount ? (originalPrice * (1 - discount / 100)).toFixed(0) : originalPrice;
+            const salePrice = discountPrices[selectedSize] || products[productKey].sizes.find(s => s.size === selectedSize)?.price || '';
             priceSpan.textContent = salePrice;
             const priceContainer = priceSpan.parentElement;
-            const existingDel = priceContainer.querySelector('del');
-            if (discount && !existingDel) {
-                priceSpan.insertAdjacentHTML('afterend', `<del>${originalPrice} грн</del>`);
-            } else if (!discount && existingDel) {
-                existingDel.remove();
+            const originalPriceElement = priceContainer.querySelector(`del[id="original_price_${productKey}"]`);
+            const originalPrice = products[productKey].sizes.find(s => s.size === selectedSize)?.price || '';
+            if (discountPrices[selectedSize] && !originalPriceElement) {
+                priceSpan.insertAdjacentHTML('afterend', `<del id="original_price_${productKey}">${originalPrice} грн</del>`);
+            } else if (!discountPrices[selectedSize] && originalPriceElement) {
+                originalPriceElement.remove();
+            } else if (originalPriceElement) {
+                originalPriceElement.textContent = `${originalPrice} грн`;
             }
         }
     });
 }
 
 document.getElementById('applyFilters')?.addEventListener('click', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const category = urlParams.get('category');
     const subcategory = document.getElementById('subcategory')?.value || null;
+    const subSubcategory = document.getElementById('subSubcategory')?.value || null;
     const priceMin = document.getElementById('priceMin')?.value ? parseInt(document.getElementById('priceMin').value) : null;
     const priceMax = document.getElementById('priceMax')?.value ? parseInt(document.getElementById('priceMax').value) : null;
     const availability = document.getElementById('availability')?.checked || null;
@@ -1097,10 +1097,8 @@ document.getElementById('applyFilters')?.addEventListener('click', () => {
     const material = document.getElementById('material')?.value || null;
     const room = document.getElementById('room')?.value || null;
     const sale = document.getElementById('onSaleOnly')?.checked || null;
-
-    console.log('Applying filters:', { category, subcategory, priceMin, priceMax, availability, color, material, room, sale });
-
-    filterProducts({ category, subcategory, priceMin, priceMax, availability, color, material, room, sale });
+    currentFilters = { ...currentFilters, subcategory, subSubcategory, priceMin, priceMax, availability, color, material, room, sale };
+    renderContent(currentFilters);
 });
 
 function updateColorSelects() {
@@ -1129,15 +1127,12 @@ function updateSubcategorySelects() {
         chairs: ['all', 'wooden', 'soft'],
         mattresses: ['all', 'standard']
     };
-
     subcategorySelects.forEach(select => {
         const currentValue = select.value;
         select.innerHTML = '<option value="">Виберіть підкатегорію</option>';
         const category = select.id === 'productSubcategory' ? document.getElementById('productCategory')?.value || 'beds' : document.getElementById('editProductCategory')?.value || 'beds';
         const options = new Set(defaultSubcategories[category] || []);
-        if (Object.keys(subcategories).length) {
-            Object.values(subcategories).flat().forEach(sub => options.add(sub));
-        }
+        if (Object.keys(subcategories).length) Object.values(subcategories).flat().forEach(sub => options.add(sub));
         [...options].sort().forEach(sub => {
             const option = document.createElement('option');
             option.value = sub;
@@ -1145,7 +1140,6 @@ function updateSubcategorySelects() {
             select.appendChild(option);
         });
         select.value = currentValue;
-        console.log(`Updated subcategory select ${select.id}:`, select.innerHTML);
     });
 }
 
@@ -1154,11 +1148,9 @@ document.getElementById('addColor')?.addEventListener('click', () => {
     if (colorInput && !colors.includes(colorInput)) {
         push(ref(database, 'colors'), colorInput).then(() => {
             document.getElementById('colorInput').value = '';
-            showNotification('Колір додано');
+            showNotification('Колір додано', 'success');
         });
-    } else {
-        showNotification('Колір уже існує або поле порожнє');
-    }
+    } else showNotification('Колір уже існує або поле порожнє', 'error');
 });
 
 document.getElementById('addMaterial')?.addEventListener('click', () => {
@@ -1166,26 +1158,15 @@ document.getElementById('addMaterial')?.addEventListener('click', () => {
     if (materialInput && !materials.includes(materialInput)) {
         push(ref(database, 'materials'), materialInput).then(() => {
             document.getElementById('materialInput').value = '';
-            showNotification('Матеріал додано');
+            showNotification('Матеріал додано', 'success');
         });
-    } else {
-        showNotification('Матеріал уже існує або поле порожнє');
-    }
+    } else showNotification('Матеріал уже існує або поле порожнє', 'error');
 });
 
 document.getElementById('productCategory')?.addEventListener('change', updateSubcategoryOptions);
 document.getElementById('editProductCategory')?.addEventListener('change', updateEditSubcategoryOptions);
 document.getElementById('editOnSale')?.addEventListener('change', toggleDiscountInput);
 
-// Expose functions to the global scope
 window.updatePrice = updatePrice;
 window.removeFromCart = removeFromCart;
 window.updateCartSize = updateCartSize;
-window.updateOrderItemSize = updateOrderItemSize;
-window.updateSubcategoryOptions = updateSubcategoryOptions;
-window.updateEditSubcategoryOptions = updateEditSubcategoryOptions;
-window.removeBanner = removeBanner;
-window.moveBanner = moveBanner;
-window.removeProduct = removeProduct;
-window.editProduct = editProduct;
-window.toggleDiscountInput = toggleDiscountInput;
