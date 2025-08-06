@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap');
+
+
 :root {
     --primary-blue: #3b82f6;
     --dark-blue: #1e3a8a;
@@ -17,6 +20,7 @@
     --shadow-medium: rgba(0, 0, 0, 0.15);
     --shadow-dark: rgba(0, 0, 0, 0.25);
     --font-primary: 'Inter', Arial, sans-serif;
+    --font-admin: "Comfortaa", sans-serif;
 }
 
 /* General styles */
@@ -245,10 +249,9 @@ main>section {
     background: var(--card-background);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 5px 15px var(--shadow-light);
-    min-height: 420px;
+    box-shadow: 0 0px 10px var(--shadow-light);
+    margin-bottom: 25px;
     display: flex;
-    flex-direction: column;
     justify-content: space-between;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -259,8 +262,24 @@ main>section {
     box-shadow: 0 8px 20px var(--shadow-medium);
 }
 
+.product-first, .product-second {
+    width: 30%;
+}
+
+.product-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0;
+}
+
+.product-button button {
+    height: 50%;
+    margin-bottom: 0;
+}
+
 .product img {
-    width: 100%;
+    aspect-ratio: 1 / 1;
     height: 200px;
     object-fit: contain;
     border-radius: 10px;
@@ -373,6 +392,10 @@ main>section {
 }
 
 /* Admin.html styles */
+.admin-html {
+    font-family: var(--font-admin);
+}
+
 .admin-html header {
     width: 100%;
     padding: 20px 50px;
@@ -391,7 +414,7 @@ main>section {
     cursor: pointer;
     font-weight: 800;
     font-size: 18px;
-    transition: transform 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .admin-html .category-menu {
@@ -404,12 +427,12 @@ main>section {
 .tab-btn {
     background: var(--primary-blue);
     color: var(--card-background);
-    padding: 12px 24px;
+    padding: 10px 22px;
     border: none;
     border-radius: 25px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.95em;
+    font-size: 12px;
     text-transform: uppercase;
     transition: background 0.3s ease, transform 0.2s ease;
 }
@@ -426,8 +449,7 @@ main>section {
 }
 
 #logout:hover {
-    background: var(--card-background);
-    color: var(--dark-blue);
+    background: var(--hover-red);
     transform: translateY(-2px);
 }
 
@@ -445,7 +467,19 @@ main>section {
     display: block !important;
 }
 
-#bannerList,
+#welcome img {
+ width: 100px;
+ margin-left: auto;
+}
+
+#bannerList {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+
+
 #productList,
 #promoList {
     display: grid;
@@ -457,20 +491,18 @@ main>section {
 #promoList li {
     background: var(--card-background);
     padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px var(--shadow-light);
+    border-radius: 30px;
+    box-shadow: 0 1px 10px var(--shadow-light);
     display: flex;
-    flex-direction: column;
     align-items: center;
 }
 
 #bannerList img {
     width: 100%;
-    max-width: 450px;
     height: clamp(150px, 40vw, 300px);
     object-fit: contain;
-    border-radius: 10px;
-    margin: 10px 0;
+    border-radius: 25px;
+    margin-right: 15px;
 }
 
 #addBanner,
@@ -490,12 +522,10 @@ main>section {
     font-weight: 600;
     font-size: 0.95em;
     text-transform: uppercase;
-    margin: 8px 0;
     transition: background 0.3s ease, transform 0.2s ease;
 }
 
 #addBanner,
-#addProduct,
 #editAddSize,
 #editSamePrice,
 #addColor,
@@ -506,7 +536,6 @@ main>section {
 }
 
 #addBanner:hover,
-#addProduct:hover,
 #editAddSize:hover,
 #editSamePrice:hover,
 #addColor:hover,
@@ -530,9 +559,23 @@ main>section {
 
 #bannerList button:last-child,
 #productList button:last-child,
-#promoList button {
+#promoList button,
+#productList button {
     background: var(--error-red);
     color: var(--card-background);
+    width: 100%;
+    border: none;
+    border-radius: 25px;
+    padding: 10px;
+}
+
+#productList button {
+    background: var(--hover-blue);
+    border-radius: 25px 25px 0 0;
+}
+
+#productList button:last-child {
+    border-radius: 0 0 25px 25px;
 }
 
 #bannerList button:last-child:hover,
@@ -542,17 +585,73 @@ main>section {
     transform: translateY(-2px);
 }
 
+.input-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 25px;
+}
+
+.input-top__left {
+    width: 50%;
+}
+
+.categories {
+    display: flex;
+    gap: 25px;
+    width: 100%;
+}
+
+.materialsAndColors {
+    display: flex;
+    width: 100%;
+    height: 150px;
+    gap: 25px;
+}
+
 #sizes,
 #editSizes {
-    margin-bottom: 20px;
+    width: 100%;
 }
 
 .size-row {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 25px;
+    position: relative;
+}
+
+.size-row button {
+    position: absolute;
+    height: 50px;
+    color: var(--background-light);
+    border: none;
+    width: 50px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 18px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.size-row .remove-size {
+    background: var(--error-red);
+    top: 0;
+    right: 0;
+}
+
+.size-row #addSize {
+    background: var(--success-green);
+    top: 0;
+    left: 240px;
+}
+
+.size-row #samePrice {
+    background: var(--primary-blue);
+    top: 0;
+    right: 315px;
 }
 
 .size-input,
@@ -584,6 +683,7 @@ main>section {
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px var(--shadow-light);
     margin-bottom: 20px;
+    box-sizing: border-box;
 }
 
 .size-input:focus,
@@ -614,8 +714,9 @@ main>section {
 
 #productDescription,
 #editProductDescription {
-    height: 140px;
-    resize: vertical;
+    width: 50%;
+    height: 120px !important;
+    resize: none ;
 }
 
 #productSubcategory,
@@ -637,6 +738,10 @@ main>section {
     margin-bottom: 20px;
 }
 
+#editProductMaterials, #editProductColors {
+    height: 100px;
+}
+
 #productSubcategory:focus,
 #editProductSubcategory:focus,
 #productMaterials:focus,
@@ -649,18 +754,92 @@ main>section {
     background: var(--card-background);
 }
 
-#rooms,
-#editRooms {
-    margin-bottom: 20px;
+#rooms, #editRooms {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 20px 0;
+  }
+  
+  #rooms label, #editRooms label {
+    position: relative;
+    padding: 10px 20px;
+    border: 2px solid var(--text-gray);
+    border-radius: 8px;
+    background-color: var(--background-light);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+  }
+  
+  #rooms input[type="checkbox"], #editRooms input[type="checkbox"] {
+    display: none;
+  }
+  
+  #rooms input[type="checkbox"]:checked + label,
+  #rooms label:has(input[type="checkbox"]:checked),
+  #editRooms input[type="checkbox"]:checked + label, 
+  #editRooms label:has(input[type="checkbox"]:checked) {
+    background-color: #cce0ff;
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+  }
+
+  #availability, #editAvailability, #editOnSale, #editOnClearance {
+    display: none;
+  }
+  
+  #availabilityL, #editAvailabilityL, #editOnSaleL, #editOnClearanceL {
+    display: inline-block;
+    padding: 10px 18px;
+    border: 2px solid var(--error-red);
+    background-color: #ffcccc;
+    color: var(--error-red);
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 96%;
+    margin-bottom: 25px;
+  }
+  
+  #availability:checked + #availabilityL,
+  #editAvailability:checked + #editAvailabilityL,
+  #editOnSale:checked + #editOnSaleL,
+  #editOnClearance:checked + #editOnClearanceL {
+    background-color: #cce0ff;
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+  }
+
+.buttonSizeAndPrice, .editProductTags {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
 
-#rooms label,
-#editRooms label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    color: var(--text-dark);
+.buttonSizeAndPrice button {
+    width: 290px;
+    height: 50px;
+    border-radius: 8px;
+    margin-bottom: 25px;
 }
+
+.editProductTags {
+    gap: 25px;
+}
+
+#editAddSize, #editSamePrice {
+    margin-bottom: 15px;
+}
+
+
+
+
+  
+  
+  
 
 /* Room.html styles */
 .room-html main {
@@ -790,6 +969,7 @@ main>section {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    font-family: var(--font-admin);
 }
 
 .login-m {
@@ -870,6 +1050,19 @@ main>section {
     transform: translateY(-2px);
 }
 
+@media (max-width: 480px) {
+    .login-m {
+        width: 90%;
+        margin: 0;
+    }
+
+    .login-to-admin {
+        width: 90%;
+    }
+}
+
+
+
 /* Modal styles */
 .modal {
     display: none;
@@ -888,8 +1081,7 @@ main>section {
 .modal-content {
     background: var(--card-background);
     padding: clamp(20px, 5vw, 30px);
-    width: 90%;
-    max-width: clamp(300px, 90vw, 600px);
+    width: 42%;
     max-height: 85vh;
     overflow-y: auto;
     border-radius: 12px;
@@ -941,7 +1133,6 @@ main>section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    max-width: clamp(300px, 80vw, 500px);
     margin: 0 auto;
     padding: 20px;
 }
@@ -949,10 +1140,10 @@ main>section {
 #orderForm input,
 #orderForm textarea,
 #addProductForm input,
-#addProductForm textarea,
 #editProductForm input,
 #editProductForm textarea {
     width: 100%;
+    height: 50px;
     margin-bottom: 20px;
     padding: 14px;
     border: 1px solid var(--border-light);
@@ -963,6 +1154,7 @@ main>section {
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px var(--shadow-light);
 }
+
 
 #orderForm input:focus,
 #orderForm textarea:focus,
@@ -980,7 +1172,7 @@ main>section {
 #addProductForm textarea,
 #editProductForm textarea {
     height: 140px;
-    resize: vertical;
+    resize: none;
 }
 
 #orderForm button[type="submit"],

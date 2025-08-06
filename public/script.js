@@ -629,7 +629,7 @@ onValue(ref(database, 'banners'), (snapshot) => {
         bannerList.innerHTML = '';
         Object.entries(banners).forEach(([key, banner]) => {
             const li = document.createElement('li');
-            li.innerHTML = `<img src="${banner.url}" alt="Banner"><button onclick="removeBanner('${key}')">Видалити</button>`;
+            li.innerHTML = `<img src="${banner.url}" alt="Banner"><button onclick="removeBanner('${key}')"><i class="material-icons">delete</i></button>`;
             bannerList.appendChild(li);
         });
     }
@@ -797,7 +797,7 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
                 if (el) el.checked = false;
             });
             document.querySelectorAll('#rooms input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
-            document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size">Видалити</button></div>';
+            document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button></div>';
             document.getElementById('productSubSubcategory').style.display = 'none';
             showNotification('Товар додано успішно', 'success');
             renderAdminProducts('all', '');
@@ -820,7 +820,7 @@ document.getElementById('addSize')?.addEventListener('click', (e) => {
     if (sizesDiv) {
         const newSizeRow = document.createElement('div');
         newSizeRow.className = 'size-row';
-        newSizeRow.innerHTML = '<input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size">Видалити</button>';
+        newSizeRow.innerHTML = '<input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button>';
         sizesDiv.appendChild(newSizeRow);
     }
 });
@@ -863,20 +863,29 @@ function renderAdminProducts(category, search) {
         productDiv.classList.add('product');
         productDiv.innerHTML = `
             <img src="${product.photo}" alt="${product.name}">
-            <h3>${product.name}</h3>
-            <p>${product.description}</p>
-            <p>Категорія: ${categoryTranslations[product.category] || product.category}</p>
-            <p>Підкатегорія: ${subcategoryTranslations[product.subcategory] || product.subcategory}</p>
-            ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
-            <p>Матеріали: ${(product.materials && product.materials.length ? product.materials.join(', ') : 'Немає')}</p>
-            <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
-            <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
-            <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p>
-            <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
-            <p>Розпродаж: ${product.onClearance ? 'Так' : 'Ні'}</p>
-            <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
-            <button onclick="editProduct('${key}')">Редагувати</button>
-            <button onclick="removeProduct('${key}')">Видалити</button>
+            <div class="product-first">
+                <h3>${product.name}</h3>
+                <p>${product.description}</p>
+                <p>Категорія: ${categoryTranslations[product.category] || product.category}</p>
+                <p>Підкатегорія: ${subcategoryTranslations[product.subcategory] || product.subcategory}</p>
+                ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
+                <p>Матеріали: ${(product.materials && product.materials.length ? product.materials.join(', ') : 'Немає')}</p>
+            </div>
+            <div class="product-second">
+                <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
+                <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
+                <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p>
+                <p>Розпродаж: ${product.onClearance ? 'Так' : 'Ні'}</p>
+                <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
+                <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
+            </div>
+            
+
+            <div class="product-button">
+                <button onclick="editProduct('${key}')"><i class="material-icons">edit</i></button>
+                <button onclick="removeProduct('${key}')"><i class="material-icons">delete</i></button>
+            </div>
+
         `;
         productList.appendChild(productDiv);
     });
@@ -915,7 +924,7 @@ window.editProduct = key => {
     roomsCheckboxes.forEach(checkbox => checkbox.checked = product.rooms && product.rooms.includes(checkbox.value));
     const editSizes = document.getElementById('editSizes');
     if (editSizes) {
-        editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="number" class="edit-price-input" value="${s.price}"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" value="${product.onSale && product.discountPrices && product.discountPrices[s.size] || ''}"><button class="remove-size">Видалити</button></div>`).join('');
+        editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="number" class="edit-price-input" value="${s.price}"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" value="${product.onSale && product.discountPrices && product.discountPrices[s.size] || ''}"><button class="remove-size"><i class="material-icons">delete</i></button></div>`).join('');
     }
     const editModal = document.getElementById('editModal');
     if (editModal) {
@@ -1001,7 +1010,7 @@ document.getElementById('editAddSize')?.addEventListener('click', (e) => {
     if (editSizes) {
         const newSizeRow = document.createElement('div');
         newSizeRow.className = 'size-row';
-        newSizeRow.innerHTML = '<input type="text" class="edit-size-input" placeholder="Розмір"><input type="number" class="edit-price-input" placeholder="Ціна"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" style="display: none;"><button class="remove-size">Видалити</button>';
+        newSizeRow.innerHTML = '<input type="text" class="edit-size-input" placeholder="Розмір"><input type="number" class="edit-price-input" placeholder="Ціна"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" style="display: none;"><button class="remove-size"><i class="material-icons">delete</i></button>';
         editSizes.appendChild(newSizeRow);
         toggleDiscountInput();
     }
