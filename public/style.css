@@ -397,6 +397,8 @@ main>section {
 }
 
 .admin-html header {
+    display: flex;
+    flex-direction: row;
     width: 100%;
     padding: 20px 50px;
     background: var(--primary-blue);
@@ -834,7 +836,70 @@ main>section {
     margin-bottom: 15px;
 }
 
+@media (max-width: 480px) {
+    .admin-html header {
+        flex-wrap: wrap;
+        padding: 15px;
+        height: 300px;
+        gap: 10px;
+        font-size: 12px;
+        position: relative;
+    }
 
+    .admin-html header #logout {
+        order: 2;
+    }
+
+    #logout {
+        width: 80px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    .category-menu {
+        flex-direction: column;
+        width: 100% !important;
+        gap: 5px;
+        order: 3;
+        padding: 5px;
+    }
+
+    .tab-btn {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .admin-m {
+        padding: 0;
+    }
+
+    .tab-content {
+        border-radius: o;
+    }
+
+    #bannerList {
+        align-items: start;
+        margin: 15px 0 0 0;
+        padding: 0;
+    }
+
+    #bannerList li {
+        padding: 5px;
+    }
+
+    #bannerList img {
+        margin-right: 0;
+    }
+
+
+    #bannerList button:last-child {
+        width: 30px;
+        margin-left: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
 
 
   
@@ -970,6 +1035,7 @@ main>section {
     align-items: center;
     height: 100vh;
     font-family: var(--font-admin);
+    user-select: none;
 }
 
 .login-m {
