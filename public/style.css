@@ -1346,7 +1346,7 @@ main>section {
 }
 
 /* Mobile-specific styles */
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
     header {
         flex-direction: column;
         gap: 12px;
@@ -1461,7 +1461,7 @@ main>section {
     #filters {
         flex-direction: column;
     }
-}
+} */
 
 @media (max-width: 480px) {
     body {
