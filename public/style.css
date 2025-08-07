@@ -874,7 +874,7 @@ main>section {
     }
 
     .tab-content {
-        border-radius: o;
+        border-radius: 0;
     }
 
     #bannerList {
@@ -899,6 +899,110 @@ main>section {
         justify-content: center;
         align-items: center;
     }
+
+    .input-top, .categories, .materialsAndColors {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .input-top__left, #productDescription {
+        width: 100%;
+    }
+
+    #addProduct {
+        width: 90%;
+        border-radius: 0;
+    }
+
+    .materialsAndColors {
+        height: 250px;
+        margin-bottom: -50px;
+    }
+
+    #rooms, #editRooms {
+        flex-wrap: wrap;
+    }
+
+    #rooms label, #editRooms label {
+        font-size: 10px;
+        padding: 5px 10px;
+        width: 30%;
+        margin-bottom: 10px;
+    }
+
+    #availabilityL {
+        width: 90%;
+    }
+
+    .size-row {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    #addSize, #samePrice, .size-row .remove-size {
+        position: static;
+    }
+
+    .size-input, .price-input, .discount-price-input  {
+        order: 2;
+    }
+
+    .product {
+        flex-direction: column;
+    }
+
+    .product-button {
+        flex-direction: row;
+    }
+
+    .product-first, .product-second {
+        width: 100%;
+    }
+
+    #productList button {
+        border-radius: 25px 0 0 25px;
+    }
+
+    #productList button:last-child {
+        border-radius: 0 25px 25px 0;
+    }
+
+    .admin-html .modal-content {
+        width: 100%;
+        max-height: 100vh;
+    }
+
+    .admin-html .modal-content .close {
+        margin: 20px;
+    }
+
+    .editProductTags {
+        flex-direction: column;
+        width: 100%;
+        gap: 5px;
+        margin-bottom: 25px;
+    }
+
+    #editAvailabilityL, #editOnSaleL, #editOnClearanceL {
+        width: 90%;
+        margin-bottom: 0;
+    }
+
+    .modal-content .size-row {
+        position: relative;
+        gap: 0;
+        margin-bottom: 25px;
+    }
+
+    .modal-content .remove-size {
+        position: absolute;
+    }
+
+
+
+
+
+    
 }
 
 
@@ -1547,9 +1651,6 @@ main>section {
         font-size: clamp(1em, 3vw, 1.2em);
     }
 
-    .modal-content {
-        padding: 10px;
-    }
 
     .close {
         font-size: 24px;
