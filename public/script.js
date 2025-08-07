@@ -182,11 +182,13 @@ function renderProductCard(container, key, product, sectionId) {
         <div class="sizes"><select class="size-select" data-product-id="${key}" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price, this.value, '${key}')">
             ${product.sizes.map((size, index) => `<option value="${size.size}" data-price="${discountPrices[size.size] || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`).join('')}
         </select></div>
-        <p>Ціна: <span id="price_${key}">${salePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del id="original_price_${key}">${originalPrice} грн</del>` : ''}</p>
+        <p><span id="price_${key}">${salePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del id="original_price_${key}">${originalPrice} грн</del>` : ''}</p>
         ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
         <p class="availability">${product.availability ? '<span style="color: green;">В наявності</span>' : '<span style="color: red;">Немає в наявності</span>'}</p>
-        <button class="addToCart" data-id="${key}">Додати в кошик</button>
-        <button class="buyNow" data-id="${key}">Замовити</button>
+        <div class="product-button-order">
+            <button class="addToCart" data-id="${key}"><i class="material-icons">shopping_cart</i></button>
+            <button class="buyNow" data-id="${key}">Замовити</button>
+        </div>
     `;
     container.appendChild(productDiv);
 }

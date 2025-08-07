@@ -98,13 +98,14 @@ header {
 
 
 main {
+    
     width: 100%;
     margin: 0 auto;
     display: flex;
     gap: 20px;
 }
 
-.category-menu {
+.index .category-menu {
     height: 563px;
     background: var(--background-light);
     position: sticky;
@@ -116,7 +117,7 @@ main>section {
     flex: 1;
     max-width: 1200px;
     margin: 0 auto;
-    box-sizing: border-box;
+    background: red;
 }
 
 .category-menu ul {
@@ -280,6 +281,12 @@ main>section {
     font-size: 14px;
 }
 
+.index .product {
+    flex-direction: column;
+    width: 300px;
+}
+
+
 
 
 
@@ -300,26 +307,23 @@ main>section {
 }
 
 .products {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(180px, 45vw, 200px), 1fr));
+    gap: 25px;
     animation: fadeIn 0.5s ease-out;
 }
 
 .product {
+    background: var(--card-background);
+    border-radius: 12px;
     padding: 20px;
+    box-shadow: 0 0px 10px var(--shadow-light);
     margin-bottom: 25px;
     display: flex;
-    flex-direction: column;
-    width: 300px;
     justify-content: space-between;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-sizing: border-box;
-    border-right: 1px solid var(--text-gray);
 }
-
-
-
-
 
 .product:hover {
     transform: translateY(-5px);
@@ -455,6 +459,632 @@ main>section {
     text-align: right;
 }
 
+/* Admin.html styles */
+.admin-html {
+    font-family: var(--font-admin);
+}
+
+.admin-html header {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 20px 50px;
+    background: var(--primary-blue);
+    box-sizing: border-box;
+    gap: 100px;
+}
+
+#logout {
+    background: var(--error-red);
+    color: var(--background-light);
+    border: none;
+    width: 100px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 18px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.admin-html .category-menu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 60%;
+        background: var(--card-background);
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px var(--shadow-light);
+        position: sticky;
+        top: 80px;
+    
+}
+
+.tab-btn {
+    background: var(--primary-blue);
+    color: var(--card-background);
+    padding: 10px 22px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: var(--hover-blue);
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    background: var(--dark-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px var(--shadow-medium);
+}
+
+#logout:hover {
+    background: var(--hover-red);
+    transform: translateY(-2px);
+}
+
+.tab-content {
+    background: var(--card-background);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow-light);
+    width: 100%;
+    display: none !important;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.tab-content.active {
+    display: block !important;
+}
+
+#welcome img {
+ width: 100px;
+ margin-left: auto;
+}
+
+#bannerList {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+}
+
+
+#productList,
+#promoList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(250px, 45vw, 280px), 1fr));
+    gap: 25px;
+}
+
+#bannerList li,
+#promoList li {
+    background: var(--card-background);
+    padding: 15px;
+    border-radius: 30px;
+    box-shadow: 0 1px 10px var(--shadow-light);
+    display: flex;
+    align-items: center;
+}
+
+#bannerList img {
+    width: 100%;
+    height: clamp(150px, 40vw, 300px);
+    object-fit: contain;
+    border-radius: 25px;
+    margin-right: 15px;
+}
+
+#addBanner,
+#addProduct,
+#editAddSize,
+#editSamePrice,
+#saveEdit,
+#addPromo,
+#savePromo,
+#addColor,
+#addMaterial {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95em;
+    text-transform: uppercase;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#addBanner,
+#editAddSize,
+#editSamePrice,
+#addColor,
+#addMaterial,
+#addPromo {
+    background: var(--primary-blue);
+    color: var(--card-background);
+}
+
+#addBanner:hover,
+#editAddSize:hover,
+#editSamePrice:hover,
+#addColor:hover,
+#addMaterial:hover,
+#addPromo:hover {
+    background: var(--hover-blue);
+    transform: translateY(-2px);
+}
+
+#saveEdit,
+#savePromo {
+    background: var(--success-green);
+    color: var(--card-background);
+}
+
+#saveEdit:hover,
+#savePromo:hover {
+    background: var(--hover-green);
+    transform: translateY(-2px);
+}
+
+#bannerList button:last-child,
+#productList button:last-child,
+#promoList button,
+#productList button {
+    background: var(--error-red);
+    color: var(--card-background);
+    width: 100%;
+    border: none;
+    border-radius: 25px;
+    padding: 10px;
+}
+
+#productList button {
+    background: var(--hover-blue);
+    border-radius: 25px 25px 0 0;
+}
+
+#productList button:last-child {
+    border-radius: 0 0 25px 25px;
+}
+
+#bannerList button:last-child:hover,
+#productList button:last-child:hover,
+#promoList button:hover {
+    background: var(--hover-red);
+    transform: translateY(-2px);
+}
+
+.input-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 25px;
+}
+
+.input-top__left {
+    width: 50%;
+}
+
+.categories {
+    display: flex;
+    gap: 25px;
+    width: 100%;
+}
+
+.materialsAndColors {
+    display: flex;
+    width: 100%;
+    height: 150px;
+    gap: 25px;
+}
+
+#sizes,
+#editSizes {
+    width: 100%;
+}
+
+.size-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 25px;
+    position: relative;
+}
+
+.size-row button {
+    position: absolute;
+    height: 50px;
+    color: var(--background-light);
+    border: none;
+    width: 50px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 18px;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.size-row .remove-size {
+    background: var(--error-red);
+    top: 0;
+    right: 0;
+}
+
+.size-row #addSize {
+    background: var(--success-green);
+    top: 0;
+    left: 320px;
+}
+
+.size-row #samePrice {
+    background: var(--primary-blue);
+    top: 0;
+    right: 385px;
+}
+
+.size-input,
+.price-input,
+.edit-size-input,
+.edit-price-input,
+.discount-price-input,
+.edit-discount-price-input,
+#productName,
+#productDescription,
+#productPhoto,
+#editProductName,
+#editProductDescription,
+#editProductPhoto,
+#productCategory,
+#editProductCategory,
+#productSearch,
+#productFilter,
+#bannerUrl,
+#colorInput,
+#materialInput,
+#promoName {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.95em;
+    background: var(--background-light);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px var(--shadow-light);
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.size-input:focus,
+.price-input:focus,
+.edit-size-input:focus,
+.edit-price-input:focus,
+.discount-price-input:focus,
+.edit-discount-price-input:focus,
+#productName:focus,
+#productDescription:focus,
+#productPhoto:focus,
+#editProductName:focus,
+#editProductDescription:focus,
+#editProductPhoto:focus,
+#productCategory:focus,
+#editProductCategory:focus,
+#productSearch:focus,
+#productFilter:focus,
+#bannerUrl:focus,
+#colorInput:focus,
+#materialInput:focus,
+#promoName:focus {
+    border-color: var(--primary-blue);
+    background: var(--card-background);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+#productDescription,
+#editProductDescription {
+    width: 50%;
+    height: 120px !important;
+    resize: none ;
+}
+
+#productSubcategory,
+#editProductSubcategory,
+#productMaterials,
+#editProductMaterials,
+#productColors,
+#editProductColors,
+#productSubSubcategory,
+#editProductSubSubcategory {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.95em;
+    background: var(--background-light);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px var(--shadow-light);
+    margin-bottom: 20px;
+}
+
+#editProductMaterials, #editProductColors {
+    height: 100px;
+}
+
+#productSubcategory:focus,
+#editProductSubcategory:focus,
+#productMaterials:focus,
+#editProductMaterials:focus,
+#productColors:focus,
+#editProductColors:focus,
+#productSubSubcategory:focus,
+#editProductSubSubcategory:focus {
+    border-color: var(--primary-blue);
+    background: var(--card-background);
+}
+
+#rooms, #editRooms {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 20px 0;
+  }
+  
+  #rooms label, #editRooms label {
+    position: relative;
+    padding: 10px 20px;
+    border: 2px solid var(--text-gray);
+    border-radius: 8px;
+    background-color: var(--background-light);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+  }
+  
+  #rooms input[type="checkbox"], #editRooms input[type="checkbox"] {
+    display: none;
+  }
+  
+  #rooms input[type="checkbox"]:checked + label,
+  #rooms label:has(input[type="checkbox"]:checked),
+  #editRooms input[type="checkbox"]:checked + label, 
+  #editRooms label:has(input[type="checkbox"]:checked) {
+    background-color: #cce0ff;
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+  }
+
+  #availability, #editAvailability, #editOnSale, #editOnClearance {
+    display: none;
+  }
+  
+  #availabilityL, #editAvailabilityL, #editOnSaleL, #editOnClearanceL {
+    display: inline-block;
+    padding: 10px 18px;
+    border: 2px solid var(--error-red);
+    background-color: #ffcccc;
+    color: var(--error-red);
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 96%;
+    margin-bottom: 25px;
+  }
+  
+  #availability:checked + #availabilityL,
+  #editAvailability:checked + #editAvailabilityL,
+  #editOnSale:checked + #editOnSaleL,
+  #editOnClearance:checked + #editOnClearanceL {
+    background-color: #cce0ff;
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+  }
+
+.buttonSizeAndPrice, .editProductTags {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.buttonSizeAndPrice button {
+    width: 290px;
+    height: 50px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.editProductTags {
+    gap: 25px;
+}
+
+#editAddSize, #editSamePrice {
+    margin-bottom: 15px;
+}
+
+@media (max-width: 480px) {
+    .admin-html header {
+        flex-wrap: wrap;
+        padding: 15px;
+        height: 320px;
+        gap: 10px;
+        font-size: 12px;
+        position: relative;
+    }
+
+    .admin-html header #logout {
+        order: 2;
+    }
+
+    #logout {
+        width: 80px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    .category-menu {
+        flex-direction: column;
+        width: 100% !important;
+        gap: 5px;
+        order: 3;
+        padding: 5px;
+    }
+
+    .tab-btn {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .admin-m {
+        padding: 0;
+    }
+
+    .tab-content {
+        border-radius: 0;
+    }
+
+    #bannerList {
+        align-items: start;
+        margin: 15px 0 0 0;
+        padding: 0;
+    }
+
+    #bannerList li {
+        padding: 0px;
+    }
+
+    #bannerList img {
+        margin-right: 0;
+        width: 90%;
+    }
+
+
+    #bannerList button:last-child {
+        width: 30px;
+        margin-left: 1px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .input-top, .categories, .materialsAndColors {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .input-top__left, #productDescription {
+        width: 100%;
+    }
+
+    #addProduct {
+        width: 90%;
+        border-radius: 0;
+    }
+
+    .materialsAndColors {
+        height: 250px;
+        margin-bottom: -50px;
+    }
+
+    #rooms, #editRooms {
+        flex-wrap: wrap;
+    }
+
+    #rooms label, #editRooms label {
+        font-size: 10px;
+        padding: 5px 10px;
+        width: 30%;
+        margin-bottom: 10px;
+    }
+
+    #availabilityL {
+        width: 90%;
+    }
+
+    .size-row {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    #addSize, #samePrice, .size-row .remove-size {
+        position: static;
+    }
+
+    .size-input, .price-input, .discount-price-input  {
+        order: 2;
+    }
+
+    .product {
+        flex-direction: column;
+    }
+
+    .product-button {
+        flex-direction: row;
+    }
+
+    .product-first, .product-second {
+        width: 100%;
+    }
+
+    #productList button {
+        border-radius: 25px 0 0 25px;
+    }
+
+    #productList button:last-child {
+        border-radius: 0 25px 25px 0;
+    }
+
+    .admin-html .modal-content {
+        width: 100%;
+        max-height: 100vh;
+    }
+
+    .admin-html .modal-content .close {
+        margin: 20px;
+    }
+
+    .editProductTags {
+        flex-direction: column;
+        width: 100%;
+        gap: 5px;
+        margin-bottom: 25px;
+    }
+
+    #editAvailabilityL, #editOnSaleL, #editOnClearanceL {
+        width: 90%;
+        margin-bottom: 0;
+    }
+
+    .modal-content .size-row {
+        position: relative;
+        gap: 0;
+        margin-bottom: 25px;
+    }
+
+    .modal-content .remove-size {
+        position: absolute;
+    }
+
+
+
+
+
+    
+}
+
+
+  
+  
+  
 
 /* Room.html styles */
 .room-html main {
@@ -575,6 +1205,106 @@ main>section {
 #subcategoryList li:hover {
     background: var(--hover-blue);
     transform: translateX(5px);
+}
+
+/* Login.html styles */
+.login-b {
+    background: var(--primary-blue);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: var(--font-admin);
+    user-select: none;
+}
+
+.login-m {
+    margin: 0 auto;
+}
+
+.login-to-admin {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 auto;
+    background: var(--background-light);
+    width: 500px;
+    border-radius: 25px;
+    padding: 20px;
+}
+
+.login-to-admin img {
+    width: 100px;
+}
+
+.login-to-admin h1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 30px;
+}
+
+#loginForm {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#loginForm input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.95em;
+    background: var(--background-light);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px var(--shadow-light);
+    box-sizing: border-box;
+}
+
+#loginForm input:focus {
+    border-color: var(--primary-blue);
+    background: var(--card-background);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+#loginForm input::placeholder {
+    color: var(--text-gray);
+    font-style: italic;
+}
+
+#loginForm button {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-blue);
+    color: var(--card-background);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95em;
+    text-transform: uppercase;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#loginForm button:hover {
+    background: var(--hover-blue);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+    .login-m {
+        width: 90%;
+        margin: 0;
+    }
+
+    .login-to-admin {
+        width: 90%;
+    }
 }
 
 

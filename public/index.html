@@ -6,22 +6,82 @@
     <title>Магазин меблів</title>
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script type="module" src="script.js"></script>
 </head>
-<body>
+<body class="index">
     <header>
-        <div class="logo">Магазин меблів</div>
-        <input type="text" id="searchBar" placeholder="Пошук...">
-        <button id="cartBtn">🛒 Кошик</button>
+        <div class="logo">
+            <img src="./img/omelyan-logo.png" alt="">
+            <h1>Omelyan Mebli</h1>
+        </div>
+        <div class="search">
+            <div class="search-nav">
+                <ul>
+                    <li><a href="">В наявності</a></li>
+                    <li><a href="room.html?clearance=true">Розпродаж</a></li>
+                    <li><a href="">Доставка та оплата</a></li>
+                    <li><a href="">Адреса</a></li>
+                </ul>
+            </div>
+            <input type="text" id="searchBar" placeholder="Пошук...">
+        </div>
+
+        <button id="cartBtn"><i class="material-icons">shopping_cart</i> <span>Кошик</span></button>
     </header>
 
     <main>
         <div id="notification"></div>
-        <aside class="category-menu">
-            <h3>Категорії</h3>
-            <ul id="mainCategories"></ul>
 
-            <h3>По кімнатах</h3>
+
+        <aside class="category-menu">
+            <ul id="mainCategories"></ul>
+        </aside>
+
+        <section class="main-section">
+            <div class="slider">
+                <div class="slides"></div>
+                <button class="prev">❮</button>
+                <button class="next">❯</button>
+            </div>
+
+
+
+
+            <section class="why-us">
+                <h2>Чому ми?</h2>
+                <div class="why-us__container">
+                <div class="fact">
+                    <div class="fact__icon"><i class="material-icons">verified</i></div>
+                    <div class="fact-title">Надійність</div>
+                    <div class="fact__desc">Меблі, які служать роками — без скрипів і розчарувань.</div>
+                </div>
+                <div class="fact">
+                    <div class="fact__icon"><i class="material-icons">explore</i></div>
+                    <div class="fact-title">Зручність</div>
+                    <div class="fact__desc">Швидко обираєш — швидко отримуєш. Мінімум мороки.</div>
+                </div>
+                <div class="fact">
+                    <div class="fact__icon"><i class="material-icons">spa</i></div>
+                    <div class="fact-title">Стиль</div>
+                    <div class="fact__desc">Красиво не тільки на фото. Реально — виглядає круто в будь-якій кімнаті.</div>
+                </div>
+                <div class="fact">
+                    <div class="fact__icon"><i class="material-icons">support</i></div>
+                    <div class="fact-title">Підтримка</div>
+                    <div class="fact__desc">Відповідаємо. Консультуємо. Допомагаємо — як для себе.</div>
+                </div>
+                </div>
+            </section>
+
+
+            <section class="sale-products">
+                <h2>Акційні товари</h2>
+                <div id="saleProducts" class="products"></div>
+                <button class="view-all" onclick="window.location.href='room.html?sale=true'">Переглянути всі</button>
+            </section>
+
+
             <div class="products-by-room">
                 <h2>Меблі за кімнатами</h2>
                 <ul>
@@ -32,45 +92,8 @@
                     <li data-tag="kitchen"><a href="room.html?room=kitchen">Кухня</a></li>
                     <li data-tag="office"><a href="room.html?room=office">Офіс</a></li>
                 </ul>
-                <button class="view-all" onclick="window.location.href='room.html'">Переглянути всі</button>
             </div>
 
-            <h3>Спеціальні пропозиції</h3>
-            <ul>
-                <li data-filter="sale"><a href="room.html?sale=true">Акційні</a></li>
-                <li data-filter="clearance"><a href="room.html?clearance=true">Розпродаж</a></li>
-            </ul>
-        </aside>
-
-        <section>
-            <div class="slider">
-                <div class="slides"></div>
-                <button class="prev">❮</button>
-                <button class="next">❯</button>
-            </div>
-
-            <div class="why-us">
-                <h2>Чому ми</h2>
-                <p>Ми пропонуємо якісні меблі за доступними цінами.</p>
-            </div>
-
-            <section class="products-by-room">
-                <h2>Товари за кімнатами</h2>
-                <ul id="roomCategoriesByRoom">
-                    <li data-tag="living_room">Вітальня</li>
-                    <li data-tag="bedroom">Спальна кімната</li>
-                    <li data-tag="nursery">Дитяча</li>
-                    <li data-tag="hallway">Передпокій</li>
-                    <li data-tag="kitchen">Кухня</li>
-                    <li data-tag="office">Офіс</li>
-                </ul>
-            </section>
-
-            <div class="sale-products">
-                <h2>Акційні товари</h2>
-                <div id="saleProducts" class="products"></div>
-                <button class="view-all" onclick="window.location.href='room.html?sale=true'">Переглянути всі</button>
-            </div>
 
             <div class="clearance-products">
                 <h2>Товари на розпродажі</h2>
@@ -78,11 +101,6 @@
                 <button class="view-all" onclick="window.location.href='room.html?clearance=true'">Переглянути всі</button>
             </div>
 
-            <div class="brand-info">
-                <h2>Про бренд</h2>
-                <p>Інформація про наш бренд.</p>
-            </div>
-        </section>
 
         <div id="cartModal" class="modal">
             <div class="modal-content">
@@ -117,12 +135,7 @@
                 <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
             </div>
         </div>
-
-        <div id="notification"></div>
+</section>
     </main>
-
-    <footer>
-        <p>© 2025 Магазин меблів. Усі права захищено.</p>
-    </footer>
 </body>
 </html>
