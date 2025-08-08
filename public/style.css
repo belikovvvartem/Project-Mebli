@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
     --primary-blue: #3b82f6;
@@ -22,6 +22,7 @@
     --shadow-dark: rgba(0, 0, 0, 0.25);
     --font-primary: 'Inter', Arial, sans-serif;
     --font-admin: "Comfortaa", sans-serif;
+    --font-price: font-family: "Exo 2", sans-serif;
 }
 
 /* General styles */
@@ -44,7 +45,7 @@ header {
     background: var(--background-light);
     color: var(--text-black);
     box-shadow: 0 4px 12px var(--shadow-medium);
-    border-bottom: var(--text-gray) 1px solid;
+    border-bottom: var(--border-light) 3px solid;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -105,11 +106,11 @@ main {
 }
 
 .category-menu {
-    height: 563px;
+    height: 580px;
     background: var(--background-light);
     position: sticky;
     top: 137px;
-    border-right: 1px solid var(--text-gray);
+    border-right: 3px solid var(--border-light);
 }
 
 main>section {
@@ -129,7 +130,7 @@ main>section {
     width: 200px;
     font-size: 20px;
     padding: 15px;
-    border-bottom: 1px solid var(--text-gray);
+    border-bottom: 3px solid var(--border-light);
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
 }
@@ -153,7 +154,7 @@ main>section {
 .view-all {
     background: var(--primary-blue);
     color: var(--card-background);
-    padding: 10px 20px;
+    padding: 15px 20px;
     border: none;
     border-radius: 25px;
     cursor: pointer;
@@ -179,15 +180,9 @@ main>section {
     display: flex;
 }
 
-.product-button-order button:first-child {
-    background: var(--primary-blue);
-    border-radius: 0;
-    width: 60px;
-}
 
-.product-button-order button:last-child {
-    border-radius: 0 25px 25px 0;
-}
+
+
 
 
 
@@ -257,7 +252,7 @@ main>section {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 200px;
+    width: 250px;
     height: 200px;
     border-radius: 25px;
     padding: 15px;
@@ -278,12 +273,90 @@ main>section {
 .fact__desc {
     color: var(--text-gray);
     font-size: 14px;
+    text-align: center;
+}
+
+.products-by-room ul {
+    list-style: none;
+    padding: 0;
+}
+
+.products-by-room ul li {
+    width: 200px;
+    height: 350px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    cursor: pointer;
+}
+
+.products-by-room ul li a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 25px;
+    font-weight: 800;
+    position: absolute;
+    padding: 0 20px;
+    box-sizing: border-box;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.171);
+    backdrop-filter: blur(14.5px);
+    -webkit-backdrop-filter: blur(14.5px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--background-light);
+    list-style: none;
+    text-decoration: none;
+}
+
+
+.products-by-room .product-room-top {
+    display: flex;
+    gap: 25px;
+}
+
+.products-by-room .product-room-bottom {
+    display: flex;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.products-by-room .living-room {
+    background-image: url(./img/rooms/living-room.webp);
+    width: 25%;
+}
+
+.products-by-room .bedroom {
+    background-image: url(./img/rooms/bedroom.jpeg);
+    width: 50%;
+}
+
+.products-by-room .baby-room {
+    background-image: url(./img/rooms/baby-room.webp);
+    width: 25%;
+}
+
+.products-by-room .kitchen {
+    background-image: url(./img/rooms/kitchen.jpeg);
+    width: 40%;
+}
+
+.products-by-room .hallway {
+    background-image: url(./img/rooms/hallway.webp);
+    width: 20%;
+}
+
+.products-by-room .office {
+    background-image: url(./img/rooms/office.jpeg);
+    width: 40%;
 }
 
 
 
 
-.products-by-room,
 .sale-products,
 .clearance-products{
     margin: 40px 0;
@@ -314,7 +387,11 @@ main>section {
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     box-sizing: border-box;
-    border-right: 1px solid var(--text-gray);
+    border-right: 3px solid var(--border-light);
+}
+
+.product:last-child {
+    border-right: none;
 }
 
 
@@ -322,7 +399,8 @@ main>section {
 
 
 .product:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
+    border-right: none;
     box-shadow: 0 8px 20px var(--shadow-medium);
 }
 
@@ -344,11 +422,10 @@ main>section {
 
 .product img {
     aspect-ratio: 1 / 1;
-    height: 200px;
+    height: 250px;
     object-fit: contain;
     border-radius: 10px;
     margin-bottom: 15px;
-    background: var(--border-light);
 }
 
 .product h3 {
@@ -403,22 +480,26 @@ main>section {
 }
 
 .addToCart {
-    background: var(--success-green);
-    color: var(--card-background);
+    background: none;
+    color: var(--primary-blue);
+    border: 3px solid var(--primary-blue);
+    width: 70px;
 }
 
 .addToCart:hover {
-    background: var(--hover-green);
+    background: var(--primary-blue);
+    color: var(--card-background);
     transform: translateY(-2px);
 }
 
 .buyNow {
-    background: var(--warning-orange);
+    background: var(--primary-blue);
     color: var(--card-background);
+    margin-left: 10px;
 }
 
 .buyNow:hover {
-    background: var(--hover-orange);
+    background: var(--dark-blue);
     transform: translateY(-2px);
 }
 
@@ -435,17 +516,40 @@ main>section {
 .promo {
     position: absolute;
     top: 10px;
-    left: 10px;
-    background: var(--success-green);
+    right: 10px;
+    background: var(--primary-blue);
     color: var(--card-background);
     padding: 5px 10px;
-    border-radius: 5px;
+    font-size: 20px;
+    border-radius: 25px 5px 25px 25px;
     font-weight: bold;
 }
 
 .promo.clearance {
+    left: 10px;
     background: var(--error-red);
+    border-radius: 5px 25px 25px 25px;
+    width: 110px;
 }
+
+.product .product-price {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-black);
+    position: relative;
+    margin-top: 30px;
+    font-family: "Exo 2", sans-serif;
+
+}
+
+.original-price {
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    font-size: 20px;
+    color: var(--text-gray);
+}
+
 
 #cartTotalPrice {
     font-size: clamp(1em, 3vw, 1.2em);
@@ -453,6 +557,10 @@ main>section {
     color: var(--dark-blue);
     margin: 15px 0;
     text-align: right;
+}
+
+#original_price {
+    background: #000;
 }
 
 

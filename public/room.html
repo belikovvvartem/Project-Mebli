@@ -6,6 +6,7 @@
     <title>Магазин меблів</title>
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script type="module" src="script.js"></script>
     <!-- Add this style to hide filters by default -->
     <style>
@@ -16,9 +17,23 @@
 </head>
 <body>
     <header>
-        <div class="logo">Магазин меблів</div>
-        <input type="text" id="searchBar" placeholder="Пошук...">
-        <button id="cartBtn">🛒 Кошик</button>
+        <div class="logo">
+            <img src="./img/omelyan-logo.png" alt="">
+            <h1>Omelyan Mebli</h1>
+        </div>
+        <div class="search">
+            <div class="search-nav">
+                <ul>
+                    <li><a href="">В наявності</a></li>
+                    <li><a href="room.html?clearance=true">Розпродаж</a></li>
+                    <li><a href="">Доставка та оплата</a></li>
+                    <li><a href="">Адреса</a></li>
+                </ul>
+            </div>
+            <input type="text" id="searchBar" placeholder="Пошук...">
+        </div>
+
+        <button id="cartBtn"><i class="material-icons">shopping_cart</i> <span>Кошик</span></button>
     </header>
 
     <main>
