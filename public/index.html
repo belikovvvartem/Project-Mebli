@@ -13,10 +13,10 @@
 
 <body class="index">
     <header>
-        <div class="logo">
+        <a href="./index.html" class="logo">
             <img src="./img/omelyan-logo.png" alt="">
             <h1>Omelyan Mebli</h1>
-        </div>
+        </a>
         <div class="search">
             <div class="search-nav">
                 <ul>
@@ -37,7 +37,8 @@
 
 
         <aside class="category-menu">
-            <ul id="mainCategories"></ul>
+            <ul id="mainCategories">
+            </ul>
         </aside>
 
         <section class="main-section">
@@ -46,6 +47,7 @@
                 <div class="slides"></div>
                 <button class="prev">❮</button>
                 <button class="next">❯</button>
+                <div class="dots"></div>
             </div>
 
             <section class="why-us">
@@ -88,20 +90,14 @@
                 <h2>Меблі за кімнатами</h2>
                 <ul>
                     <div class="product-room-top">
-                        <li data-tag="living_room" class="living-room"><a href="room.html?room=living_room">Вітальня <i
-                                    class="material-icons">east</i> </a></li>
-                        <li data-tag="bedroom" class="bedroom"><a href="room.html?room=bedroom">Спальна кімната <i
-                                    class="material-icons">east</i> </a></li>
-                        <li data-tag="nursery" class="baby-room"><a href="room.html?room=nursery">Дитяча <i
-                                    class="material-icons">east</i> </a></li>
+                        <li data-tag="living_room" class="living-room"><a href="room.html?room=living_room">Вітальня <i class="material-icons">east</i> </a></li>
+                        <li data-tag="bedroom" class="bedroom"><a href="room.html?room=bedroom">Спальна кімната <i class="material-icons">east</i> </a></li>
+                        <li data-tag="nursery" class="baby-room"><a href="room.html?room=nursery">Дитяча <i class="material-icons">east</i> </a></li>
                     </div>
                     <div class="product-room-bottom">
-                        <li data-tag="kitchen" class="kitchen"><a href="room.html?room=kitchen">Кухня <i
-                                    class="material-icons">east</i> </a></li>
-                        <li data-tag="hallway" class="hallway"><a href="room.html?room=hallway">Передпокій <i
-                                    class="material-icons">east</i> </a></li>
-                        <li data-tag="office" class="office"><a href="room.html?room=office">Офіс <i
-                                    class="material-icons">east</i> </a></li>
+                        <li data-tag="kitchen" class="kitchen"><a href="room.html?room=kitchen">Кухня <i class="material-icons">east</i> </a></li>
+                        <li data-tag="hallway" class="hallway"><a href="room.html?room=hallway">Передпокій <i class="material-icons">east</i> </a></li>
+                        <li data-tag="office" class="office"><a href="room.html?room=office">Офіс <i class="material-icons">east</i> </a></li>
                     </div>
                 </ul>
             </div>
@@ -132,8 +128,10 @@
                         <input type="text" id="orderName" placeholder="ПІБ" required>
                         <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
                         <input type="text" id="orderCountry" placeholder="Країна" required>
+                        <div class="region-citi">
                         <input type="text" id="orderRegion" placeholder="Область" required>
                         <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                        </div>
                         <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
                         <h3>Товари у замовленні</h3>
                         <div id="orderItems" class="products"></div>
@@ -148,6 +146,51 @@
                     <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
                 </div>
             </div>
+            <footer>
+                <div class="footer-top">
+                    <a href="./index.html" class="logo">
+                        <img src="./img/omelyan-logo.png" alt="">
+                        <h1>Omelyan Mebli</h1>
+                    </a>
+                    <div class="footer-category">
+                        <h3>Категорії</h3>
+                        <a href="room.html?category=beds">Ліжка</a>
+                        <a href="room.html?category=sofas">Дивани</a>
+                        <a href="room.html?category=wardrobes">Шафи</a>
+                        <a href="room.html?category=tables">Столи</a>
+                        <a href="room.html?category=chairs">Стільці</a>
+                        <a href="room.html?category=mattresses">Матраци</a>
+                    </div>
+                    <div class="footer-by-room">
+                        <h3>По кімнатах</h3>
+                        <a href="room.html?room=living_room">Вітальня</a>
+                        <a href="room.html?room=bedroom">Спальня кімната</a>
+                        <a href="room.html?room=nursery">Дитячя</a>
+                        <a href="room.html?room=kitchen">Кухня</a>
+                        <a href="room.html?room=hallway">Передпокій</a>
+                        <a href="room.html?room=office">Офіс</a>
+                    </div>
+                    <div class="social-link">
+                        <h3>Соцмережі</h3>
+                        <a href="#">Instagram</a>
+                        <a href="#">FaceBook</a>
+                        <a href="#">TikTok</a>
+                        <a href="#"></a>
+                        <a href="#"></a>
+                        <a href="#"></a>
+                    </div>
+                    <div class="contact">
+                        <p><a href="mailto:"></a></p>
+                        <p><a href="tel:+"></a></p>
+                        <p></p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
+                    <div class="privacy-policy"><a href="./privacy-policy.html?from=index">Політика конфіденційності</a></div>
+                    <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix Agency</a></div>
+                </div>
+            </footer>
         </section>
     </main>
 </body>

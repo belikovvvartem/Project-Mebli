@@ -43,13 +43,14 @@ function initializeData() {
             renderSubcategories(currentFilters.category, currentFilters.subcategory);
             isInitialLoad = false;
         }
+
+
     });
     onValue(ref(database, 'promos'), (snapshot) => { promos = snapshot.val() || {}; applyPromos(); });
     onValue(ref(database, 'colors'), (snapshot) => { colors = Object.values(snapshot.val() || []); updateColorSelects(); });
     onValue(ref(database, 'materials'), (snapshot) => { materials = Object.values(snapshot.val() || []); updateMaterialSelects(); });
     onValue(ref(database, 'subcategories'), (snapshot) => { subcategories = snapshot.val() || {}; updateSubcategorySelects(); });
 }
-
 initializeData();
 
 function showNotification(message, type = 'success') {
@@ -82,27 +83,52 @@ function loadUserData() {
 let currentSlide = 0;
 function updateBannerSlider() {
     const slides = document.querySelector('.slides');
-    if (!slides) return;
+    const dots = document.querySelector('.dots');
+    if (!slides || !dots) return;
     slides.innerHTML = '';
-    Object.entries(banners).forEach(([key, banner]) => {
+    dots.innerHTML = '';
+    Object.entries(banners).forEach(([key, banner], index) => {
         const img = document.createElement('img');
         img.src = banner.url;
         img.classList.add('slide');
         img.dataset.key = key;
         slides.appendChild(img);
+
+        const dot = document.createElement('div');
+        dot.classList.add('dot');
+        if (index === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => showSlide(index));
+        dots.appendChild(dot);
     });
     showSlide(0);
 }
 
 function showSlide(index) {
     const slides = document.querySelector('.slides');
+    const dots = document.querySelectorAll('.dot');
     if (!slides || !slides.children.length) return;
     currentSlide = (index % slides.children.length + slides.children.length) % slides.children.length;
     slides.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((dot, i) => dot.classList.toggle('active', i === currentSlide));
 }
 
-document.querySelector('.prev')?.addEventListener('click', () => showSlide(currentSlide - 1));
-document.querySelector('.next')?.addEventListener('click', () => showSlide(currentSlide + 1));
+let autoSlideInterval;
+function startAutoSlide() {
+    autoSlideInterval = setInterval(() => showSlide(currentSlide + 1), 5000); // Перемикає кожні 5 секунд
+}
+function stopAutoSlide() {
+    clearInterval(autoSlideInterval);
+}
+
+// Запускаємо автопрокрутку після ініціалізації
+updateBannerSlider();
+startAutoSlide();
+
+// Зупиняємо автопрокрутку при взаємодії користувача
+document.querySelector('.prev')?.addEventListener('click', () => { stopAutoSlide(); showSlide(currentSlide - 1); });
+document.querySelector('.next')?.addEventListener('click', () => { stopAutoSlide(); showSlide(currentSlide + 1); });
+document.querySelector('.slides')?.addEventListener('touchstart', stopAutoSlide);
+
 
 let touchStartX = 0, touchEndX = 0;
 document.querySelector('.slides')?.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
@@ -112,6 +138,21 @@ document.querySelector('.slides')?.addEventListener('touchend', e => {
     else if (touchEndX - touchStartX > 50) showSlide(currentSlide - 1);
 });
 
+function getCategoryIcon(category) {
+    const iconMap = {
+        all: './img/icons/all.png',
+        beds: './img/icons/bed.png',
+        sofas: './img/icons/sofa.png',
+        wardrobes: './img/icons/cabinet.png',
+        tables: './img/icons/table.png',
+        chairs: './img/icons/chair.png',
+        mattresses: './img/icons/mattress.png',
+        sale: './img/icons/percentage.png',
+        clearance: './img/icons/sale.png'
+    };
+    return iconMap[category] || '';
+}
+
 function renderCategories() {
     const mainCategories = document.getElementById('mainCategories');
     if (!mainCategories) return;
@@ -119,18 +160,71 @@ function renderCategories() {
     ['all', 'beds', 'sofas', 'wardrobes', 'tables', 'chairs', 'mattresses'].forEach(category => {
         const li = document.createElement('li');
         li.textContent = category === 'all' ? 'Всі товари' : categoryTranslations[category];
+        li.dataset.category = category;
+        li.style.backgroundImage = `url('${getCategoryIcon(category)}')`;
+        li.style.backgroundRepeat = 'no-repeat';
+        li.style.backgroundPosition = '10px center';
+        li.style.backgroundSize = '30px 30px';
+        li.style.paddingLeft = '55px';
+        li.style.display = 'flex';
+        li.style.alignItems = 'center';
         li.addEventListener('click', () => window.location.href = `room.html?category=${category}`);
+
+        if (window.location.pathname.includes('room.html')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const selectedCategory = urlParams.get('category');
+            if (selectedCategory === category) {
+                li.classList.add('selected');
+            }
+        }
+
         mainCategories.appendChild(li);
     });
     const saleLi = document.createElement('li');
-    saleLi.textContent = '🎉 Акційні';
+    saleLi.textContent = 'Акційні';
+    saleLi.dataset.category = 'sale';
+    saleLi.style.backgroundImage = `url('${getCategoryIcon('sale')}')`;
+    saleLi.style.backgroundRepeat = 'no-repeat';
+    saleLi.style.backgroundPosition = '10px center';
+    saleLi.style.backgroundSize = '30px 30px';
+    saleLi.style.paddingLeft = '55px';
+    saleLi.style.display = 'flex';
+    saleLi.style.alignItems = 'center';
     saleLi.addEventListener('click', () => window.location.href = 'room.html?sale=true');
+
+    if (window.location.pathname.includes('room.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('sale') === 'true') {
+            saleLi.classList.add('selected');
+        }
+    }
+
     mainCategories.appendChild(saleLi);
     const clearanceLi = document.createElement('li');
-    clearanceLi.textContent = '💸 Розпродаж';
+    clearanceLi.textContent = 'Розпродаж';
+    clearanceLi.dataset.category = 'clearance';
+    clearanceLi.style.backgroundImage = `url('${getCategoryIcon('clearance')}')`;
+    clearanceLi.style.backgroundRepeat = 'no-repeat';
+    clearanceLi.style.backgroundPosition = '10px center';
+    clearanceLi.style.backgroundSize = '35px 35px';
+    clearanceLi.style.paddingLeft = '55px';
+    clearanceLi.style.display = 'flex';
+    clearanceLi.style.alignItems = 'center';
     clearanceLi.addEventListener('click', () => window.location.href = 'room.html?clearance=true');
+
+    if (window.location.pathname.includes('room.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('clearance') === 'true') {
+            clearanceLi.classList.add('selected');
+        }
+    }
+
     mainCategories.appendChild(clearanceLi);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderCategories();
+});
 
 document.querySelectorAll('#roomCategories li').forEach(li =>
     li.addEventListener('click', () => window.location.href = `room.html?room=${li.dataset.tag}`)
@@ -147,16 +241,16 @@ function renderContent(filters) {
         container.innerHTML = '';
         let filteredProducts = Object.entries(products).filter(([key, product]) => {
             return (filters.category === 'all' || product.category === filters.category) &&
-                   (!filters.subcategory || product.subcategory === filters.subcategory) &&
-                   (!filters.subSubcategory || product.subSubcategory === filters.subSubcategory) &&
-                   (!filters.priceMin || product.sizes[0].price >= filters.priceMin) &&
-                   (!filters.priceMax || product.sizes[0].price <= filters.priceMax) &&
-                   (filters.availability === null || product.availability === filters.availability) &&
-                   (!filters.color || (product.colors && product.colors.includes(filters.color))) &&
-                   (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
-                   (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
-                   (!filters.sale || product.onSale) &&
-                   (!filters.clearance || product.onClearance);
+                (!filters.subcategory || product.subcategory === filters.subcategory) &&
+                (!filters.subSubcategory || product.subSubcategory === filters.subSubcategory) &&
+                (!filters.priceMin || product.sizes[0].price >= filters.priceMin) &&
+                (!filters.priceMax || product.sizes[0].price <= filters.priceMax) &&
+                (filters.availability === null || product.availability === filters.availability) &&
+                (!filters.color || (product.colors && product.colors.includes(filters.color))) &&
+                (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
+                (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
+                (!filters.sale || product.onSale) &&
+                (!filters.clearance || product.onClearance);
         });
         filteredProducts.forEach(([key, product]) => {
             if (containerId === 'mainProducts' ||
@@ -188,6 +282,7 @@ function renderProductCard(container, key, product, sectionId) {
             </select></div>
             <p class="availability">${product.availability ? '<span style="color: green;">В наявності</span>' : '<span style="color: red;">Немає в наявності</span>'}</p>
             <p class="product-price"><span class="sale-price" id="price_${key}">${salePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${key}">${originalPrice} грн</del>` : ''}</p>
+            
             <div class="product-button-order">
                 <button class="addToCart" data-id="${key}"><i class="material-icons">shopping_cart</i></button>
                 <button class="buyNow" data-id="${key}">Замовити</button>
@@ -242,14 +337,22 @@ function renderCart() {
             productDiv.dataset.productId = item.id;
             productDiv.innerHTML = `
                 <img src="${product.photo}" alt="${product.name}">
-                <h3>${product.name}</h3>
-                <p>${product.description}</p>
-                <div class="sizes"><select class="size-select" onchange="updateCartSize(${index}, this.value); updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price, this.value, '${item.id}')">
-                    ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
-                </select></div>
-                <p>Ціна: <span id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
-                ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
-                <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
+                <div class="order-items-content">
+                    <div class="order-items-desc">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
+                    </div>
+                    <div class="order-items-bottom">
+                        <div class="order-items-price">
+                            <p class="product-price"><span class="sale-price"  id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
+                        </div>
+                            <div class="sizes"><select class="size-select" onchange="updateCartSize(${index}, this.value); updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price, this.value, '${item.id}')">
+                                ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
+                            </select></div>
+                            <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
+                    </div>
+                </div>
             `;
             cartItems.appendChild(productDiv);
         });
@@ -347,14 +450,21 @@ function renderOrderItems(orderItems) {
         productDiv.dataset.productId = item.id;
         productDiv.innerHTML = `
             <img src="${product.photo}" alt="${product.name}">
-            <h3>${product.name}</h3>
-            <p>${product.description}</p>
-            <div class="sizes"><select class="size-select" onchange="updateOrderItemSize(${index}, this.value)">
-                ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
-            </select></div>
-            <p>Ціна: <span id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
-            ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
-            ${product.rooms?.length ? `<p>Кімнати: ${product.rooms.map(room => roomTranslations[room] || room).join(', ')}</p>` : ''}
+            <div class="order-items-content">
+                <div class="order-items-desc">
+                    <h3>${product.name}</h3>
+                    <p>${product.description}</p>
+                    ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
+                </div>
+                <div class="order-items-bottom">
+                    <div class="order-items-price">
+                        <p class="product-price"><span class="sale-price" id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
+                    </div>
+                    <div class="sizes"><select class="size-select" onchange="updateOrderItemSize(${index}, this.value)">
+                        ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
+                    </select></div>
+                </div>
+            </div>
         `;
         productDiv.querySelector('.size-select')?.addEventListener('change', (e) => {
             updatePrice(`price_${index}`, e.target.options[e.target.selectedIndex].dataset.price, e.target.value, item.id);
@@ -1116,6 +1226,27 @@ document.getElementById('applyFilters')?.addEventListener('click', () => {
     renderContent(currentFilters);
 });
 
+let productsLoaded = false;
+let promosLoaded = false;
+
+function tryRenderContent() {
+    if (productsLoaded && promosLoaded) {
+        renderContent(currentFilters);
+    }
+}
+
+onValue(ref(database, 'products'), (snapshot) => {
+    products = snapshot.val() || {};
+    productsLoaded = true;
+    tryRenderContent();
+});
+
+onValue(ref(database, 'promos'), (snapshot) => {
+    promos = snapshot.val() || {};
+    promosLoaded = true;
+    tryRenderContent();
+});
+
 function updateColorSelects() {
     const colorSelects = [document.getElementById('productColors'), document.getElementById('editProductColors'), document.getElementById('color')].filter(el => el);
     colorSelects.forEach(select => {
@@ -1158,6 +1289,11 @@ function updateSubcategorySelects() {
     });
 }
 
+
+
+
+
+
 document.getElementById('addColor')?.addEventListener('click', () => {
     const colorInput = document.getElementById('colorInput')?.value.trim() || '';
     if (colorInput && !colors.includes(colorInput)) {
@@ -1185,3 +1321,4 @@ document.getElementById('editOnSale')?.addEventListener('change', toggleDiscount
 window.updatePrice = updatePrice;
 window.removeFromCart = removeFromCart;
 window.updateCartSize = updateCartSize;
+

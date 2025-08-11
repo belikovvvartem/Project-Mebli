@@ -17,10 +17,10 @@
 </head>
 <body>
     <header>
-        <div class="logo">
+        <a href="./index.html" class="logo">
             <img src="./img/omelyan-logo.png" alt="">
             <h1>Omelyan Mebli</h1>
-        </div>
+        </a>
         <div class="search">
             <div class="search-nav">
                 <ul>
@@ -38,16 +38,27 @@
 
     <main>
         <aside class="category-menu">
-            <h3>Підкатегорії</h3>
+            <ul id="mainCategories">
+            </ul>
             <ul id="subcategoryList"></ul>
         </aside>
+
+        <section class="main-section">
 
         <section>
             <button id="filterBtn">Фільтри</button>
             <div id="filters" class="filters">
+                <div class="price-input">
                 <input type="number" id="priceMin" placeholder="Мін. ціна">
                 <input type="number" id="priceMax" placeholder="Макс. ціна">
+                </div>
+
+                <div class="filter-inputs">
                 <label><input type="checkbox" id="availability"> Наявність</label>
+                <label><input type="checkbox" id="onSaleOnly"> Тільки акційні</label>
+                </div>
+
+                <div class="filter-select">
                 <select id="color">Колір: Виберіть колір</select>
                 <select id="material">Матеріал: Виберіть матеріал</select>
                 <select id="room">
@@ -59,7 +70,7 @@
                     <option value="kitchen">Кухня</option>
                     <option value="office">Офіс</option>
                 </select>
-                <label><input type="checkbox" id="onSaleOnly"> Тільки акційні</label>
+                </div>
                 <button id="applyFilters">Застосувати</button>
             </div>
             <div id="roomProducts" class="products"></div>
@@ -82,8 +93,10 @@
                     <input type="text" id="orderName" placeholder="ПІБ" required>
                     <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
                     <input type="text" id="orderCountry" placeholder="Країна" required>
+                    <div class="region-citi">
                     <input type="text" id="orderRegion" placeholder="Область" required>
                     <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                    </div>
                     <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
                     <h3>Товари у замовленні</h3>
                     <div id="orderItems" class="products"></div>
@@ -99,10 +112,53 @@
             </div>
         </div>
         <div id="notification"></div>
+        <footer>
+            <div class="footer-top">
+                <a href="./index.html" class="logo">
+                    <img src="./img/omelyan-logo.png" alt="">
+                    <h1>Omelyan Mebli</h1>
+                </a>
+                <div class="footer-category">
+                    <h3>Категорії</h3>
+                    <a href="room.html?category=beds">Ліжка</a>
+                    <a href="room.html?category=sofas">Дивани</a>
+                    <a href="room.html?category=wardrobes">Шафи</a>
+                    <a href="room.html?category=tables">Столи</a>
+                    <a href="room.html?category=chairs">Стільці</a>
+                    <a href="room.html?category=mattresses">Матраци</a>
+                </div>
+                <div class="footer-by-room">
+                    <h3>По кімнатах</h3>
+                    <a href="room.html?room=living_room">Вітальня</a>
+                    <a href="room.html?room=bedroom">Спальня кімната</a>
+                    <a href="room.html?room=nursery">Дитячя</a>
+                    <a href="room.html?room=kitchen">Кухня</a>
+                    <a href="room.html?room=hallway">Передпокій</a>
+                    <a href="room.html?room=office">Офіс</a>
+                </div>
+                <div class="social-link">
+                    <h3>Соцмережі</h3>
+                    <a href="#">Instagram</a>
+                    <a href="#">FaceBook</a>
+                    <a href="#">TikTok</a>
+                    <a href="#"></a>
+                    <a href="#"></a>
+                    <a href="#"></a>
+                </div>
+                <div class="contact">
+                    <p><a href="mailto:"></a></p>
+                    <p><a href="tel:+"></a></p>
+                    <p></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
+                <div class="privacy-policy"><a href="./privacy-policy.html?from=room">Політика конфіденційності</a></div>
+                <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix Agency</a></div>
+            </div>
+        </footer>
+        </section>
     </main>
 
-    <footer>
-        <p>© 2025 Магазин меблів. Усі права захищено.</p>
-    </footer>
 </body>
 </html>
