@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config();
+require('dotenv').config(); // Залишаємо для локального тестування, якщо потрібно
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,21 +12,23 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Перевірка змінних оточення
-if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
-    console.error('Error: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is not set');
+if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_IDS) {
+    console.error('Error: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_IDS is not set');
     process.exit(1);
 }
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
-const chatId = process.env.TELEGRAM_CHAT_ID;
+const chatIds = process.env.TELEGRAM_CHAT_IDS.split(',').map(id => id.trim());
 let bot;
 
 try {
-    bot = new TelegramBot(token, { polling: false }); // Вимкнено polling для уникнення повторних помилок
+    bot = new TelegramBot(token, { polling: false });
     console.log('Telegram bot initialized successfully');
-    // Тестове повідомлення для перевірки підключення
-    bot.sendMessage(chatId, 'Server started successfully').catch(err => {
-        console.error('Test message failed:', err.message);
+    // Тестове повідомлення для всіх чатів
+    chatIds.forEach(chatId => {
+        bot.sendMessage(chatId, 'Server started successfully').catch(err => {
+            console.error(`Test message failed for chat ${chatId}:`, err.message);
+        });
     });
 } catch (error) {
     console.error('Failed to initialize Telegram bot:', error.message);
@@ -70,9 +72,18 @@ app.post('/sendOrder', async (req, res) => {
 ${productList}
         `;
 
-        // Відправка повідомлення в Telegram
-        await bot.sendMessage(chatId, message);
-        console.log('Order sent to Telegram:', message);
+        // Відправка повідомлення до всіх чатів
+        const sendPromises = chatIds.map(chatId =>
+            bot.sendMessage(chatId, message).catch(err => {
+                console.error(`Failed to send message to chat ${chatId}:`, err.message);
+                return null; // Продовжуємо виконання, навіть якщо один чат не вдався
+            })
+        );
+
+        // Чекаємо завершення всіх відправок
+        await Promise.all(sendPromises);
+
+        console.log('Order sent to Telegram for all chat IDs:', chatIds);
         res.status(200).json({ message: 'Order sent successfully' });
     } catch (error) {
         console.error('Error processing order:', error.message, error.stack);
