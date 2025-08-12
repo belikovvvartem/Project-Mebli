@@ -8,7 +8,7 @@ const auth = getAuth();
 const database = getDatabase();
 
 let products = {}, banners = {}, promos = {}, colors = [], materials = [], subcategories = {};
-let currentFilters = { category: 'all', subcategory: null, subSubcategory: null, priceMin: null, priceMax: null, availability: null, color: null, material: null, room: null, sale: null, clearance: null };
+let currentFilters = { category: 'all', subcategory: null, subSubcategory: null, priceMin: null, priceMax: null, availability: null, color: null, material: null, room: null, sale: null, clearance: null, search: null };
 let isInitialLoad = true;
 
 const categoryTranslations = {
@@ -250,7 +250,22 @@ function renderContent(filters) {
                 (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
                 (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
                 (!filters.sale || product.onSale) &&
-                (!filters.clearance || product.onClearance);
+                (!filters.clearance || product.onClearance) &&
+                // Додано умову для пошуку
+                (!filters.search || (
+                    product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+                    (product.description && product.description.toLowerCase().includes(filters.search.toLowerCase())) ||
+                    (product.category && product.category.toLowerCase().includes(filters.search.toLowerCase())) ||
+                    (product.subcategory && product.subcategory.toLowerCase().includes(filters.search.toLowerCase())) ||
+                    (product.subSubcategory && product.subSubcategory.toLowerCase().includes(filters.search.toLowerCase())) ||
+                    (product.colors && product.colors.some(color => color.toLowerCase().includes(filters.search.toLowerCase()))) ||
+                    (product.materials && product.materials.some(material => material.toLowerCase().includes(filters.search.toLowerCase()))) ||
+                    (product.rooms && product.rooms.some(room => room.toLowerCase().includes(filters.search.toLowerCase()))) ||
+                    (product.sizes && product.sizes.some(size => 
+                        size.size.toLowerCase().includes(filters.search.toLowerCase()) || 
+                        size.price.toString().includes(filters.search.toLowerCase())
+                    ))
+                ));
         });
         filteredProducts.forEach(([key, product]) => {
             if (containerId === 'mainProducts' ||
@@ -262,6 +277,7 @@ function renderContent(filters) {
         });
     });
 }
+
 
 function renderProductCard(container, key, product, sectionId) {
     const productDiv = document.createElement('div');
@@ -1321,4 +1337,88 @@ document.getElementById('editOnSale')?.addEventListener('change', toggleDiscount
 window.updatePrice = updatePrice;
 window.removeFromCart = removeFromCart;
 window.updateCartSize = updateCartSize;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBar = document.getElementById('searchBar');
+    const searchButton = document.getElementById('searchButton');
+
+    // Перевіряємо, чи знайдені елементи
+    if (searchBar && searchButton) {
+        const handleSearch = () => {
+            const query = searchBar.value.trim(); // Оригінальний текст
+            currentFilters.search = query ? query.toLowerCase() : null;
+
+            // Перевіряємо, чи ми на index.html, privacy-policy.html, або кореневій сторінці
+            if (
+                window.location.pathname.includes('index.html') ||
+                window.location.pathname === '/' ||
+                window.location.pathname === '' ||
+                window.location.pathname.includes('privacy-policy.html')
+            ) {
+                if (query) {
+                    window.location.href = `room.html?search=${query}`; // Без кодування
+                }
+            } else if (window.location.pathname.includes('room.html')) {
+                const url = new URL(window.location);
+                if (query) {
+                    url.searchParams.set('search', query); // Без кодування
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.pushState({}, '', url);
+                renderContent(currentFilters);
+            }
+        };
+
+        searchButton.addEventListener('click', handleSearch);
+
+        searchBar.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        searchBar.addEventListener('input', () => {
+            const query = searchBar.value.trim(); // Оригінальний текст
+            currentFilters.search = query ? query.toLowerCase() : null;
+            if (window.location.pathname.includes('room.html')) {
+                const url = new URL(window.location);
+                if (query) {
+                    url.searchParams.set('search', query); // Без кодування
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.pushState({}, '', url);
+                renderContent(currentFilters);
+            }
+        });
+    } else {
+        console.warn('searchBar or searchButton not found in DOM');
+    }
+
+    // Ініціалізація пошуку на room.html
+    if (window.location.pathname.includes('room.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchQuery = urlParams.get('search');
+        if (searchQuery) {
+            currentFilters.search = searchQuery.toLowerCase();
+            if (searchBar) searchBar.value = searchQuery; // Використовуємо оригінальний текст
+            renderContent(currentFilters);
+        }
+    }
+
+    // Обробка popstate для коректного відновлення стану
+    window.addEventListener('popstate', () => {
+        if (window.location.pathname.includes('room.html')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            currentFilters.search = searchQuery ? searchQuery.toLowerCase() : null;
+            if (searchBar) searchBar.value = searchQuery || '';
+            renderContent(currentFilters);
+        }
+    });
+
+    // Збереження іншої логіки для категорій
+    renderCategories();
+});
 

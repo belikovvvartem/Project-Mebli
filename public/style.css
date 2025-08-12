@@ -53,6 +53,17 @@ header {
     z-index: 100;
 }
 
+section > h2{
+    color: var(--dark-blue);
+    font-size: 35px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+section {
+    margin-top: 80px;
+}
+
 .logo {
     display: flex;
     align-items: center;
@@ -68,11 +79,19 @@ header {
 
 .search-nav ul {
     display: flex;
-    gap: 30px;
+    align-items: center;
+    gap: 65px;
     list-style: none;
 }
 
+.search-nav ul li {
+    margin-left: -35px;
+}
+
 .search-nav ul li a{
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-decoration: none;
     color: var(--text-black);
     transition: all 0.2s ease-in-out;
@@ -82,15 +101,21 @@ header {
     color: var(--primary-blue);
 }
 
+.search-nav ul li a img {
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+}
+
 
 
 
 #searchBar {
-    padding: 10px 15px;
+    padding: 15px 15px;
     border: 3px solid var(--primary-blue);
-    border-radius: 15px;
+    border-radius: 15px 0 0 15px;
     width: 100%;
-    font-size: 0.95em;
+    font-size: 18px;
     background: var(--card-background);
     transition: box-shadow 0.3s ease;
 }
@@ -98,6 +123,31 @@ header {
 #searchBar:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.search-content {
+    display: flex;
+}
+
+#searchButton {
+    padding: 5px;
+    border-radius: 0 15px 15px 0;
+    cursor: pointer;
+    background: var(--primary-blue);
+    color: var(--background-light);
+    border: 3px solid var(--primary-blue);
+    width: 70px;
+    transition: all 0.5s ease;
+}
+
+#searchButton:hover {
+    background: var(--background-light);
+    color: var(--primary-blue);
+}
+
+#searchButton i {
+    font-size: 30px;
+    font-weight: 600;
 }
 
 #cartBtn {
@@ -128,10 +178,10 @@ main {
 
 .category-menu {
     display: flex;
-    height: 580px;
+    height: 590px;
     background: var(--background-light);
     position: sticky;
-    top: 137px;
+    top: 145px;
 }
 
 main>section {
@@ -193,10 +243,6 @@ main>section {
     font-size: 0.95em;
 }
 
-.category-menu .products-by-room h2 {
-    font-size: clamp(1.2em, 3vw, 1.4em);
-    margin-bottom: 10px;
-}
 
 .view-all {
     display: flex;
@@ -412,15 +458,6 @@ main>section {
 .clearance-products{
     margin: 40px 0;
     width: 100%;
-}
-
-.products-by-room h2,
-.sale-products h2,
-.clearance-products h2{
-    color: var(--dark-blue);
-    font-size: clamp(1.5em, 4vw, 1.8em);
-    margin-bottom: 20px;
-    font-weight: 600;
 }
 
 .products {
@@ -646,12 +683,12 @@ footer {
     margin-bottom: 5px;
 }
 
-.footer-category, .footer-by-room, .social-link {
+.footer-category, .footer-by-room, .social-link, .contact {
     display: flex;
     flex-direction: column;
 }
 
-.footer-category a, .footer-by-room a, .social-link a {
+.footer-category a, .footer-by-room a, .social-link a, .contact a {
     color: var(--text-black);
     text-decoration: none;
 }

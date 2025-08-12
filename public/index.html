@@ -20,36 +20,37 @@
         <div class="search">
             <div class="search-nav">
                 <ul>
-                    <li><a href="">В наявності</a></li>
-                    <li><a href="room.html?clearance=true">Розпродаж</a></li>
-                    <li><a href="">Доставка та оплата</a></li>
-                    <li><a href="">Адреса</a></li>
+                    <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png" alt=""> В наявності</a></li>
+                    <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt=""> Розпродаж</a></li>
+                    <li><a href=""><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та оплата</a></li>
+                    <li><a href=""><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
                 </ul>
             </div>
-            <input type="text" id="searchBar" placeholder="Пошук...">
+            <div class="search-content">
+            <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
+            <button id="searchButton" class="search-button">
+                <i class="material-icons">search</i>
+            </button>
+            </div>
         </div>
 
-        <button id="cartBtn"><i class="material-icons">shopping_cart</i> <span>Кошик</span></button>
+        <button id="cartBtn"><img src="./img/icons/cart.png" alt="" style="width: 30px; height: 30px;"><span>Кошик</span></button>
     </header>
 
     <main>
         <div id="notification"></div>
-
-
         <aside class="category-menu">
             <ul id="mainCategories">
             </ul>
         </aside>
 
         <section class="main-section">
-
             <div class="slider">
                 <div class="slides"></div>
                 <button class="prev">❮</button>
                 <button class="next">❯</button>
                 <div class="dots"></div>
             </div>
-
             <section class="why-us">
                 <h2>Чому ми?</h2>
                 <div class="why-us__container">
@@ -76,17 +77,13 @@
                     </div>
                 </div>
             </section>
-
-
             <section class="sale-products">
                 <h2>Акційні товари</h2>
                 <div id="saleProducts" class="products"></div>
                 <button class="view-all" onclick="window.location.href='room.html?sale=true'">Переглянути всі <i
                         class="material-icons">east</i></button>
             </section>
-
-
-            <div class="products-by-room">
+            <section class="products-by-room">
                 <h2>Меблі за кімнатами</h2>
                 <ul>
                     <div class="product-room-top">
@@ -100,17 +97,13 @@
                         <li data-tag="office" class="office"><a href="room.html?room=office">Офіс <i class="material-icons">east</i> </a></li>
                     </div>
                 </ul>
-            </div>
-
-
-            <div class="clearance-products">
+            </section>
+            <section class="clearance-products">
                 <h2>Товари на розпродажі</h2>
                 <div id="clearanceProducts" class="products"></div>
                 <button class="view-all" onclick="window.location.href='room.html?clearance=true'">Переглянути
                     всі <i class="material-icons">east</i></button>
-            </div>
-
-
+            </section>
             <div id="cartModal" class="modal">
                 <div class="modal-content">
                     <span class="close">&times;</span>
@@ -172,16 +165,14 @@
                     </div>
                     <div class="social-link">
                         <h3>Соцмережі</h3>
-                        <a href="#">Instagram</a>
-                        <a href="#">FaceBook</a>
-                        <a href="#">TikTok</a>
-                        <a href="#"></a>
-                        <a href="#"></a>
-                        <a href="#"></a>
+                        <a href="https://www.instagram.com/omelyan.mebli/">Instagram</a>
+                        <a href="https://www.facebook.com/p/%D0%9E%D0%BC%D0%B5%D0%BB%D1%8F%D0%BD-%D0%9C%D0%B5%D0%B1%D0%BB%D1%96-%D0%97%D0%B0%D0%BA%D0%B0%D1%80%D0%BF%D0%B0%D1%82%D1%82%D1%8F-%D0%92%D0%BE%D0%BB%D0%B8%D0%BD%D1%8C-%D0%9B%D1%8C%D0%B2%D1%96%D0%B2-%D0%86%D0%B2%D0%B0%D0%BD%D0%BE-%D0%A4%D1%80%D0%B0%D0%BD%D0%BA%D1%96%D0%B2%D1%81%D1%8C%D0%BA-100090895882157/">FaceBook</a>
+                        <a href="https://www.tiktok.com/@omelyan.mebli">TikTok</a>
                     </div>
                     <div class="contact">
+                        <h3>Контакти</h3>
                         <p><a href="mailto:"></a></p>
-                        <p><a href="tel:+"></a></p>
+                        <p><a href="tel:+380678692144">+380 67 869 2144</a></p>
                         <p></p>
                     </div>
                 </div>
