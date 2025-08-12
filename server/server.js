@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config(); // Залишаємо для локального тестування, якщо потрібно
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,12 +24,7 @@ let bot;
 try {
     bot = new TelegramBot(token, { polling: false });
     console.log('Telegram bot initialized successfully');
-    // Тестове повідомлення для всіх чатів
-    chatIds.forEach(chatId => {
-        bot.sendMessage(chatId, 'Server started successfully').catch(err => {
-            console.error(`Test message failed for chat ${chatId}:`, err.message);
-        });
-    });
+    console.log('Chat IDs:', chatIds);
 } catch (error) {
     console.error('Failed to initialize Telegram bot:', error.message);
     process.exit(1);
@@ -46,20 +41,22 @@ app.post('/sendOrder', async (req, res) => {
             return res.status(400).json({ error: 'Invalid order data' });
         }
 
-        // Перевірка товарів
+        // Перевірка товарів і формування списку з гіперпосиланням на фото
         const productList = products.map(p => {
             if (!p.name || !p.size || !p.price || !p.photo) {
                 throw new Error('Invalid product data');
             }
+            // Перевірка, що p.photo є дійсним URL
+            const photoLink = p.photo.match(/^https?:\/\/[^\s]+$/) ? `[Фото](${p.photo})` : 'Фото недоступне';
             return `
 - 🪑 ${p.name}
   📏 Розмір: ${p.size}
   💵 Ціна: ${p.price}
-  🖼 Фото: ${p.photo}
+  🖼 ${photoLink}
 `;
         }).join('');
 
-        // Формування повідомлення
+        // Формування повідомлення в Markdown
         const message = `
 🆕 НОВЕ ЗАМОВЛЕННЯ
 👤 Ім'я: ${name}
@@ -72,18 +69,35 @@ app.post('/sendOrder', async (req, res) => {
 ${productList}
         `;
 
-        // Відправка повідомлення до всіх чатів
-        const sendPromises = chatIds.map(chatId =>
-            bot.sendMessage(chatId, message).catch(err => {
-                console.error(`Failed to send message to chat ${chatId}:`, err.message);
-                return null; // Продовжуємо виконання, навіть якщо один чат не вдався
-            })
-        );
+        // Відправка повідомлення з урахуванням обмеження в 4000 символів
+        if (message.length > 4000) {
+            const messages = message.match(/.{1,4000}/g); // Розбиваємо на частини
+            for (const chatId of chatIds) {
+                for (const msgPart of messages) {
+                    try {
+                        console.log(`Sending order part to chat ${chatId}`);
+                        await bot.sendMessage(chatId, msgPart, { parse_mode: 'Markdown' });
+                        console.log(`Order part successfully sent to chat ${chatId}`);
+                        await new Promise(resolve => setTimeout(resolve, 100)); // Затримка 100 мс
+                    } catch (err) {
+                        console.error(`Failed to send order part to chat ${chatId}:`, err.message);
+                    }
+                }
+            }
+        } else {
+            for (const chatId of chatIds) {
+                try {
+                    console.log(`Sending order to chat ${chatId}`);
+                    await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+                    console.log(`Order successfully sent to chat ${chatId}`);
+                    await new Promise(resolve => setTimeout(resolve, 100)); // Затримка 100 мс
+                } catch (err) {
+                    console.error(`Failed to send order to chat ${chatId}:`, err.message);
+                }
+            }
+        }
 
-        // Чекаємо завершення всіх відправок
-        await Promise.all(sendPromises);
-
-        console.log('Order sent to Telegram for all chat IDs:', chatIds);
+        console.log('Order processing completed for all chat IDs:', chatIds);
         res.status(200).json({ message: 'Order sent successfully' });
     } catch (error) {
         console.error('Error processing order:', error.message, error.stack);
