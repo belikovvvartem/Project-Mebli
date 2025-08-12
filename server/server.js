@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const TelegramBot = require('node-telegram-bot-api');
-require('dotenv').config();
+require('dotenv').config(); // Залишаємо для локального тестування, якщо потрібно
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,6 +18,7 @@ if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_IDS) {
 }
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
+// Розділяємо TELEGRAM_CHAT_IDS на масив
 const chatIds = process.env.TELEGRAM_CHAT_IDS.split(',').map(id => id.trim());
 let bot;
 
@@ -25,27 +26,15 @@ try {
     bot = new TelegramBot(token, { polling: false });
     console.log('Telegram bot initialized successfully');
     console.log('Chat IDs:', chatIds);
+    // Тестове повідомлення для всіх чатів
+    chatIds.forEach(chatId => {
+        bot.sendMessage(chatId, 'Server started successfully').catch(err => {
+            console.error(`Test message failed for chat ${chatId}:`, err.message);
+        });
+    });
 } catch (error) {
     console.error('Failed to initialize Telegram bot:', error.message);
     process.exit(1);
-}
-
-// Функція для екранування спеціальних символів у Markdown
-function escapeMarkdown(text) {
-    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
-}
-
-// Функція для перевірки та очищення URL
-function sanitizeUrl(url) {
-    try {
-        // Перевірка, чи URL є дійсним
-        new URL(url);
-        // Заміна пробілів і кодування спеціальних символів
-        return encodeURI(url.replace(/\s/g, '%20'));
-    } catch (e) {
-        console.error(`Invalid URL: ${url}`);
-        return null;
-    }
 }
 
 app.post('/sendOrder', async (req, res) => {
@@ -59,80 +48,42 @@ app.post('/sendOrder', async (req, res) => {
             return res.status(400).json({ error: 'Invalid order data' });
         }
 
-        // Екранування спеціальних символів у полях
-        const escapedName = escapeMarkdown(name);
-        const escapedPhone = escapeMarkdown(phone);
-        const escapedCountry = escapeMarkdown(country);
-        const escapedRegion = escapeMarkdown(region);
-        const escapedCity = escapeMarkdown(city);
-        const escapedComment = comment ? escapeMarkdown(comment) : 'Немає';
-
-        // Перевірка товарів і формування списку з гіперпосиланням на фото
+        // Перевірка товарів
         const productList = products.map(p => {
             if (!p.name || !p.size || !p.price || !p.photo) {
                 throw new Error('Invalid product data');
             }
-            const escapedProductName = escapeMarkdown(p.name);
-            const escapedSize = escapeMarkdown(p.size);
-            const escapedPrice = escapeMarkdown(p.price.toString());
-            // Очищення та перевірка URL
-            const sanitizedPhoto = sanitizeUrl(p.photo);
-            const photoLink = sanitizedPhoto ? `[Фото](${sanitizedPhoto})` : 'Фото недоступне';
             return `
-- 🪑 ${escapedProductName}
-  📏 Розмір: ${escapedSize}
-  💵 Ціна: ${escapedPrice}
-  🖼 ${photoLink}
+- 🪑 ${p.name}
+  📏 Розмір: ${p.size}
+  💵 Ціна: ${p.price}
+  🖼 Фото: ${p.photo}
 `;
         }).join('');
 
-        // Формування повідомлення в Markdown
+        // Формування повідомлення
         const message = `
 🆕 НОВЕ ЗАМОВЛЕННЯ
-👤 Ім'я: ${escapedName}
-📞 Телефон: ${escapedPhone}
-📍 Країна: ${escapedCountry}
-📍 Область: ${escapedRegion}
-📍 Місто/Село: ${escapedCity}
-📝 Коментар: ${escapedComment}
+👤 Ім'я: ${name}
+📞 Телефон: ${phone}
+📍 Країна: ${country}
+📍 Область: ${region}
+📍 Місто/Село: ${city}
+📝 Коментар: ${comment || 'Немає'}
 🛒 Товари:
 ${productList}
         `;
 
-        console.log('Message to send:', message);
-
-        // Функція для безпечного розбиття повідомлення
-        function splitMessage(message, maxLength = 4000) {
-            const parts = [];
-            let currentPart = '';
-            const lines = message.split('\n');
-
-            for (const line of lines) {
-                // Якщо додавання рядка перевищить ліміт, зберігаємо поточну частину
-                if (currentPart.length + line.length + 1 > maxLength) {
-                    if (currentPart) parts.push(currentPart);
-                    currentPart = line + '\n';
-                } else {
-                    currentPart += line + '\n';
-                }
-            }
-            if (currentPart) parts.push(currentPart);
-            return parts;
-        }
-
-        // Відправка повідомлення з урахуванням обмеження в 4000 символів
-        const messages = message.length > 4000 ? splitMessage(message, 4000) : [message];
+        // Послідовна відправка повідомлень до всіх чатів із затримкою
         for (const chatId of chatIds) {
-            for (let i = 0; i < messages.length; i++) {
-                const msgPart = messages[i];
-                try {
-                    console.log(`Sending order part ${i + 1} to chat ${chatId}`);
-                    await bot.sendMessage(chatId, msgPart, { parse_mode: 'Markdown' });
-                    console.log(`Order part ${i + 1} successfully sent to chat ${chatId}`);
-                    await new Promise(resolve => setTimeout(resolve, 100)); // Затримка 100 мс
-                } catch (err) {
-                    console.error(`Failed to send order part ${i + 1} to chat ${chatId}:`, err.message);
-                }
+            try {
+                console.log(`Sending order to chat ${chatId}`);
+                await bot.sendMessage(chatId, message);
+                console.log(`Order successfully sent to chat ${chatId}`);
+                // Затримка 100 мс між відправками, щоб уникнути обмежень Telegram API
+                await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (err) {
+                console.error(`Failed to send order to chat ${chatId}:`, err.message);
             }
         }
 
@@ -144,11 +95,3 @@ ${productList}
     }
 });
 
-// Тестовий ендпоінт
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'Server is running' });
-});
-
-app.listen(port, () => {
-    console.log(`Server running at port ${port}`);
-});
