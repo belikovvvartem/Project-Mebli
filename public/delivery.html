@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Omelyan Mebli</title>
+    <title>Доставка та оплата | Omelyan Mebli</title>
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script type="module" src="script.js"></script>
-    <style>
-        #filters {
-            display: none;
-        }
-    </style>
 </head>
 <body>
     <header>
-        <a href="./index.html" class="logo">
+        <a href="./index.html" class="logo" id="backBtn">
             <img src="./img/omelyan-logo.png" alt="">
             <h1>Omelyan Mebli</h1>
         </a>
@@ -25,7 +20,7 @@
                 <ul>
                     <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png" alt=""> В наявності</a></li>
                     <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt=""> Розпродаж</a></li>
-                    <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та оплата</a></li>
+                    <li><a href="#"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та оплата</a></li>
                     <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
                 </ul>
             </div>
@@ -41,43 +36,12 @@
     </header>
 
     <main>
-        <aside class="category-menu category-menu-room">
+        <div id="notification"></div>
+        <aside class="category-menu">
             <ul id="mainCategories"></ul>
-            <ul id="subcategoryList"></ul>
         </aside>
 
         <section class="main-section">
-
-        <section>
-            <button id="filterBtn">Фільтри</button>
-            <div id="filters" class="filters">
-                <div class="price-input">
-                <input type="number" id="priceMin" placeholder="Мін. ціна">
-                <input type="number" id="priceMax" placeholder="Макс. ціна">
-                </div>
-
-                <div class="filter-inputs">
-                <label><input type="checkbox" id="availability"> Наявність</label>
-                <label><input type="checkbox" id="onSaleOnly"> Тільки акційні</label>
-                </div>
-
-                <div class="filter-select">
-                <select id="color">Колір: Виберіть колір</select>
-                <select id="material">Матеріал: Виберіть матеріал</select>
-                <select id="room">
-                    <option value="">Кімната: Виберіть кімнату</option>
-                    <option value="living_room">Вітальня</option>
-                    <option value="bedroom">Спальна кімната</option>
-                    <option value="nursery">Дитяча</option>
-                    <option value="hallway">Передпокій</option>
-                    <option value="kitchen">Кухня</option>
-                    <option value="office">Офіс</option>
-                </select>
-                </div>
-                <button id="applyFilters">Застосувати</button>
-            </div>
-            <div id="roomProducts" class="products"></div>
-        </section>
 
         <div id="cartModal" class="modal">
             <div class="modal-content">
@@ -114,7 +78,6 @@
                 <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
             </div>
         </div>
-        <div id="notification"></div>
         <footer>
             <div class="footer-top">
                 <a href="./index.html" class="logo">
@@ -154,12 +117,11 @@
             </div>
             <div class="footer-bottom">
                 <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
-                <div class="privacy-policy"><a href="./privacy-policy.html?from=room">Політика конфіденційності</a></div>
+                <div class="privacy-policy"><a href="./privacy-policy.html?from=index">Політика конфіденційності</a></div>
                 <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix Agency</a></div>
             </div>
         </footer>
         </section>
     </main>
-
 </body>
 </html>

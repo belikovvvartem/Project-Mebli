@@ -4,11 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин меблів</title>
+    <title>Omelyan Mebli</title>
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.7/css/swiper.min.css">
     <script type="module" src="script.js"></script>
+    <script type="module" src="swiper.js"></script>
 </head>
 
 <body class="index">
@@ -20,30 +22,96 @@
         <div class="search">
             <div class="search-nav">
                 <ul>
-                    <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png" alt=""> В наявності</a></li>
-                    <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt=""> Розпродаж</a></li>
-                    <li><a href=""><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та оплата</a></li>
-                    <li><a href=""><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
+                    <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png"
+                                alt=""> В наявності</a></li>
+                    <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="">
+                            Розпродаж</a></li>
+                    <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та
+                            оплата</a></li>
+                    <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
                 </ul>
             </div>
             <div class="search-content">
-            <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
-            <button id="searchButton" class="search-button">
-                <i class="material-icons">search</i>
-            </button>
+                <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
+                <button id="searchButton" class="search-button">
+                    <i class="material-icons">search</i>
+                </button>
             </div>
         </div>
 
-        <button id="cartBtn"><img src="./img/icons/cart.png" alt="" style="width: 30px; height: 30px;"><span>Кошик</span></button>
+        <button id="cartBtn"><img src="./img/icons/cart.png" alt=""
+                style="width: 30px; height: 30px;"><span>Кошик</span></button>
     </header>
-
     <main>
+        <div class="swiper-nav">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/bed.png" alt="">
+                                <h1>Ліжка</h1>
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/sofa.png" alt="">
+                                <h1>Дивани</h1>
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/cabinet.png" alt="">
+                                <h1>Шафи</h1>
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/table.png" alt="">
+                                <h1>Столи</h1>
+                            </li>
+                        </a>
+                    </div>
+                    <div class="swiper-slide">
+    
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/chair.png" alt="">
+                                <h1>Стільці</h1>
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/mattress.png" alt="">
+                                <h1>Матраци</h1>
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/percentage.png" alt="">
+                                <h1>Акційні</h1>
+                            </li>
+                        </a>
+                        <a href="">
+                            <li>
+                                <img src="./img/icons/sale.png" alt="">
+                                <h1>Розпродаж</h1>
+                            </li>
+                        </a>
+                    </div>
+                </div>
+                
+    
+    
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+    </div>
         <div id="notification"></div>
         <aside class="category-menu">
             <ul id="mainCategories">
             </ul>
         </aside>
-
         <section class="main-section">
             <div class="slider">
                 <div class="slides"></div>
@@ -87,16 +155,23 @@
                 <h2>Меблі за кімнатами</h2>
                 <ul>
                     <div class="product-room-top">
-                        <li data-tag="living_room" class="living-room"><a href="room.html?room=living_room">Вітальня <i class="material-icons">east</i> </a></li>
-                        <li data-tag="bedroom" class="bedroom"><a href="room.html?room=bedroom">Спальна кімната <i class="material-icons">east</i> </a></li>
-                        <li data-tag="nursery" class="baby-room"><a href="room.html?room=nursery">Дитяча <i class="material-icons">east</i> </a></li>
+                        <li data-tag="living_room" class="living-room"><a href="room.html?room=living_room">Вітальня <i
+                                    class="material-icons">east</i> </a></li>
+                        <li data-tag="bedroom" class="bedroom"><a href="room.html?room=bedroom">Спальна кімната <i
+                                    class="material-icons">east</i> </a></li>
+                        <li data-tag="nursery" class="baby-room"><a href="room.html?room=nursery">Дитяча <i
+                                    class="material-icons">east</i> </a></li>
                     </div>
                     <div class="product-room-bottom">
-                        <li data-tag="kitchen" class="kitchen"><a href="room.html?room=kitchen">Кухня <i class="material-icons">east</i> </a></li>
-                        <li data-tag="hallway" class="hallway"><a href="room.html?room=hallway">Передпокій <i class="material-icons">east</i> </a></li>
-                        <li data-tag="office" class="office"><a href="room.html?room=office">Офіс <i class="material-icons">east</i> </a></li>
+                        <li data-tag="kitchen" class="kitchen"><a href="room.html?room=kitchen">Кухня <i
+                                    class="material-icons">east</i> </a></li>
+                        <li data-tag="hallway" class="hallway"><a href="room.html?room=hallway">Передпокій <i
+                                    class="material-icons">east</i> </a></li>
+                        <li data-tag="office" class="office"><a href="room.html?room=office">Офіс <i
+                                    class="material-icons">east</i> </a></li>
                     </div>
                 </ul>
+
             </section>
             <section class="clearance-products">
                 <h2>Товари на розпродажі</h2>
@@ -122,8 +197,8 @@
                         <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
                         <input type="text" id="orderCountry" placeholder="Країна" required>
                         <div class="region-citi">
-                        <input type="text" id="orderRegion" placeholder="Область" required>
-                        <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                            <input type="text" id="orderRegion" placeholder="Область" required>
+                            <input type="text" id="orderCity" placeholder="Місто/Село" required>
                         </div>
                         <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
                         <h3>Товари у замовленні</h3>
@@ -166,24 +241,29 @@
                     <div class="social-link">
                         <h3>Соцмережі</h3>
                         <a href="https://www.instagram.com/omelyan.mebli/">Instagram</a>
-                        <a href="https://www.facebook.com/p/%D0%9E%D0%BC%D0%B5%D0%BB%D1%8F%D0%BD-%D0%9C%D0%B5%D0%B1%D0%BB%D1%96-%D0%97%D0%B0%D0%BA%D0%B0%D1%80%D0%BF%D0%B0%D1%82%D1%82%D1%8F-%D0%92%D0%BE%D0%BB%D0%B8%D0%BD%D1%8C-%D0%9B%D1%8C%D0%B2%D1%96%D0%B2-%D0%86%D0%B2%D0%B0%D0%BD%D0%BE-%D0%A4%D1%80%D0%B0%D0%BD%D0%BA%D1%96%D0%B2%D1%81%D1%8C%D0%BA-100090895882157/">FaceBook</a>
+                        <a
+                            href="https://www.facebook.com/p/%D0%9E%D0%BC%D0%B5%D0%BB%D1%8F%D0%BD-%D0%9C%D0%B5%D0%B1%D0%BB%D1%96-%D0%97%D0%B0%D0%BA%D0%B0%D1%80%D0%BF%D0%B0%D1%82%D1%82%D1%8F-%D0%92%D0%BE%D0%BB%D0%B8%D0%BD%D1%8C-%D0%9B%D1%8C%D0%B2%D1%96%D0%B2-%D0%86%D0%B2%D0%B0%D0%BD%D0%BE-%D0%A4%D1%80%D0%B0%D0%BD%D0%BA%D1%96%D0%B2%D1%81%D1%8C%D0%BA-100090895882157/">FaceBook</a>
                         <a href="https://www.tiktok.com/@omelyan.mebli">TikTok</a>
                     </div>
                     <div class="contact">
                         <h3>Контакти</h3>
                         <p><a href="mailto:"></a></p>
                         <p><a href="tel:+380678692144">+380 67 869 2144</a></p>
-                        <p></p>
+                        <p>вул. Лесі Українки, 1, Нересниця</p>
+                        <p>Пн-Пт 09:00 - 18:00</p>
                     </div>
                 </div>
                 <div class="footer-bottom">
                     <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
-                    <div class="privacy-policy"><a href="./privacy-policy.html?from=index">Політика конфіденційності</a></div>
-                    <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix Agency</a></div>
+                    <div class="privacy-policy"><a href="./privacy-policy.html?from=index">Політика конфіденційності</a>
+                    </div>
+                    <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix
+                            Agency</a></div>
                 </div>
             </footer>
         </section>
     </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.7/js/swiper.min.js"></script>
 </body>
 
 </html>

@@ -114,17 +114,15 @@ function showSlide(index) {
 
 let autoSlideInterval;
 function startAutoSlide() {
-    autoSlideInterval = setInterval(() => showSlide(currentSlide + 1), 5000); // Перемикає кожні 5 секунд
+    autoSlideInterval = setInterval(() => showSlide(currentSlide + 1), 3000);
 }
 function stopAutoSlide() {
     clearInterval(autoSlideInterval);
 }
 
-// Запускаємо автопрокрутку після ініціалізації
 updateBannerSlider();
 startAutoSlide();
 
-// Зупиняємо автопрокрутку при взаємодії користувача
 document.querySelector('.prev')?.addEventListener('click', () => { stopAutoSlide(); showSlide(currentSlide - 1); });
 document.querySelector('.next')?.addEventListener('click', () => { stopAutoSlide(); showSlide(currentSlide + 1); });
 document.querySelector('.slides')?.addEventListener('touchstart', stopAutoSlide);
@@ -240,18 +238,20 @@ function renderContent(filters) {
         if (!container) return;
         container.innerHTML = '';
         let filteredProducts = Object.entries(products).filter(([key, product]) => {
+            const effectivePrice = product.onSale && product.discountPrices && product.discountPrices[product.sizes[0].size] 
+                ? product.discountPrices[product.sizes[0].size] 
+                : product.sizes[0].price;
             return (filters.category === 'all' || product.category === filters.category) &&
                 (!filters.subcategory || product.subcategory === filters.subcategory) &&
                 (!filters.subSubcategory || product.subSubcategory === filters.subSubcategory) &&
-                (!filters.priceMin || product.sizes[0].price >= filters.priceMin) &&
-                (!filters.priceMax || product.sizes[0].price <= filters.priceMax) &&
+                (!filters.priceMin || effectivePrice >= filters.priceMin) &&
+                (!filters.priceMax || effectivePrice <= filters.priceMax) &&
                 (filters.availability === null || product.availability === filters.availability) &&
                 (!filters.color || (product.colors && product.colors.includes(filters.color))) &&
                 (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
                 (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
                 (!filters.sale || product.onSale) &&
                 (!filters.clearance || product.onClearance) &&
-                // Додано умову для пошуку
                 (!filters.search || (
                     product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
                     (product.description && product.description.toLowerCase().includes(filters.search.toLowerCase())) ||
@@ -333,48 +333,70 @@ document.getElementById('searchBar')?.addEventListener('input', e => {
 function renderCart() {
     const cartItems = document.getElementById('cartItems');
     const totalPriceElement = document.getElementById('cartTotalPrice');
-    if (!cartItems || !totalPriceElement) return;
-    cartItems.innerHTML = '';
+
+    const cartCountEl = document.getElementById('cartCount') || document.getElementById('cartStatus') || document.querySelector('.cart-count');
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    if (cartCountEl) {
+        cartCountEl.textContent = cart.length > 0 ? String(cart.length) : '';
+    }
+
+    if (!cartItems || !totalPriceElement) return;
+
+    cartItems.innerHTML = '';
     let totalPrice = 0;
+
     if (cart.length === 0) {
         cartItems.innerHTML = '<p>Кошик порожній</p>';
         totalPriceElement.textContent = '';
-    } else {
-        cart.forEach((item, index) => {
-            const product = products[item.id];
-            if (!product) return;
-            const size = product.sizes.find(s => s.size === item.size);
-            if (!size) return;
-            const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
-            totalPrice += parseFloat(discountPrice || size.price);
-            const productDiv = document.createElement('div');
-            productDiv.classList.add('product');
-            productDiv.dataset.productId = item.id;
-            productDiv.innerHTML = `
-                <img src="${product.photo}" alt="${product.name}">
-                <div class="order-items-content">
-                    <div class="order-items-desc">
-                        <h3>${product.name}</h3>
-                        <p>${product.description}</p>
-                        ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
-                    </div>
-                    <div class="order-items-bottom">
-                        <div class="order-items-price">
-                            <p class="product-price"><span class="sale-price"  id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
-                        </div>
-                            <div class="sizes"><select class="size-select" onchange="updateCartSize(${index}, this.value); updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price, this.value, '${item.id}')">
-                                ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
-                            </select></div>
-                            <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
-                    </div>
-                </div>
-            `;
-            cartItems.appendChild(productDiv);
-        });
-        totalPriceElement.textContent = `Загальна ціна: ${totalPrice} грн`;
+        return;
     }
+
+    cart.forEach((item, index) => {
+        const product = products[item.id];
+        if (!product) return;
+        const size = product.sizes.find(s => s.size === item.size);
+        if (!size) return;
+
+        const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
+        totalPrice += parseFloat(discountPrice || size.price);
+
+        const productDiv = document.createElement('div');
+        productDiv.classList.add('product');
+        productDiv.dataset.productId = item.id;
+
+        productDiv.innerHTML = `
+            <img src="${product.photo || ''}" alt="${product.name || ''}">
+            <div class="order-items-content">
+                <div class="order-items-desc">
+                    <h3>${product.name || ''}</h3>
+                    <p>${product.description || ''}</p>
+                </div>
+                <div class="order-items-bottom">
+                    <div class="order-items-price">
+                        <p class="product-price">
+                            <span class="sale-price" id="price_${index}">${discountPrice || size.price}</span> грн
+                            ${product.onSale ? `<del class="original-price" id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}
+                        </p>
+                    </div>
+                    <div class="sizes">
+                        <select class="size-select" data-product-id="${item.id}"
+                                onchange="updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price, this.value, '${item.id}'); updateCartSize(${index}, this.value);">
+                            ${product.sizes.map(s => `<option data-price="${s.price}" value="${s.size}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
+                </div>
+            </div>
+        `;
+
+        cartItems.appendChild(productDiv);
+    });
+
+    totalPriceElement.textContent = `Загальна ціна: ${totalPrice} грн`;
 }
+
 
 window.removeFromCart = (index) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -1342,13 +1364,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchBar = document.getElementById('searchBar');
     const searchButton = document.getElementById('searchButton');
 
-    // Перевіряємо, чи знайдені елементи
     if (searchBar && searchButton) {
         const handleSearch = () => {
-            const query = searchBar.value.trim(); // Оригінальний текст
+            const query = searchBar.value.trim(); 
             currentFilters.search = query ? query.toLowerCase() : null;
 
-            // Перевіряємо, чи ми на index.html, privacy-policy.html, або кореневій сторінці
             if (
                 window.location.pathname.includes('index.html') ||
                 window.location.pathname === '/' ||
@@ -1356,12 +1376,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.pathname.includes('privacy-policy.html')
             ) {
                 if (query) {
-                    window.location.href = `room.html?search=${query}`; // Без кодування
+                    window.location.href = `room.html?search=${query}`; 
                 }
             } else if (window.location.pathname.includes('room.html')) {
                 const url = new URL(window.location);
                 if (query) {
-                    url.searchParams.set('search', query); // Без кодування
+                    url.searchParams.set('search', query);
                 } else {
                     url.searchParams.delete('search');
                 }
@@ -1379,12 +1399,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         searchBar.addEventListener('input', () => {
-            const query = searchBar.value.trim(); // Оригінальний текст
+            const query = searchBar.value.trim(); 
             currentFilters.search = query ? query.toLowerCase() : null;
             if (window.location.pathname.includes('room.html')) {
                 const url = new URL(window.location);
                 if (query) {
-                    url.searchParams.set('search', query); // Без кодування
+                    url.searchParams.set('search', query); я
                 } else {
                     url.searchParams.delete('search');
                 }
@@ -1396,18 +1416,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('searchBar or searchButton not found in DOM');
     }
 
-    // Ініціалізація пошуку на room.html
     if (window.location.pathname.includes('room.html')) {
         const urlParams = new URLSearchParams(window.location.search);
         const searchQuery = urlParams.get('search');
         if (searchQuery) {
             currentFilters.search = searchQuery.toLowerCase();
-            if (searchBar) searchBar.value = searchQuery; // Використовуємо оригінальний текст
+            if (searchBar) searchBar.value = searchQuery;
             renderContent(currentFilters);
         }
     }
 
-    // Обробка popstate для коректного відновлення стану
     window.addEventListener('popstate', () => {
         if (window.location.pathname.includes('room.html')) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1418,7 +1436,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Збереження іншої логіки для категорій
     renderCategories();
 });
 
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderCart);
+} else {
+    renderCart();
+}
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'cart') renderCart();
+});
