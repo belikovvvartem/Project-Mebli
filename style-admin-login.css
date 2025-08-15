@@ -59,6 +59,10 @@ header {
     font-size: 25px;
 }
 
+select {
+    -webkit-appearance: none;
+}
+
 .logo img {
     width: 50px;
     height: 50px;
