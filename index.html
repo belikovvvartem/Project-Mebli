@@ -20,7 +20,6 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.7/css/swiper.min.css">
     <script type="module" src="script.js"></script>
-    <script type="module" src="swiper.js"></script>
 </head>
 
 <body class="index">
@@ -62,23 +61,47 @@
 
     <div id="searchBox">
         <div class="search-content-for-phone">
-            <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
-            <button id="searchButton" class="search-button">
+            <input type="text" autocomplete="off" class="searchBar" placeholder="Пошук...">
+            <button class="searchButton">
                 <i class="material-icons">search</i>
             </button>
         </div>
-      </div>
+    </div>
 
       <div id="menuOverlay">
         <!-- Саме меню -->
         <div id="sideMenu">
-          <h2>Меню</h2>
-          <ul>
-            <li><a href="#">Головна</a></li>
-            <li><a href="#">Про нас</a></li>
-            <li><a href="#">Послуги</a></li>
-            <li><a href="#">Контакти</a></li>
-          </ul>
+
+            <div class="accordion">
+                <button class="accordion-header"><span><img src="./img/icons/menu.png" alt=""></span> Каталог меблів <span class="arrow"><img src="./img/icons/right-arrow.png" alt=""></span></button>
+                <div class="accordion-content">
+                    <ul id="mainCategories">
+                    </ul>
+                </div>
+              </div>
+          
+              <!-- Кнопки -->
+              <div class="menu-buttons">
+                <div class="search-nav">
+                    <ul>
+                        <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png"
+                                    alt=""> В наявності</a></li>
+                        <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="">
+                                Розпродаж</a></li>
+                        <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та
+                                оплата</a></li>
+                        <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
+                    </ul>
+                </div>
+              </div>
+          
+              <!-- Контакти -->
+              <div class="contacts">
+                <p><img src="./img/icons/callphone.png" alt=""> +38 067 869 2144</p>
+                <p><img src="./img/icons/clock.png" alt=""> Пн-Пт: 9:00 - 18:00</p>
+                <p><img src="./img/icons/location.png" alt=""> вул. Лесі Українки, 1, Нересниця</p>
+              </div>
+
         </div>
       </div>
     
@@ -305,6 +328,7 @@
         </section>
     </main>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.7/js/swiper.min.js"></script>
+    <script src="./swiper.js"></script>
 </body>
 
 </html>

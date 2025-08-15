@@ -1401,77 +1401,84 @@ window.removeFromCart = removeFromCart;
 window.updateCartSize = updateCartSize;
 
 document.addEventListener('DOMContentLoaded', () => {
-    const searchBar = document.getElementById('searchBar');
-    const searchButton = document.getElementById('searchButton');
+    const searchBars = document.querySelectorAll('.searchBar');
+    const searchButtons = document.querySelectorAll('.searchButton');
 
-    if (searchBar && searchButton) {
-        const handleSearch = () => {
-            const query = searchBar.value.trim(); 
-            currentFilters.search = query ? query.toLowerCase() : null;
+    searchBars.forEach((searchBar, index) => {
+        const searchButton = searchButtons[index]; // Припускаємо, що кнопки відповідають полям за порядком
 
-            if (
-                window.location.pathname.includes('index.html') ||
-                window.location.pathname === '/' ||
-                window.location.pathname === '' ||
-                window.location.pathname.includes('privacy-policy.html')
-            ) {
-                if (query) {
-                    window.location.href = `room.html?search=${query}`; 
+        if (searchBar && searchButton) {
+            const handleSearch = () => {
+                const query = searchBar.value.trim(); 
+                currentFilters.search = query ? query.toLowerCase() : null;
+
+                if (
+                    window.location.pathname.includes('index.html') ||
+                    window.location.pathname === '/' ||
+                    window.location.pathname === '' ||
+                    window.location.pathname.includes('privacy-policy.html')
+                ) {
+                    if (query) {
+                        window.location.href = `room.html?search=${encodeURIComponent(query)}`; 
+                    }
+                } else if (window.location.pathname.includes('room.html')) {
+                    const url = new URL(window.location);
+                    if (query) {
+                        url.searchParams.set('search', encodeURIComponent(query));
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    window.history.pushState({}, '', url);
+                    renderContent(currentFilters);
                 }
-            } else if (window.location.pathname.includes('room.html')) {
-                const url = new URL(window.location);
-                if (query) {
-                    url.searchParams.set('search', query);
-                } else {
-                    url.searchParams.delete('search');
+            };
+
+            searchButton.addEventListener('click', handleSearch);
+
+            searchBar.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
                 }
-                window.history.pushState({}, '', url);
-                renderContent(currentFilters);
-            }
-        };
+            });
 
-        searchButton.addEventListener('click', handleSearch);
+            searchBar.addEventListener('input', () => {
+                const query = searchBar.value.trim(); 
+                currentFilters.search = query ? query.toLowerCase() : null;
+                if (window.location.pathname.includes('room.html')) {
+                    const url = new URL(window.location);
+                    if (query) {
+                        url.searchParams.set('search', encodeURIComponent(query));
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    window.history.pushState({}, '', url);
+                    renderContent(currentFilters);
+                }
+            });
 
-        searchBar.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                handleSearch();
-            }
-        });
-
-        searchBar.addEventListener('input', () => {
-            const query = searchBar.value.trim(); 
-            currentFilters.search = query ? query.toLowerCase() : null;
+            // Ініціалізація пошукового запиту з URL для room.html
             if (window.location.pathname.includes('room.html')) {
-                const url = new URL(window.location);
-                if (query) {
-                    url.searchParams.set('search', query); я
-                } else {
-                    url.searchParams.delete('search');
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchQuery = urlParams.get('search');
+                if (searchQuery) {
+                    currentFilters.search = searchQuery.toLowerCase();
+                    searchBar.value = decodeURIComponent(searchQuery);
+                    renderContent(currentFilters);
                 }
-                window.history.pushState({}, '', url);
-                renderContent(currentFilters);
             }
-        });
-    } else {
-        console.warn('searchBar or searchButton not found in DOM');
-    }
-
-    if (window.location.pathname.includes('room.html')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const searchQuery = urlParams.get('search');
-        if (searchQuery) {
-            currentFilters.search = searchQuery.toLowerCase();
-            if (searchBar) searchBar.value = searchQuery;
-            renderContent(currentFilters);
+        } else {
+            console.warn(`searchBar or searchButton not found for index ${index}`);
         }
-    }
+    });
 
     window.addEventListener('popstate', () => {
         if (window.location.pathname.includes('room.html')) {
             const urlParams = new URLSearchParams(window.location.search);
             const searchQuery = urlParams.get('search');
             currentFilters.search = searchQuery ? searchQuery.toLowerCase() : null;
-            if (searchBar) searchBar.value = searchQuery || '';
+            searchBars.forEach(searchBar => {
+                searchBar.value = searchQuery ? decodeURIComponent(searchQuery) : '';
+            });
             renderContent(currentFilters);
         }
     });

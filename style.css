@@ -103,7 +103,7 @@ header {
     display: flex;
 }
 
-#searchBar {
+#searchBar, .searchBar {
     padding: 15px 15px;
     border: 3px solid var(--primary-blue);
     border-radius: 15px 0 0 15px;
@@ -118,7 +118,7 @@ header {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-#searchButton {
+#searchButton, .searchButton {
     padding: 5px;
     border-radius: 0 15px 15px 0;
     cursor: pointer;
@@ -134,7 +134,7 @@ header {
     color: var(--primary-blue);
 }
 
-#searchButton i {
+#searchButton i, .searchButton i {
     font-size: 30px;
     font-weight: 600;
 }
@@ -1784,7 +1784,7 @@ main>section {
       /* Фон */
       #menuOverlay {
         position: fixed;
-        top: 50px; /* висота хедера */
+        top: 83px; /* висота хедера */
         left: 0;
         width: 100%;
         height: calc(100% - 50px);
@@ -1816,6 +1816,90 @@ main>section {
       
       #menuOverlay.open #sideMenu {
         transform: translateX(0);
+      }
+
+      .accordion {
+        border-bottom: 1px solid #ddd;
+      }
+      
+      .accordion-header {
+        width: 100%;
+        background: none;
+        border: none;
+        padding: 10px 0;
+        text-align: left;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+      }
+      
+      .accordion-header .arrow {
+        transition: transform 0.3s ease;
+      }
+      
+      .accordion-header.active .arrow {
+        transform: rotate(90deg);
+      }
+
+      .accordion-header span img {
+        width: 30px;
+        height: 30px;
+      }
+      
+      .accordion-content {
+        max-height: 0px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      
+      .accordion-content ul {
+        margin: 0;
+        padding-left: 15px;
+      }
+      
+      .accordion-content ul li {
+        list-style: none;
+        height: 50px;
+      }
+      
+      .accordion-content ul li a {
+        display: block;
+        padding: 5px 0;
+        text-decoration: none;
+        color: #333;
+      }
+      
+      /* Кнопки */
+      .menu-buttons {
+        margin: 15px 0;
+        display: flex;
+        flex-direction: column;
+        border-bottom: 1px solid #ddd;
+      }
+      
+      .menu-buttons .search-nav {
+        display: block;
+      }
+
+      .menu-buttons .search-nav ul {
+        flex-direction: column;
+        align-items: start;
+        gap: 15px;
+      }
+      
+      /* Контакти */
+      .contacts p {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 0;
+      }
+
+      .contacts img {
+        width: 30px;
+        height: 30px;
       }
 
 
@@ -1908,7 +1992,8 @@ main>section {
 
     .why-us__container {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
         border: none;
         border-radius: 0;
     }
@@ -1916,10 +2001,17 @@ main>section {
     .fact {
         border: none;
         border-radius: 0;
+        width: 50%;
+    }
+
+    .fact:first-child {
+        border-right: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
     }
 
     .fact:last-child {
-        border: none;
+        border-top: 1px solid #ddd;
+        border-left: 1px solid #ddd;
     }
 
     #saleProducts,
@@ -1942,7 +2034,8 @@ main>section {
 
     #saleProducts .product img,
     #clearanceProducts .product img {
-        width: 115%;
+        width: 100%;
+        height: 70%;
         border-radius: 8px;
     }
 
@@ -1965,7 +2058,7 @@ main>section {
     }
 
     #cartItems {
-        zoom: 0.65;
+        zoom: 0.5;
     }
 
     .category-menu li.selected,
@@ -2005,11 +2098,28 @@ main>section {
     }
 
     section > h2 {
-        font-size: 14px;
+        font-size: 25px;
     }
 
     .view-all {
-        font-size: 10px;
-        padding: 5px 10px;
+        font-size: 15px;
+        padding: 15px 20px;
+    }
+
+    .addres-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .addres-left {
+        width: 100%;
+    }
+
+    .addres-container iframe {
+        width: 100%;
+    }
+
+    #orderForm {
+        zoom: 0.6;
     }
 }

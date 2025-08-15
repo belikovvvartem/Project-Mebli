@@ -25,15 +25,25 @@ var mySwiper = new Swiper ('.swiper-container', {
 
   const menuBtn = document.getElementById("menuBtn");
   const menuOverlay = document.getElementById("menuOverlay");
+  const accordionHeader = document.querySelector(".accordion-header");
+  const accordionContent = document.querySelector(".accordion-content");
 
+  // Відкриття/закриття меню
   menuBtn.addEventListener("click", () => {
     const isOpen = menuOverlay.classList.toggle("open");
     menuBtn.style.transform = isOpen ? "rotate(90deg)" : "rotate(0deg)";
   });
 
+  // Закриття при кліку на фон
   menuOverlay.addEventListener("click", (e) => {
-    if (e.target === menuOverlay) { // Клікнули на фон, а не на меню
+    if (e.target === menuOverlay) {
       menuOverlay.classList.remove("open");
       menuBtn.style.transform = "rotate(0deg)";
     }
+  });
+
+  // Акордеон
+  accordionHeader.addEventListener("click", () => {
+    const isOpen = accordionHeader.classList.toggle("active");
+    accordionContent.style.maxHeight = isOpen ? accordionContent.scrollHeight + "px" : "0";
   });
