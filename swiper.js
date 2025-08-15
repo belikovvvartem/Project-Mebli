@@ -5,3 +5,35 @@ var mySwiper = new Swiper ('.swiper-container', {
       prevEl: '.swiper-button-prev',
     },
   })
+
+  const btn = document.getElementById("openSearchBtn");
+  const searchBox = document.getElementById("searchBox");
+
+  btn.addEventListener("click", () => {
+    if (searchBox.classList.contains("open")) {
+      searchBox.classList.remove("open");
+      setTimeout(() => {
+        if (!searchBox.classList.contains("open")) {
+          searchBox.style.display = "none";
+        }
+      }, 300); // після анімації ховаємо
+    } else {
+      searchBox.style.display = "block";
+      setTimeout(() => searchBox.classList.add("open"), 10);
+    }
+  });
+
+  const menuBtn = document.getElementById("menuBtn");
+  const menuOverlay = document.getElementById("menuOverlay");
+
+  menuBtn.addEventListener("click", () => {
+    const isOpen = menuOverlay.classList.toggle("open");
+    menuBtn.style.transform = isOpen ? "rotate(90deg)" : "rotate(0deg)";
+  });
+
+  menuOverlay.addEventListener("click", (e) => {
+    if (e.target === menuOverlay) { // Клікнули на фон, а не на меню
+      menuOverlay.classList.remove("open");
+      menuBtn.style.transform = "rotate(0deg)";
+    }
+  });

@@ -49,33 +49,64 @@
             </div>
         </div>
 
-        <button id="cartBtn"><img src="./img/icons/cart.png" alt=""
-                style="width: 30px; height: 30px;"><span>Кошик</span></button>
+
+        <div class="phone-nav-button">
+            <button id="openSearchBtn"><img src="./img/icons/search.png" alt=""></button>
+
+            <button id="cartBtn"><img src="./img/icons/cart.png" alt="" style="width: 30px; height: 30px;"><span>Кошик</span></button>
+        
+            <button id="menuBtn" class="hamburger"><img src="./img/icons/close-menu.png" alt=""></button>
+        </div>
+
     </header>
+
+    <div id="searchBox">
+        <div class="search-content-for-phone">
+            <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
+            <button id="searchButton" class="search-button">
+                <i class="material-icons">search</i>
+            </button>
+        </div>
+      </div>
+
+      <div id="menuOverlay">
+        <!-- Саме меню -->
+        <div id="sideMenu">
+          <h2>Меню</h2>
+          <ul>
+            <li><a href="#">Головна</a></li>
+            <li><a href="#">Про нас</a></li>
+            <li><a href="#">Послуги</a></li>
+            <li><a href="#">Контакти</a></li>
+          </ul>
+        </div>
+      </div>
+    
+
     <main>
         <div class="swiper-nav">
             <div class="swiper-container">
                 <div class="swiper-wrapper">
                     <div class="swiper-slide">
-                        <a href="">
+                        <a href="room.html?category=beds">
                             <li>
                                 <img src="./img/icons/bed.png" alt="">
                                 <h1>Ліжка</h1>
                             </li>
                         </a>
-                        <a href="">
+                        <a href="room.html?category=sofas">
                             <li>
                                 <img src="./img/icons/sofa.png" alt="">
                                 <h1>Дивани</h1>
                             </li>
                         </a>
-                        <a href="">
+                        <a href="room.html?category=wardrobes">
                             <li>
                                 <img src="./img/icons/cabinet.png" alt="">
                                 <h1>Шафи</h1>
                             </li>
                         </a>
-                        <a href="">
+                        <a href="room.html?category=tables">
                             <li>
                                 <img src="./img/icons/table.png" alt="">
                                 <h1>Столи</h1>
@@ -84,25 +115,25 @@
                     </div>
                     <div class="swiper-slide">
     
-                        <a href="">
+                        <a href="room.html?category=chairs">
                             <li>
                                 <img src="./img/icons/chair.png" alt="">
                                 <h1>Стільці</h1>
                             </li>
                         </a>
-                        <a href="">
+                        <a href="room.html?category=mattresses">
                             <li>
                                 <img src="./img/icons/mattress.png" alt="">
                                 <h1>Матраци</h1>
                             </li>
                         </a>
-                        <a href="">
+                        <a href="room.html?sale=true">
                             <li>
                                 <img src="./img/icons/percentage.png" alt="">
                                 <h1>Акційні</h1>
                             </li>
                         </a>
-                        <a href="">
+                        <a href="room.html?clearance=true">
                             <li>
                                 <img src="./img/icons/sale.png" alt="">
                                 <h1>Розпродаж</h1>

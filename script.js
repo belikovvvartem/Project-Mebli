@@ -267,6 +267,46 @@ function renderContent(filters) {
                     ))
                 ));
         });
+
+        // Для roomProducts, якщо вибрано "Всі товари", групуємо товари по категоріях, сортуємо категорії за новизною найновішого товару в них
+        if (containerId === 'roomProducts' && filters.category === 'all') {
+            const categories = ['beds', 'sofas', 'wardrobes', 'tables', 'chairs', 'mattresses'];
+            const categoryGroups = {};
+
+            // Групуємо товари по категоріях
+            filteredProducts.forEach(([key, product]) => {
+                if (!categoryGroups[product.category]) {
+                    categoryGroups[product.category] = [];
+                }
+                categoryGroups[product.category].push([key, product]);
+            });
+
+            // Для кожної категорії знаходимо max createdAt
+            const categoryOrder = categories
+                .filter(cat => categoryGroups[cat] && categoryGroups[cat].length > 0)
+                .map(cat => ({
+                    category: cat,
+                    maxCreatedAt: Math.max(...categoryGroups[cat].map(([, p]) => p.createdAt || 0))
+                }))
+                .sort((a, b) => b.maxCreatedAt - a.maxCreatedAt) // Сортуємо категорії за max createdAt descending
+                .map(({ category }) => category);
+
+            // Збираємо товари в порядку сортованих категорій, з сортуванням всередині кожної категорії за createdAt descending
+            let selectedProducts = [];
+            categoryOrder.forEach(cat => {
+                const sortedCategoryProducts = categoryGroups[cat].sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+                selectedProducts = [...selectedProducts, ...sortedCategoryProducts];
+            });
+
+            filteredProducts = selectedProducts;
+        } else {
+            // Для інших контейнерів або категорій сортуємо за новизною
+            filteredProducts.sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+            if (containerId === 'saleProducts' || containerId === 'clearanceProducts') {
+                filteredProducts = filteredProducts.slice(0, 4); // Ліміт 4 для акцій та розпродажу
+            }
+        }
+
         filteredProducts.forEach(([key, product]) => {
             if (containerId === 'mainProducts' ||
                 (containerId === 'roomProducts' && (filters.category === 'all' || product.category === filters.category)) ||
