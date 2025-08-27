@@ -1972,7 +1972,7 @@ main>section {
         flex-wrap: wrap;
         justify-content: center;
         gap: 25px;
-        zoom: 0.8;
+        zoom: 0.7;
         flex-direction: row;
     }
 
