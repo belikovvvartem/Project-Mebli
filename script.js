@@ -1402,73 +1402,93 @@ window.updateCartSize = updateCartSize;
 
 document.addEventListener('DOMContentLoaded', () => {
     const searchBars = document.querySelectorAll('.searchBar');
-    const searchButtons = document.querySelectorAll('.searchButton');
 
-    searchBars.forEach((searchBar, index) => {
-        const searchButton = searchButtons[index]; // Припускаємо, що кнопки відповідають полям за порядком
+    searchBars.forEach(searchBar => {
+        const handleSearch = () => {
+            const query = searchBar.value.trim();
+            console.log('Search triggered:', query); // Для діагностики
+            currentFilters.search = query ? query.toLowerCase() : null;
 
-        if (searchBar && searchButton) {
-            const handleSearch = () => {
-                const query = searchBar.value.trim(); 
-                currentFilters.search = query ? query.toLowerCase() : null;
-
-                if (
-                    window.location.pathname.includes('index.html') ||
-                    window.location.pathname === '/' ||
-                    window.location.pathname === '' ||
-                    window.location.pathname.includes('privacy-policy.html')
-                ) {
-                    if (query) {
-                        window.location.href = `room.html?search=${encodeURIComponent(query)}`; 
-                    }
-                } else if (window.location.pathname.includes('room.html')) {
-                    const url = new URL(window.location);
-                    if (query) {
-                        url.searchParams.set('search', encodeURIComponent(query));
-                    } else {
-                        url.searchParams.delete('search');
-                    }
-                    window.history.pushState({}, '', url);
-                    renderContent(currentFilters);
+            // Перенаправлення на room.html для всіх сторінок, крім room.html
+            if (!window.location.pathname.includes('room.html')) {
+                if (query) {
+                    window.location.href = `room.html?search=${query}`; // Без encodeURIComponent
                 }
-            };
-
-            searchButton.addEventListener('click', handleSearch);
-
-            searchBar.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    handleSearch();
+            } else {
+                const url = new URL(window.location);
+                if (query) {
+                    url.searchParams.set('search', query); // Без encodeURIComponent
+                } else {
+                    url.searchParams.delete('search');
                 }
-            });
-
-            searchBar.addEventListener('input', () => {
-                const query = searchBar.value.trim(); 
-                currentFilters.search = query ? query.toLowerCase() : null;
-                if (window.location.pathname.includes('room.html')) {
-                    const url = new URL(window.location);
-                    if (query) {
-                        url.searchParams.set('search', encodeURIComponent(query));
-                    } else {
-                        url.searchParams.delete('search');
-                    }
-                    window.history.pushState({}, '', url);
-                    renderContent(currentFilters);
-                }
-            });
-
-            // Ініціалізація пошукового запиту з URL для room.html
-            if (window.location.pathname.includes('room.html')) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const searchQuery = urlParams.get('search');
-                if (searchQuery) {
-                    currentFilters.search = searchQuery.toLowerCase();
-                    searchBar.value = decodeURIComponent(searchQuery);
-                    renderContent(currentFilters);
-                }
+                window.history.pushState({}, '', url);
+                renderContent(currentFilters);
             }
-        } else {
-            console.warn(`searchBar or searchButton not found for index ${index}`);
+        };
+
+        searchBar.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Enter pressed on:', searchBar); // Для діагностики
+                handleSearch();
+            }
+        });
+
+        searchBar.addEventListener('input', () => {
+            const query = searchBar.value.trim();
+            console.log('Input changed:', query); // Для діагностики
+            currentFilters.search = query ? query.toLowerCase() : null;
+            if (window.location.pathname.includes('room.html')) {
+                const url = new URL(window.location);
+                if (query) {
+                    url.searchParams.set('search', query); // Без encodeURIComponent
+                } else {
+                    url.searchParams.delete('search');
+                }
+                window.history.pushState({}, '', url);
+                renderContent(currentFilters);
+            }
+        });
+
+        if (window.location.pathname.includes('room.html')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            if (searchQuery) {
+                currentFilters.search = searchQuery.toLowerCase();
+                searchBar.value = searchQuery; // Використовуємо некодований запит
+                renderContent(currentFilters);
+            }
         }
+    });
+
+    const searchButtons = document.querySelectorAll('.searchButton, .search-button');
+    searchButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const container = button.closest('.search-content, .search-content-for-phone') || button.parentElement;
+            const searchBar = container ? container.querySelector('.searchBar') : null;
+
+            if (searchBar) {
+                console.log('Button clicked, associated input:', searchBar.value); // Для діагностики
+                const query = searchBar.value.trim();
+                currentFilters.search = query ? query.toLowerCase() : null;
+
+                if (!window.location.pathname.includes('room.html')) {
+                    if (query) {
+                        window.location.href = `room.html?search=${query}`; // Без encodeURIComponent
+                    }
+                } else {
+                    const url = new URL(window.location);
+                    if (query) {
+                        url.searchParams.set('search', query); // Без encodeURIComponent
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    window.history.pushState({}, '', url);
+                    renderContent(currentFilters);
+                }
+            } else {
+                console.warn('No associated searchBar found for button:', button);
+            }
+        });
     });
 
     window.addEventListener('popstate', () => {
@@ -1477,7 +1497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchQuery = urlParams.get('search');
             currentFilters.search = searchQuery ? searchQuery.toLowerCase() : null;
             searchBars.forEach(searchBar => {
-                searchBar.value = searchQuery ? decodeURIComponent(searchQuery) : '';
+                searchBar.value = searchQuery || '';
             });
             renderContent(currentFilters);
         }
@@ -1485,6 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderCategories();
 });
+
 
 
 if (document.readyState === 'loading') {

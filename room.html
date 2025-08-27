@@ -16,37 +16,57 @@
     </style>
 </head>
 <body>
-    <header>
+    <button id="call-me-back" onclick="window.location.href='tel:+380678692144'">
+        <span class="icon">
+            <img src="./img/icons/phone-call-white.png" alt="">
+        </span>
+        <span class="text">Подзвонити</span>
+      </button>
+      <header>
         <a href="./index.html" class="logo">
             <img src="./img/omelyan-logo.png" alt="">
             <h1>Omelyan Mebli</h1>
         </a>
-        <div class="search">
-            <div class="search-nav">
-                <ul>
-                    <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png"
-                                alt=""> В наявності</a></li>
-                    <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="">
-                            Розпродаж</a></li>
-                    <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та
-                            оплата</a></li>
-                    <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
-                </ul>
+
+        <div class="header-center">
+            <div class="search">
+                <div class="search-nav">
+                    <ul>
+                        <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png"
+                                    alt=""> В наявності</a></li>
+                        <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="">
+                                Розпродаж</a></li>
+                        <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка
+                                та
+                                оплата</a></li>
+                        <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
+                    </ul>
+                </div>
+                <div class="search-content">
+                    <input type="text" autocomplete="off" class="searchBar" placeholder="Пошук...">
+                    <button class="searchButton search-button">
+                        <i class="material-icons">search</i>
+                    </button>
+                </div>
             </div>
-            <div class="search-content">
-                <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
-                <button id="searchButton" class="search-button">
-                    <i class="material-icons">search</i>
-                </button>
+
+
+
+            <div class="contact-and-times">
+                <p class="times">Пн-Пт 09:00 - 18:00</p>
+                <a href="tel:+380678692144">+380 67 869 2144</a>
             </div>
         </div>
+
+
 
 
         <div class="phone-nav-button">
             <button id="openSearchBtn"><img src="./img/icons/search.png" alt=""></button>
 
-            <button id="cartBtn"><img src="./img/icons/cart.png" alt="" style="width: 30px; height: 30px;"><span>Кошик</span></button>
-        
+            <button id="cartBtn"><img src="./img/icons/cart.png" alt=""
+                    style="width: 30px; height: 30px;"><span>Кошик</span></button>
+
             <button id="menuBtn" class="hamburger"><img src="./img/icons/close-menu.png" alt=""></button>
         </div>
 
@@ -330,7 +350,6 @@
             <div class="footer-bottom">
                 <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
                 <div class="privacy-policy"><a href="./privacy-policy.html?from=room">Політика конфіденційності</a></div>
-                <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix Agency</a></div>
             </div>
         </footer>
         </section>

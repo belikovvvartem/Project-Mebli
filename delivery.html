@@ -17,41 +17,271 @@
     <link rel="stylesheet" href="style.css">
     <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.7/css/swiper.min.css">
     <script type="module" src="script.js"></script>
 </head>
 <body>
-    <header>
-        <a href="./index.html" class="logo" id="backBtn">
+    <button id="call-me-back" onclick="window.location.href='tel:+380678692144'">
+        <span class="icon">
+            <img src="./img/icons/phone-call-white.png" alt="">
+        </span>
+        <span class="text">Подзвонити</span>
+      </button>
+      <header>
+        <a href="./index.html" class="logo">
             <img src="./img/omelyan-logo.png" alt="">
             <h1>Omelyan Mebli</h1>
         </a>
-        <div class="search">
-            <div class="search-nav">
-                <ul>
-                    <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png" alt=""> В наявності</a></li>
-                    <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt=""> Розпродаж</a></li>
-                    <li><a href="#"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та оплата</a></li>
-                    <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
-                </ul>
-            </div>
-            <div class="search-content">
-                <input type="text" autocomplete="off" id="searchBar" placeholder="Пошук...">
-                <button id="searchButton" class="search-button">
-                    <i class="material-icons">search</i>
-                </button>
+
+        <div class="header-center">
+            <div class="search">
+                <div class="search-nav">
+                    <ul>
+                        <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png"
+                                    alt=""> В наявності</a></li>
+                        <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="">
+                                Розпродаж</a></li>
+                        <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка
+                                та
+                                оплата</a></li>
+                        <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
+                    </ul>
                 </div>
+                <div class="search-content">
+                    <input type="text" autocomplete="off" class="searchBar" placeholder="Пошук...">
+                    <button class="searchButton search-button">
+                        <i class="material-icons">search</i>
+                    </button>
+                </div>
+            </div>
+
+
+
+            <div class="contact-and-times">
+                <p class="times">Пн-Пт 09:00 - 18:00</p>
+                <a href="tel:+380678692144">+380 67 869 2144</a>
+            </div>
         </div>
 
-        <button id="cartBtn"><img src="./img/icons/cart.png" alt="" style="width: 30px; height: 30px;"><span>Кошик</span></button>
+
+
+
+        <div class="phone-nav-button">
+            <button id="openSearchBtn"><img src="./img/icons/search.png" alt=""></button>
+
+            <button id="cartBtn"><img src="./img/icons/cart.png" alt=""
+                    style="width: 30px; height: 30px;"><span>Кошик</span></button>
+
+            <button id="menuBtn" class="hamburger"><img src="./img/icons/close-menu.png" alt=""></button>
+        </div>
+
     </header>
 
+    <div id="searchBox">
+        <div class="search-content-for-phone">
+            <input type="text" autocomplete="off" class="searchBar" placeholder="Пошук...">
+            <button class="searchButton">
+                <i class="material-icons">search</i>
+            </button>
+        </div>
+    </div>
+
+    <div id="menuOverlay">
+        <!-- Саме меню -->
+        <div id="sideMenu">
+
+            <div class="accordion">
+                <button class="accordion-header"><span><img src="./img/icons/menu.png" alt=""></span> Каталог меблів
+                    <span class="arrow"><img src="./img/icons/right-arrow.png" alt=""></span></button>
+                <div class="accordion-content">
+                    
+                    <a href="room.html?category=beds">
+                        <li>
+                            <img src="./img/icons/bed.png" alt="">
+                            <h1>Ліжка</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?category=sofas">
+                        <li>
+                            <img src="./img/icons/sofa.png" alt="">
+                            <h1>Дивани</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?category=wardrobes">
+                        <li>
+                            <img src="./img/icons/cabinet.png" alt="">
+                            <h1>Шафи</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?category=tables">
+                        <li>
+                            <img src="./img/icons/table.png" alt="">
+                            <h1>Столи</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?category=chairs">
+                        <li>
+                            <img src="./img/icons/chair.png" alt="">
+                            <h1>Стільці</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?category=mattresses">
+                        <li>
+                            <img src="./img/icons/mattress.png" alt="">
+                            <h1>Матраци</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?sale=true">
+                        <li>
+                            <img src="./img/icons/percentage.png" alt="">
+                            <h1>Акційні</h1>
+                        </li>
+                    </a>
+                    <a href="room.html?clearance=true">
+                        <li>
+                            <img src="./img/icons/sale.png" alt="">
+                            <h1>Розпродаж</h1>
+                        </li>
+                    </a>
+
+                </div>
+            </div>
+
+            <!-- Кнопки -->
+            <div class="menu-buttons">
+                <div class="search-nav">
+                    <ul>
+                        <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png"
+                                    alt=""> В наявності</a></li>
+                        <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="">
+                                Розпродаж</a></li>
+                        <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка
+                                та
+                                оплата</a></li>
+                        <li><a href="./addres.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Контакти -->
+            <div class="contacts">
+                <p><img src="./img/icons/callphone.png" alt=""> +38 067 869 2144</p>
+                <p><img src="./img/icons/clock.png" alt=""> Пн-Пт: 9:00 - 18:00</p>
+                <p><img src="./img/icons/location.png" alt=""> вул. Лесі Українки, 1, Нересниця</p>
+            </div>
+
+        </div>
+    </div>
+
     <main>
+        <div class="swiper-nav">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <a href="room.html?category=beds">
+                            <li>
+                                <img src="./img/icons/bed.png" alt="">
+                                <h1>Ліжка</h1>
+                            </li>
+                        </a>
+                        <a href="room.html?category=sofas">
+                            <li>
+                                <img src="./img/icons/sofa.png" alt="">
+                                <h1>Дивани</h1>
+                            </li>
+                        </a>
+                        <a href="room.html?category=wardrobes">
+                            <li>
+                                <img src="./img/icons/cabinet.png" alt="">
+                                <h1>Шафи</h1>
+                            </li>
+                        </a>
+                        <a href="room.html?category=tables">
+                            <li>
+                                <img src="./img/icons/table.png" alt="">
+                                <h1>Столи</h1>
+                            </li>
+                        </a>
+                    </div>
+                    <div class="swiper-slide">
+    
+                        <a href="room.html?category=chairs">
+                            <li>
+                                <img src="./img/icons/chair.png" alt="">
+                                <h1>Стільці</h1>
+                            </li>
+                        </a>
+                        <a href="room.html?category=mattresses">
+                            <li>
+                                <img src="./img/icons/mattress.png" alt="">
+                                <h1>Матраци</h1>
+                            </li>
+                        </a>
+                        <a href="room.html?sale=true">
+                            <li>
+                                <img src="./img/icons/percentage.png" alt="">
+                                <h1>Акційні</h1>
+                            </li>
+                        </a>
+                        <a href="room.html?clearance=true">
+                            <li>
+                                <img src="./img/icons/sale.png" alt="">
+                                <h1>Розпродаж</h1>
+                            </li>
+                        </a>
+                    </div>
+                </div>
+                
+    
+    
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+    </div>
         <div id="notification"></div>
         <aside class="category-menu">
             <ul id="mainCategories"></ul>
         </aside>
 
-        <section class="main-section">
+        <section class="main-section" >
+
+            <section style="margin-top: 0px;">
+                <h2>1. Доставка</h2>
+                <p>Ми пропонуємо безкоштовну доставку нашим власним транспортом безпосередньо до вашого дому по всій території України. Це включає:</p>
+                <ul>
+                    <li>Доставку до під'їзду або прямо до квартири/будинку (за попередньою домовленістю).</li>
+                    <li>Можливість професійної установки меблів нашими фахівцями за додаткову плату (вартість залежить від складності та обсягу робіт).</li>
+                    <li>Терміни доставки: від 3 до 14 робочих днів залежно від наявності товару на складі та вашого місця розташування.</li>
+                </ul>
+                <p>Перед відправкою ми обов'язково зв'яжемося з вами для узгодження деталей. Якщо товар є в наявності, доставка може бути організована швидше.</p>
+    
+                <h2>2. Оплата</h2>
+                <p>Ми пропонуємо гнучкі та безпечні варіанти оплати, щоб зробити процес покупки максимально зручним:</p>
+                <ul>
+                    <li>Мінімальна передоплата на офіційний рахунок ФОП (фізичної особи-підприємця) – зазвичай 20-30% від вартості замовлення для підтвердження покупки.</li>
+                    <li>Решта суми сплачується при отриманні товару (готівкою або банківським переказом).</li>
+                    <li>Всі платежі здійснюються через офіційні банківські реквізити для забезпечення повної прозорості та захисту ваших коштів.</li>
+                    <li>Також в нашому магазиніви можете підключити оплату частинами</li>
+                </ul>
+                <!--
+                <h3>Оплата частинами</h3>
+                <p>Ми також пропонуємо можливість оплати частинами через партнерські банки. Це дозволяє розділити вартість покупки на зручні щомісячні платежі без переплат (за умови акційних пропозицій). Деталі уточнюйте у наших менеджерів під час оформлення замовлення.</p>
+                -->
+    
+                <h2>3. Додаткова інформація</h2>
+                <p>У разі виникнення будь-яких питань щодо доставки чи оплати, наші менеджери завжди готові надати консультацію. Ми гарантуємо повну конфіденційність ваших даних відповідно до нашої <a href="privacy-policy.html">політики конфіденційності</a>.</p>
+    
+                <h2>4. Контактна інформація</h2>
+                <p>Якщо у вас є запитання щодо доставки чи оплати, звертайтеся до нас:</p>
+                <ul>
+                    <li>Email: support@omelyanmebli.com</li>
+                    <li>Телефон: +380 67 869 2144</li>
+                    <li>Адреса: вул. Лесі Українки, 1, Нересниця</li>
+                </ul>
+                    
+    
+                <p>Останнє оновлення: 27 серпня 2025 року</p>
+            </section>
 
         <div id="cartModal" class="modal">
             <div class="modal-content">
@@ -128,10 +358,12 @@
             <div class="footer-bottom">
                 <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
                 <div class="privacy-policy"><a href="./privacy-policy.html?from=index">Політика конфіденційності</a></div>
-                <div class="developedBy">Зроблено в <a href="https://belarix-agency.com" target="_blank">Belarix Agency</a></div>
             </div>
         </footer>
         </section>
     </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.7/js/swiper.min.js"></script>
+    <script src="./swiper.js"></script>
 </body>
 </html>
