@@ -131,6 +131,10 @@ ${productList}
     }
 });
 
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', message: 'Server is running' });
+});
+
 app.listen(port, () => {
     console.log(`Сервер запущено на порту ${port}`);
 });
