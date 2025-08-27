@@ -1966,7 +1966,6 @@ main>section {
         flex-direction: column;
     }
 
-
     #cartItems {
         display: flex;
         flex-wrap: wrap;
