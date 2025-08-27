@@ -131,3 +131,7 @@ ${productList}
     }
 });
 
+app.listen(port, () => {
+    console.log(`Сервер запущено на порту ${port}`);
+});
+
