@@ -241,9 +241,12 @@ function renderContent(filters) {
             const effectivePrice = product.onSale && product.discountPrices && product.discountPrices[product.sizes[0].size] 
                 ? product.discountPrices[product.sizes[0].size] 
                 : product.sizes[0].price;
+            // Уточнена умова для subSubcategory
+            const subSubcategoryMatch = !filters.subSubcategory || 
+                (product.subcategory === filters.subcategory && product.subSubcategory === filters.subSubcategory);
             return (filters.category === 'all' || product.category === filters.category) &&
                 (!filters.subcategory || product.subcategory === filters.subcategory) &&
-                (!filters.subSubcategory || product.subSubcategory === filters.subSubcategory) &&
+                subSubcategoryMatch &&
                 (!filters.priceMin || effectivePrice >= filters.priceMin) &&
                 (!filters.priceMax || effectivePrice <= filters.priceMax) &&
                 (filters.availability === null || product.availability === filters.availability) &&
@@ -794,6 +797,14 @@ function renderSubcategories(category, selectedSubcategory) {
                 document.querySelectorAll('#subcategoryList li').forEach(item => item.classList.remove('selected'));
                 li.classList.add('selected');
                 currentFilters.subcategory = sub === 'all' ? null : sub;
+                // Скидаємо subSubcategory, якщо підкатегорія не підтримує підпідкатегорії або це "Всі товари"
+                if (!wardrobeSubSubs[sub] || sub === 'all') {
+                    currentFilters.subSubcategory = null;
+                    // Оновлюємо URL, щоб видалити subSubcategory
+                    const url = new URL(window.location);
+                    url.searchParams.delete('subSubcategory');
+                    window.history.pushState({}, '', url);
+                }
                 renderContent(currentFilters);
             });
             if (wardrobeSubSubs[sub]) {
@@ -805,6 +816,10 @@ function renderSubcategories(category, selectedSubcategory) {
                     subLi.addEventListener('click', (e) => {
                         e.stopPropagation();
                         currentFilters.subSubcategory = subSub;
+                        // Оновлюємо URL з новим subSubcategory
+                        const url = new URL(window.location);
+                        url.searchParams.set('subSubcategory', subSub);
+                        window.history.pushState({}, '', url);
                         renderContent(currentFilters);
                     });
                     ul.appendChild(subLi);
