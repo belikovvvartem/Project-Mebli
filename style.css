@@ -1970,7 +1970,6 @@ main>section {
     #cartItems {
         display: flex;
         flex-wrap: wrap;
-        justify-content: center;
         gap: 25px;
         zoom: 0.7;
         flex-direction: row;
