@@ -918,6 +918,7 @@ main>section {
     justify-content: center;
     align-items: center;
     overflow: auto;
+    zoom: 0.8;
 }
 
 .modal-content {

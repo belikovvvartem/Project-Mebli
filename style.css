@@ -706,7 +706,7 @@ main>section {
     width: 100%;
     overflow: hidden;
     animation: fadeIn 0.5s ease-out;
-    border-radius: 50px;
+    border-radius: 15px;
 }
 
 .slides {
@@ -1052,7 +1052,7 @@ main>section {
     left: 10px;
     background: var(--error-red);
     border-radius: 5px 25px 25px 25px;
-    width: 125px;
+    width: 135px;
     user-select: none;
 }
 
@@ -1592,7 +1592,9 @@ main>section {
     }
 
     .logo h1 {
-        display: none;
+        font-size: 18px;
+        color: var(--primary-blue);
+        text-transform: uppercase;
     }
 
     .search {
@@ -1781,7 +1783,6 @@ main>section {
         font-weight: 500;
       }
       
-      /* Кнопки */
       .menu-buttons {
         margin: 15px 0;
         display: flex;
@@ -1799,7 +1800,6 @@ main>section {
         gap: 15px;
       }
       
-      /* Контакти */
       .contacts p {
         display: flex;
         align-items: center;
@@ -1811,8 +1811,6 @@ main>section {
         width: 30px;
         height: 30px;
       }
-
-
 
     .main-section {
         display: flex;
@@ -1898,6 +1896,7 @@ main>section {
     .slider {
         width: 100%;
         margin-top: -50px;
+        
     }
 
     .why-us__container {
@@ -1949,8 +1948,6 @@ main>section {
         height: 70%;
         border-radius: 8px;
     }
-
-
 
     .footer-top {
         display: flex;
@@ -2013,6 +2010,10 @@ main>section {
         border: none;
     }
 
+    .product button {
+        border-radius: 15px;
+    }
+
     #roomProducts .product:hover {
         transform: none;
         box-shadow: none;
@@ -2028,6 +2029,15 @@ main>section {
 
     #filters button {
         width: 200px;
+    }
+
+    #orderItems .product {
+        height: auto;
+    }
+
+    #orderItems .order-items-bottom {
+        display: flex;
+        flex-direction: row;
     }
 
     #filters {
@@ -2159,9 +2169,4 @@ main>section {
         width: 25px;
         height: 25px;
       }
-
-
-    
-
-
 }

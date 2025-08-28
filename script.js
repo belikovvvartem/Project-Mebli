@@ -199,7 +199,7 @@ function renderCategories() {
 
     mainCategories.appendChild(saleLi);
     const clearanceLi = document.createElement('li');
-    clearanceLi.textContent = 'Розпродаж';
+    clearanceLi.textContent = 'Хіти продажів';
     clearanceLi.dataset.category = 'clearance';
     clearanceLi.style.backgroundImage = `url('${getCategoryIcon('clearance')}')`;
     clearanceLi.style.backgroundRepeat = 'no-repeat';
@@ -330,7 +330,7 @@ function renderProductCard(container, key, product, sectionId) {
     const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
     productDiv.innerHTML = `
         <div class="product-container-top">
-            ${product.onClearance ? '<span class="promo clearance">Розпродаж</span>' : ''}
+            ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
             ${product.onSale ? '<span class="promo">Акція</span>' : ''}
             <img src="${product.photo}" alt="${product.name}">
             <h3>${product.name}</h3><p>${product.description}</p>
@@ -1084,7 +1084,7 @@ function renderAdminProducts(category, search) {
                 <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
                 <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
                 <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p>
-                <p>Розпродаж: ${product.onClearance ? 'Так' : 'Ні'}</p>
+                <p>Хіт продажу: ${product.onClearance ? 'Так' : 'Ні'}</p>
                 <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
                 <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
             </div>
