@@ -28,7 +28,7 @@ const roomTranslations = {
     living_room: 'Вітальня',
     bedroom: 'Спальна кімната',
     nursery: 'Дитяча',
-    hallway: 'Передпокій',
+    hallway: 'Прихожа',
     kitchen: 'Кухня',
     office: 'Офіс'
 };
