@@ -823,6 +823,7 @@ main>section {
 .products-by-room li a {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 15px;
     font-size: 25px;
     font-weight: 800;
@@ -854,7 +855,7 @@ main>section {
 
 .products-by-room .living-room {
     background-image: url(./img/rooms/living-room.webp);
-    width: 25%;
+    width: 40%;
 }
 
 .products-by-room .bedroom {
@@ -864,12 +865,12 @@ main>section {
 
 .products-by-room .baby-room {
     background-image: url(./img/rooms/baby-room.webp);
-    width: 25%;
+    width: 40%;
 }
 
 .products-by-room .kitchen {
     background-image: url(./img/rooms/kitchen.webp);
-    width: 40%;
+    width: 50%;
 }
 
 .products-by-room .hallway {
@@ -880,6 +881,7 @@ main>section {
 .products-by-room .office {
     background-image: url(./img/rooms/office.webp);
     width: 40%;
+    display: none;
 }
 
 
@@ -2098,11 +2100,11 @@ main>section {
     }
 
     .products-by-room li {
-        height: 200px;
+        height: 180px;
     }
     
     .products-by-room li a {
-        font-size: 15px;
+        font-size: 13px;
         height: 40px;
     }
 
@@ -2125,25 +2127,27 @@ main>section {
     }
     
     .products-by-room .living-room {
-        width: 49%;
+        width: 32%;
     }
     
     .products-by-room .bedroom {
-        width: 99%;
+        width: 49%;
         order: 3;
     }
     
     .products-by-room .baby-room {
-        width: 49%;
+        width: 32%;
         order: 2;
     }
     
     .products-by-room .kitchen {
-        width: 59%;
+        width: 49%;
+        display: flex;
+        justify-content: space-between;
     }
     
     .products-by-room .hallway {
-        width: 39%;
+        width: 32%;
     }
     
     .products-by-room .office {
