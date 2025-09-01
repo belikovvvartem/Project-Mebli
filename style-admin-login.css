@@ -610,6 +610,10 @@ main>section {
     width: 96%;
     margin-bottom: 25px;
   }
+
+  #availabilityL, #editAvailabilityL {
+    display: none;
+  }
   
   #availability:checked + #availabilityL,
   #editAvailability:checked + #editAvailabilityL,

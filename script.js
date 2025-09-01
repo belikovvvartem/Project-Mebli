@@ -339,7 +339,7 @@ function renderProductCard(container, key, product, sectionId) {
             <div class="sizes"><select class="size-select" data-product-id="${key}" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price, this.value, '${key}')">
                 ${product.sizes.map((size, index) => `<option value="${size.size}" data-price="${discountPrices[size.size] || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`).join('')}
             </select></div>
-            <p class="availability">${product.availability ? '<span style="color: green;">В наявності</span>' : '<span style="color: red;">Немає в наявності</span>'}</p>
+            <!-- <p class="availability">${product.availability ? '<span style="color: green;">В наявності</span>' : '<span style="color: red;">Немає в наявності</span>'}</p> -->
             <p class="product-price"><span class="sale-price" id="price_${key}">${salePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${key}">${originalPrice} грн</del>` : ''}</p>
             
             <div class="product-button-order">
@@ -1083,7 +1083,7 @@ function renderAdminProducts(category, search) {
             <div class="product-second">
                 <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
                 <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
-                <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p>
+                <!-- <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p> -->
                 <p>Хіт продажу: ${product.onClearance ? 'Так' : 'Ні'}</p>
                 <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
                 <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>

@@ -397,7 +397,7 @@ select {
     color: var(--card-background);
     border: none;
     padding: 14px;
-    border-radius: 25px;
+    border-radius: 15px;
     cursor: pointer;
     font-weight: 600;
     font-size: 1em;
@@ -425,7 +425,7 @@ select {
     color: var(--card-background);
     border: none;
     padding: 14px;
-    border-radius: 25px;
+    border-radius: 15px;
     cursor: pointer;
     font-weight: 600;
     font-size: 1em;
@@ -1239,16 +1239,18 @@ main>section {
 
 
 .contact-and-times p {
-    margin-bottom: -8px;
     font-size: 15px;
 }
 
 
 .contact-and-times a {
-    font-size: 25px;
+    font-size: 18px;
     color: var(--text-black);
     text-decoration: none;
     font-weight: 700;
+}
+
+.contact-and-times a:last-child {
 }
 
 /* Delivery.html Specific Styles */
