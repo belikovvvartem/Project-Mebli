@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Продукт - Omelyan Mebli</title><link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="shortcut icon" href="./img/omelyan-logo.png" type="image/x-icon">
+    <script defer src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script type="module" defer src="script.js"></script>
+</head>
+<body class="product-html">
+    <button id="call-me-back" onclick="window.location.href='tel:+380678692144'">
+        <span class="icon">
+            <img src="./img/icons/phone-call-white.png" alt="Зателефонувати">
+        </span>
+        <span class="text">Подзвонити</span>
+    </button>
+    <header>
+        <a href="./index.html" class="logo">
+            <img src="./img/omelyan-logo.png" alt="Омелян Меблі логотип">
+            <h1>Omelyan Mebli</h1>
+        </a>
+        <div class="header-center">
+            <div class="search">
+                <div class="search-nav">
+                    <ul>
+                        <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png" alt="Омелян Меблі товари в наявності"> В наявності</a></li>
+                        <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt="Омелян Меблі товари в розпродажі"> Хіти продажів</a></li>
+                        <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt="Омелян Меблі доставка та оплата"> Доставка та оплата</a></li>
+                        <li><a href="./address.html"><img src="./img/icons/header-icon/shop.png" alt="Омелян Меблі адреса"> Адреса</a></li>
+                    </ul>
+                </div>
+                <div class="search-content">
+                    <input type="text" autocomplete="off" class="searchBar" placeholder="Пошук...">
+                    <button class="searchButton search-button">
+                        <i class="material-icons">search</i>
+                    </button>
+                </div>
+            </div>
+            <div class="contact-and-times">
+                <p class="times">Пн-Пт 09:00 - 18:00</p>
+                <a href="tel:+380678692144">+380 67 869 2144</a>
+                <a href="tel:+380965103421">+380 96 510 3421</a>
+            </div>
+        </div>
+        <div class="phone-nav-button">
+            <button id="openSearchBtn"><img src="./img/icons/search.png" alt="Омелян Меблі пошук"></button>
+            <button id="cartBtn"><img src="./img/icons/cart.png" alt="Омелян Меблі Кошик" style="width: 30px; height: 30px;"><span>Кошик</span></button>
+            <button id="menuBtn" class="hamburger"><img src="./img/icons/close-menu.png" alt="Омелян Меблі закрити меню"></button>
+        </div>
+    </header>
+    <div id="searchBox">
+        <div class="search-content-for-phone">
+            <input type="text" autocomplete="off" class="searchBar" placeholder="Пошук...">
+            <button class="searchButton">
+                <i class="material-icons">search</i>
+            </button>
+        </div>
+    </div>
+    <div id="menuOverlay">
+        <div id="sideMenu">
+            <div class="accordion">
+                <button class="accordion-header"><span><img src="./img/icons/menu.png" alt="Омелян Меблі каталог"></span> Каталог меблів <span class="arrow"><img src="./img/icons/right-arrow.png" alt="Омелян Меблі стрілка"></span></button>
+                <div class="accordion-content">
+                    <a href="room.html?category=beds"><li><img src="./img/icons/bed.png" alt="Омелян Меблі ліжка"><h1>Ліжка</h1></li></a>
+                    <a href="room.html?category=sofas"><li><img src="./img/icons/sofa.png" alt="Омелян Меблі дивани"><h1>Дивани</h1></li></a>
+                    <a href="room.html?category=wardrobes"><li><img src="./img/icons/cabinet.png" alt="Омелян Меблі шафи"><h1>Шафи</h1></li></a>
+                    <a href="room.html?category=tables"><li><img src="./img/icons/table.png" alt="Омелян Меблі столи"><h1>Столи</h1></li></a>
+                    <a href="room.html?category=chairs"><li><img src="./img/icons/chair.png" alt="Омелян Меблі стільці"><h1>Стільці</h1></li></a>
+                    <a href="room.html?category=mattresses"><li><img src="./img/icons/mattress.png" alt="Омелян Меблі матраци"><h1>Матраци</h1></li></a>
+                    <a href="room.html?sale=true"><li><img src="./img/icons/percentage.png" alt="Омелян Меблі акційні"><h1>Акційні</h1></li></a>
+                    <a href="room.html?clearance=true"><li><img src="./img/icons/sale.png" alt="Омелян Меблі розпродаж"><h1>Хіти продажів</h1></li></a>
+                </div>
+            </div>
+            <div class="menu-buttons">
+                <div class="search-nav">
+                    <ul>
+                        <li><a href="room.html?availability=true"><img src="./img/icons/header-icon/availability.png" alt=""> В наявності</a></li>
+                        <li><a href="room.html?clearance=true"><img src="./img/icons/header-icon/sale.png" alt=""> Хіти продажів</a></li>
+                        <li><a href="./delivery.html"><img src="./img/icons/header-icon/delivery.png" alt=""> Доставка та оплата</a></li>
+                        <li><a href="./address.html"><img src="./img/icons/header-icon/shop.png" alt=""> Адреса</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="contacts">
+                <p><img src="./img/icons/callphone.png" alt="Омелян Меблі номер телефону" onclick="window.location.href='tel:+380678692144'"> +38 067 869 2144</p>
+                <p><img src="./img/icons/callphone.png" alt="Омелян Меблі номер телефону" onclick="window.location.href='tel:+380965103421'"> +38 096 510 3421</p>
+                <p><img src="./img/icons/clock.png" alt="Омелян Меблі графік"> Пн-Пт: 9:00 - 18:00</p>
+                <p><img src="./img/icons/location.png" alt="Омелян Меблі адреса"> вул. Лесі Українки, 1, Нересниця</p>
+            </div>
+        </div>
+    </div>
+    <main>
+        <div class="swiper-nav">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <a href="room.html?category=beds"><li><img src="./img/icons/bed.png" alt=""><h1>Ліжка</h1></li></a>
+                        <a href="room.html?category=sofas"><li><img src="./img/icons/sofa.png" alt=""><h1>Дивани</h1></li></a>
+                        <a href="room.html?category=wardrobes"><li><img src="./img/icons/cabinet.png" alt=""><h1>Шафи</h1></li></a>
+                        <a href="room.html?category=tables"><li><img src="./img/icons/table.png" alt=""><h1>Столи</h1></li></a>
+                    </div>
+                    <div class="swiper-slide">
+                        <a href="room.html?category=chairs"><li><img src="./img/icons/chair.png" alt=""><h1>Стільці</h1></li></a>
+                        <a href="room.html?category=mattresses"><li><img src="./img/icons/mattress.png" alt=""><h1>Матраци</h1></li></a>
+                        <a href="room.html?sale=true"><li><img src="./img/icons/percentage.png" alt=""><h1>Акційні</h1></li></a>
+                        <a href="room.html?clearance=true"><li><img src="./img/icons/sale.png" alt=""><h1>Хіти продажів</h1></li></a>
+                    </div>
+                </div>
+            </div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+        <div id="notification"></div>
+        <aside class="category-menu">
+            <ul id="mainCategories"></ul>
+        </aside>
+        <section class="main-section">
+            <div id="productDetails"></div>
+            <div id="cartModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Кошик</h2>
+                    <div id="cartItems" class="products"></div>
+                    <p id="cartTotalPrice"></p>
+                    <button id="checkout">Оформити замовлення</button>
+                </div>
+            </div>
+            <div id="orderModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Оформлення замовлення</h2>
+                    <form id="orderForm">
+                        <input type="text" id="orderName" placeholder="ПІБ" required>
+                        <input type="tel" id="orderPhone" placeholder="Телефон (e.g., +380991234567)" required>
+                        <input type="text" id="orderCountry" placeholder="Країна" required>
+                        <div class="region-citi">
+                            <input type="text" id="orderRegion" placeholder="Область" required>
+                            <input type="text" id="orderCity" placeholder="Місто/Село" required>
+                        </div>
+                        <textarea id="orderComment" placeholder="Коментар до замовлення"></textarea>
+                        <h3>Товари у замовленні</h3>
+                        <div id="orderItems" class="products"></div>
+                        <button type="submit">Оформити</button>
+                    </form>
+                </div>
+            </div>
+            <div id="successModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <p>Ваше замовлення успішно оформлено, скоро з вами зв’яжуться наші продавці</p>
+                    <button onclick="document.getElementById('successModal').style.display='none'">Закрити</button>
+                </div>
+            </div>
+            <footer>
+                <div class="footer-top">
+                    <a href="./index.html" class="logo">
+                        <img src="./img/omelyan-logo.png" alt="">
+                        <h1>Omelyan Mebli</h1>
+                    </a>
+                    <div class="footer-category">
+                        <h3>Категорії</h3>
+                        <a href="room.html?category=beds">Ліжка</a>
+                        <a href="room.html?category=sofas">Дивани</a>
+                        <a href="room.html?category=wardrobes">Шафи</a>
+                        <a href="room.html?category=tables">Столи</a>
+                        <a href="room.html?category=chairs">Стільці</a>
+                        <a href="room.html?category=mattresses">Матраци</a>
+                    </div>
+                    <div class="footer-by-room">
+                        <h3>По кімнатах</h3>
+                        <a href="room.html?room=living_room">Вітальня</a>
+                        <a href="room.html?room=bedroom">Спальна кімната</a>
+                        <a href="room.html?room=nursery">Дитяча</a>
+                        <a href="room.html?room=kitchen">Кухня</a>
+                        <a href="room.html?room=hallway">Прихожа</a>
+                    </div>
+                    <div class="social-link">
+                        <h3>Соцмережі</h3>
+                        <a href="https://www.instagram.com/omelyan.mebli/">Instagram</a>
+                        <a href="https://www.facebook.com/p/%D0%9E%D0%BC%D0%B5%D0%BB%D1%8F%D0%BD-%D0%9C%D0%B5%D0%B1%D0%BB%D1%96-%D0%97%D0%B0%D0%BA%D0%B0%D1%80%D0%BF%D0%B0%D1%82%D1%82%D1%8F-%D0%92%D0%BE%D0%BB%D0%B8%D0%BD%D1%8C-%D0%9B%D1%8C%D0%B2%D1%96%D0%B2-%D0%86%D0%B2%D0%B0%D0%BD%D0%BE-%D0%A4%D1%80%D0%B0%D0%BD%D0%BA%D1%96%D0%B2%D1%81%D1%8C%D0%BA-100090895882157/">FaceBook</a>
+                        <a href="https://www.tiktok.com/@omelyan.mebli">TikTok</a>
+                    </div>
+                    <div class="contact">
+                        <h3>Контакти</h3>
+                        <p><a href="mailto:"></a></p>
+                        <p><a href="tel:+380678692144">+380 67 869 2144</a></p>
+                        <p><a href="tel:+380965103421">+380 96 510 3421</a></p>
+                        <p>вул. Лесі Українки, 1, Нересниця</p>
+                        <p>Пн-Пт 09:00 - 18:00</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <div class="rights">© 2025 Omelyan Mebli. Всі права захищено</div>
+                    <div class="privacy-policy"><a href="./privacy-policy.html?from=index">Політика конфіденційності</a></div>
+                </div>
+            </footer>
+        </section>
+    </main>
+
+</body>
+</html>

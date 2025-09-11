@@ -43,7 +43,12 @@
                 <div class="input-top">
                     <div class="input-top__left">
                         <input type="text" id="productName" placeholder="Назва товару">
-                        <input type="text" id="productPhoto" placeholder="URL фото">
+                        <div class="form-group">
+                            <div id="photosContainer">
+                                <input type="text" class="productPhotoInput" placeholder="URL фото 1" required>
+                            </div>
+                            <button type="button" id="addPhotoBtn">Додати ще URL фото</button>
+                        </div>
                     </div>
                     <textarea id="productDescription" placeholder="Опис товару" maxlength="200"></textarea>
                 </div>
@@ -138,7 +143,12 @@
                 <form id="editProductForm">
                     <input type="text" id="editProductName" placeholder="Назва товару">
                     <textarea id="editProductDescription" placeholder="Опис товару" maxlength="200"></textarea>
-                    <input type="text" id="editProductPhoto" placeholder="URL фото">
+                    <div class="form-group">
+                        <div id="editPhotosContainer">
+                            <!-- Динамічно заповнюватиметься -->
+                        </div>
+                        <button type="button" id="addEditPhotoBtn">Додати ще URL фото</button>
+                    </div>
                     <select id="editProductCategory">
                         <option value="">Виберіть категорію</option>
                         <option value="beds">Ліжка</option>

@@ -1,7 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getDatabase, ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { firebaseConfig } from './firebaseConfig.js';
+
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
@@ -222,6 +223,29 @@ function renderCategories() {
 
 document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
+
+    if (window.location.pathname.includes('product.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+        if (!productId) {
+            showNotification('ID продукту не вказано', 'error');
+            return;
+        }
+        onValue(ref(database, 'products'), (snapshot) => {
+            products = snapshot.val() || {};
+            try {
+                if (typeof renderSingleProduct === 'undefined') {
+                    console.error('renderSingleProduct не визначено');
+                    showNotification('Помилка завантаження скрипта', 'error');
+                    return;
+                }
+                renderSingleProduct(productId);
+            } catch (e) {
+                console.error('Помилка виклику renderSingleProduct:', e);
+                showNotification('Не вдалося завантажити продукт', 'error');
+            }
+        }, { onlyOnce: true });
+    }
 });
 
 document.querySelectorAll('#roomCategories li').forEach(li =>
@@ -241,7 +265,6 @@ function renderContent(filters) {
             const effectivePrice = product.onSale && product.discountPrices && product.discountPrices[product.sizes[0].size] 
                 ? product.discountPrices[product.sizes[0].size] 
                 : product.sizes[0].price;
-            // Уточнена умова для subSubcategory
             const subSubcategoryMatch = !filters.subSubcategory || 
                 (product.subcategory === filters.subcategory && product.subSubcategory === filters.subSubcategory);
             return (filters.category === 'all' || product.category === filters.category) &&
@@ -271,42 +294,37 @@ function renderContent(filters) {
                 ));
         });
 
-        // Для roomProducts, якщо вибрано "Всі товари", групуємо товари по категоріях, сортуємо категорії за новизною найновішого товару в них
         if (containerId === 'roomProducts' && filters.category === 'all') {
             const categories = ['beds', 'sofas', 'wardrobes', 'tables', 'chairs', 'mattresses'];
             const categoryGroups = {};
-
-            // Групуємо товари по категоріях
             filteredProducts.forEach(([key, product]) => {
-                if (!categoryGroups[product.category]) {
-                    categoryGroups[product.category] = [];
-                }
+                if (!categoryGroups[product.category]) categoryGroups[product.category] = [];
                 categoryGroups[product.category].push([key, product]);
             });
-
-            // Для кожної категорії знаходимо max createdAt
             const categoryOrder = categories
                 .filter(cat => categoryGroups[cat] && categoryGroups[cat].length > 0)
                 .map(cat => ({
                     category: cat,
                     maxCreatedAt: Math.max(...categoryGroups[cat].map(([, p]) => p.createdAt || 0))
                 }))
-                .sort((a, b) => b.maxCreatedAt - a.maxCreatedAt) // Сортуємо категорії за max createdAt descending
+                .sort((a, b) => b.maxCreatedAt - a.maxCreatedAt)
                 .map(({ category }) => category);
-
-            // Збираємо товари в порядку сортованих категорій, з сортуванням всередині кожної категорії за createdAt descending
             let selectedProducts = [];
             categoryOrder.forEach(cat => {
                 const sortedCategoryProducts = categoryGroups[cat].sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
                 selectedProducts = [...selectedProducts, ...sortedCategoryProducts];
             });
-
             filteredProducts = selectedProducts;
         } else {
-            // Для інших контейнерів або категорій сортуємо за новизною
             filteredProducts.sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
             if (containerId === 'saleProducts' || containerId === 'clearanceProducts') {
-                filteredProducts = filteredProducts.slice(0, 4); // Ліміт 4 для акцій та розпродажу
+                // Фільтруємо лише акційні/хітові товари та беремо 4 найновіші
+                filteredProducts = filteredProducts
+                    .filter(([_, product]) => 
+                        (containerId === 'saleProducts' && product.onSale) || 
+                        (containerId === 'clearanceProducts' && product.onClearance)
+                    )
+                    .slice(0, 4); // Ліміт 4 найновіші
             }
         }
 
@@ -322,44 +340,290 @@ function renderContent(filters) {
 }
 
 
+
+
+
+function renderSingleProduct(productId) {
+    console.log('renderSingleProduct called with ID:', productId);
+    let product = null;
+
+    if (products[productId]) {
+        product = { key: productId, ...products[productId] };
+    } else {
+        product = Object.entries(products).flatMap(([cat, prods]) =>
+            Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
+        ).find(p => p.key === productId);
+    }
+
+    console.log('Found product:', product);
+    if (!product) {
+        showNotification('Продукт не знайдено', 'error');
+        return;
+    }
+    const container = document.getElementById('productDetails');
+    console.log('Container found:', container);
+    if (!container) {
+        showNotification('Контейнер для продукту не знайдено', 'error');
+        return;
+    }
+
+    const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
+    const originalPrice = product.sizes[0].price;
+    const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
+    const formattedSalePrice = Number(salePrice).toLocaleString('uk-UA');
+    const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+
+    const categoryName = categoryTranslations[product.category] || product.category;
+    const subcategoryName = product.subcategory ? subcategoryTranslations[product.subcategory] || product.subcategory : null;
+    const subSubcategoryName = product.subSubcategory ? subcategoryTranslations[product.subSubcategory] || product.subSubcategory : null;
+    const breadcrumbPath = [];
+    breadcrumbPath.push('<a href="' + (document.referrer || 'index.html') + '">Головна</a>');
+    if (subcategoryName && subSubcategoryName) {
+        breadcrumbPath.push('<a href="room.html?category=' + product.category + '&subcategory=' + product.subcategory + '">' + subcategoryName + '</a>');
+        breadcrumbPath.push(subSubcategoryName);
+    } else if (subcategoryName) {
+        breadcrumbPath.push('<a href="room.html?category=' + product.category + '&subcategory=' + product.subcategory + '">' + subcategoryName + '</a>');
+    } else {
+        breadcrumbPath.push('<a href="room.html?category=' + product.category + '">' + categoryName + '</a>');
+    }
+    breadcrumbPath.push(product.name);
+
+    container.innerHTML = `
+        <div class="breadcrumb">
+            ${breadcrumbPath.join(' > ')}
+        </div>
+        <div class="product-container-top" onclick="window.location.href='product.html?id=${productId}'" style="cursor: pointer;">
+            ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
+            ${product.onSale ? '<span class="promo">Акція</span>' : ''}
+            <div class="product-image-slider">
+                <div class="swiper-wrapper">
+                    ${(product.photos || [product.photo] || []).map(url => `<div class="swiper-slide"><div class="product-image-container"><img src="${url}" alt="${product.name}" class="product-image"></div></div>`).join('')}
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+            </div>
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+        </div>
+        <div class="product-container-bottom">
+            <div class="sizes">
+                <select class="size-select" data-product-id="${productId}" onchange="updatePrice('price_${productId}', this.options[this.selectedIndex].dataset.price, this.value, '${productId}')">
+                    ${product.sizes.map((size, index) => {
+                        const discount = discountPrices[size.size] || null;
+                        const formattedDiscount = discount ? Number(discount).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
+                        const formattedOriginal = Number(size.price).toLocaleString('uk-UA');
+                        return `<option value="${size.size}" data-price="${discount || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`;
+                    }).join('')}
+                </select>
+            </div>
+            <div class="order-items-price">
+                <p class="product-price"><span class="sale-price" id="price_${productId}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice} грн</del>` : ''}</p>
+            </div>
+            <div class="product-button-order">
+                <button class="addToCart" data-id="${productId}"><i class="material-icons">shopping_cart</i></button>
+                <button class="buyNow" data-id="${productId}">Замовити</button>
+            </div>
+        </div>
+    `;
+    console.log('Photos used:', product.photos || [product.photo] || []);
+    console.log('Discount prices:', discountPrices);
+
+    if (typeof Swiper !== 'undefined') {
+        new Swiper('.product-image-slider', {
+            loop: true,
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+            autoplay: { delay: 5000 },
+            slidesPerView: 1,
+            spaceBetween: 10
+        });
+    } else {
+        console.warn('Swiper не завантажено');
+        showNotification('Не вдалося завантажити слайдер зображень', 'error');
+    }
+}
+
+
+function renderProductDetails(product) {
+    const container = document.getElementById('productDetails');
+    console.log('Container found:', container);
+    if (!container) {
+        showNotification('Контейнер для продукту не знайдено', 'error');
+        return;
+    }
+
+    const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
+    const originalPrice = product.sizes[0].price;
+    const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
+    const formattedSalePrice = Number(salePrice).toLocaleString('uk-UA');
+    const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+
+    container.innerHTML = `
+        <div class="product-container-top">
+            ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
+            ${product.onSale ? '<span class="promo">Акція</span>' : ''}
+            <div class="product-image-slider">
+                <div class="swiper-wrapper">
+                    ${(product.photos || [product.photo] || []).map(url => `<div class="swiper-slide"><div class="product-image-container"><img src="${url}" alt="${product.name}" class="product-image"></div></div>`).join('')}
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+            </div>
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+        </div>
+        <div class="product-container-bottom">
+            <div class="sizes">
+                <select class="size-select" data-product-id="${product.key}" onchange="updatePrice('price_${product.key}', this.options[this.selectedIndex].dataset.price, this.value, '${product.key}')">
+                    ${product.sizes.map((size, index) => {
+                        const discount = discountPrices[size.size] || null;
+                        const formattedDiscount = discount ? Number(discount).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
+                        const formattedOriginal = Number(size.price).toLocaleString('uk-UA');
+                        return `<option value="${size.size}" data-price="${discount || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`;
+                    }).join('')}
+                </select>
+            </div>
+            <div class="order-items-price">
+                <p class="product-price"><span class="sale-price" id="price_${product.key}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${product.key}">${formattedOriginalPrice} грн</del>` : ''}</p>
+            </div>
+            <div class="product-button-order">
+                <button class="addToCart" data-id="${product.key}"><i class="material-icons">shopping_cart</i></button>
+                <button class="buyNow" data-id="${product.key}">Замовити</button>
+            </div>
+        </div>
+    `;
+    console.log('Photos used:', product.photos || [product.photo] || []);
+    console.log('Discount prices:', discountPrices);
+
+    if (typeof Swiper !== 'undefined') {
+        new Swiper('.product-image-slider', {
+            loop: true,
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+            autoplay: { delay: 5000 },
+            slidesPerView: 1,
+            spaceBetween: 10
+        });
+    } else {
+        console.warn('Swiper не завантажено');
+        showNotification('Не вдалося завантажити слайдер зображень', 'error');
+    }
+}
+
+
+
+
+
+
 function renderProductCard(container, key, product, sectionId) {
     const productDiv = document.createElement('div');
     productDiv.classList.add('product');
     const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
     const originalPrice = product.sizes[0].price;
     const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
+    const formattedSalePrice = Number(salePrice).toLocaleString('uk-UA');
+    const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+
     productDiv.innerHTML = `
-        <div class="product-container-top">
+        <div class="product-container-top" onclick="window.location.href='product.html?id=${key}'" style="cursor: pointer;">
             ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
             ${product.onSale ? '<span class="promo">Акція</span>' : ''}
-            <img src="${product.photo}" alt="${product.name}">
-            <h3>${product.name}</h3><p>${product.description}</p>
+            <img src="${(product.photos || [])[0] || product.photo}" alt="${product.name}" class="product-img">
+            <h3>${product.name}</h3>
+            <p>${product.description}</p> 
         </div>
-        <div class="product-container-bootom">
-            <div class="sizes"><select class="size-select" data-product-id="${key}" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price, this.value, '${key}')">
-                ${product.sizes.map((size, index) => `<option value="${size.size}" data-price="${discountPrices[size.size] || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`).join('')}
-            </select></div>
-            <!-- <p class="availability">${product.availability ? '<span style="color: green;">В наявності</span>' : '<span style="color: red;">Немає в наявності</span>'}</p> -->
-            <p class="product-price"><span class="sale-price" id="price_${key}">${salePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${key}">${originalPrice} грн</del>` : ''}</p>
-            
+        <div class="product-container-bottom">
+            <div class="sizes">
+                <select class="size-select" data-product-id="${key}" onchange="updatePrice('price_${key}', this.options[this.selectedIndex].dataset.price, this.value, '${key}')">
+                    ${product.sizes.map((size, index) => {
+                        const discount = discountPrices[size.size] || null;
+                        const formattedDiscount = discount ? Number(discount).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
+                        const formattedOriginal = Number(size.price).toLocaleString('uk-UA');
+                        return `<option value="${size.size}" data-price="${discount || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`;
+                    }).join('')}
+                </select>
+            </div>
+            <p class="product-price"><span class="sale-price" id="price_${key}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${key}">${formattedOriginalPrice} грн</del>` : ''}</p>
             <div class="product-button-order">
                 <button class="addToCart" data-id="${key}"><i class="material-icons">shopping_cart</i></button>
                 <button class="buyNow" data-id="${key}">Замовити</button>
             </div>
         </div>
     `;
+    // Виключаємо перенаправлення для кнопок і селекту
+    const clickableArea = productDiv.querySelector('.product-container-top');
+    clickableArea.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'BUTTON' && !e.target.classList.contains('size-select')) {
+            window.location.href = `product.html?id=${key}`;
+        }
+    });
+    // Додаємо обробник для оновлення ціни при зміні розміру
+    const sizeSelect = productDiv.querySelector('.size-select');
+    sizeSelect.addEventListener('change', (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const newPrice = selectedOption.dataset.price;
+        const originalPrice = selectedOption.dataset.original-price;
+        const priceElement = productDiv.querySelector(`#price_${key}`);
+        const originalPriceElement = productDiv.querySelector(`#original_price_${key}`);
+        if (priceElement) priceElement.textContent = Number(newPrice).toLocaleString('uk-UA');
+        if (product.onSale && originalPriceElement) {
+            originalPriceElement.textContent = `${Number(originalPrice).toLocaleString('uk-UA')} грн`;
+        } else if (!product.onSale && originalPriceElement) {
+            originalPriceElement.remove();
+        } else if (product.onSale && !originalPriceElement) {
+            priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${key}">${Number(originalPrice).toLocaleString('uk-UA')} грн</del>`);
+        }
+    });
     container.appendChild(productDiv);
 }
 
 window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
+    console.log('updatePrice called with:', { priceId, newPrice, selectedSize, productId });
     const priceElement = document.getElementById(priceId);
     const originalPriceElement = document.getElementById(`original_price_${productId}`);
-    if (priceElement) priceElement.textContent = newPrice;
-    if (products[productId] && products[productId].onSale && products[productId].discountPrices && selectedSize) {
-        const originalPrice = products[productId].sizes.find(s => s.size === selectedSize)?.price || '';
-        if (originalPriceElement) originalPriceElement.textContent = `${originalPrice} грн`;
-        else if (products[productId].discountPrices[selectedSize]) priceElement.insertAdjacentHTML('afterend', `<del id="original_price_${productId}">${originalPrice} грн</del>`);
-    } else if (originalPriceElement) originalPriceElement.remove();
+    if (!priceElement) {
+        console.error('Price element not found:', priceId);
+        return;
+    }
+
+    // Форматування нової ціни
+    const formattedNewPrice = Number(newPrice.replace(/\s/g, '')).toLocaleString('uk-UA');
+    console.log('Formatted new price:', formattedNewPrice); // Діагностика
+    priceElement.textContent = `${formattedNewPrice}`;
+    let product = products[productId];
+    if (!product) {
+        product = Object.entries(products).flatMap(([cat, prods]) => 
+            Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
+        ).find(p => p.key === productId);
+    }
+
+    if (!product) {
+        console.error('Product not found:', productId);
+        return;
+    }
+
+    console.log('Product data:', product);
+    console.log('Discount prices:', product.discountPrices);
+    console.log('Selected size:', selectedSize);
+
+    const originalPrice = product.sizes.find(s => s.size === selectedSize)?.price || '';
+    if (product.onSale && product.discountPrices && product.discountPrices[selectedSize]) {
+        console.log('Discount price exists for size:', selectedSize);
+        if (originalPriceElement) {
+            // Форматування старої ціни
+            const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+            console.log('Formatted original price:', formattedOriginalPrice); // Діагностика
+            originalPriceElement.textContent = `${formattedOriginalPrice} грн`;
+        } else {
+            const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+            priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice} грн</del>`);
+        }
+    } else if (originalPriceElement) {
+        console.log('Removing original price element');
+        originalPriceElement.remove();
+    }
 };
 
 document.getElementById('searchBar')?.addEventListener('input', e => {
@@ -376,11 +640,9 @@ document.getElementById('searchBar')?.addEventListener('input', e => {
 function renderCart() {
     const cartItems = document.getElementById('cartItems');
     const totalPriceElement = document.getElementById('cartTotalPrice');
-
     const cartCountEl = document.getElementById('cartCount') || document.getElementById('cartStatus') || document.querySelector('.cart-count');
 
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
     if (cartCountEl) {
         cartCountEl.textContent = cart.length > 0 ? String(cart.length) : '';
     }
@@ -397,7 +659,9 @@ function renderCart() {
     }
 
     cart.forEach((item, index) => {
-        const product = products[item.id];
+        let product = Object.entries(products).flatMap(([cat, prods]) =>
+            Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
+        ).find(p => p.key === item.id) || (products[item.id] ? { key: item.id, ...products[item.id] } : null);
         if (!product) return;
         const size = product.sizes.find(s => s.size === item.size);
         if (!size) return;
@@ -408,9 +672,11 @@ function renderCart() {
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.dataset.productId = item.id;
+        const formattedDiscountPrice = discountPrice ? Number(discountPrice).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
+        const formattedOriginalPrice = Number(size.price).toLocaleString('uk-UA');
 
         productDiv.innerHTML = `
-            <img src="${product.photo || ''}" alt="${product.name || ''}">
+            <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name || ''}">
             <div class="order-items-content">
                 <div class="order-items-desc">
                     <h3>${product.name || ''}</h3>
@@ -419,25 +685,28 @@ function renderCart() {
                 <div class="order-items-bottom">
                     <div class="order-items-price">
                         <p class="product-price">
-                            <span class="sale-price" id="price_${index}">${discountPrice || size.price}</span> грн
-                            ${product.onSale ? `<del class="original-price" id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}
+                            <span class="sale-price" id="price_${index}">${formattedDiscountPrice}</span> грн
+                            ${product.onSale ? `<del class="original-price" id="original_price_${item.id}_${index}">${formattedOriginalPrice} грн</del>` : ''}
                         </p>
                     </div>
                     <div class="sizes">
                         <select class="size-select" data-product-id="${item.id}"
                                 onchange="updatePrice('price_${index}', this.options[this.selectedIndex].dataset.price, this.value, '${item.id}'); updateCartSize(${index}, this.value);">
-                            ${product.sizes.map(s => `<option data-price="${s.price}" value="${s.size}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
+                            ${product.sizes.map(s => {
+                                const formattedPrice = Number(s.price).toLocaleString('uk-UA');
+                                return `<option data-price="${s.price}" value="${s.size}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`;
+                            }).join('')}
                         </select>
                     </div>
                     <button class="remove-from-cart" onclick="removeFromCart(${index})">Видалити</button>
                 </div>
             </div>
         `;
-
         cartItems.appendChild(productDiv);
     });
 
-    totalPriceElement.textContent = `Загальна ціна: ${totalPrice} грн`;
+    const formattedTotalPrice = Number(totalPrice).toLocaleString('uk-UA');
+    totalPriceElement.textContent = `Загальна ціна: ${formattedTotalPrice} грн`;
 }
 
 
@@ -474,7 +743,10 @@ document.querySelectorAll('.modal').forEach(modal =>
 document.addEventListener('click', e => {
     if (e.target.classList.contains('addToCart') || e.target.classList.contains('buyNow')) {
         const productId = e.target.dataset.id;
-        if (!products[productId]) {
+        let product = products[productId] || Object.entries(products).flatMap(([cat, prods]) =>
+            Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
+        ).find(p => p.key === productId);
+        if (!product) {
             showNotification('Товар недоступний', 'error');
             return;
         }
@@ -486,12 +758,14 @@ document.addEventListener('click', e => {
         const size = sizeSelect.value;
         if (e.target.classList.contains('addToCart')) {
             const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            cart.push({ id: productId, size });
-            localStorage.setItem('cart', JSON.stringify(cart));
-            showNotification('Товар додано до кошика', 'success');
+            if (!cart.some(item => item.id === productId && item.size === size)) {
+                cart.push({ id: productId, size });
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+                showNotification('Товар додано до кошика', 'success');
+            }
         }
         if (e.target.classList.contains('buyNow')) {
-            const product = products[productId];
             const sizeExists = product.sizes.some(s => s.size === size);
             if (!sizeExists) {
                 showNotification('Вибраний розмір недоступний', 'error');
@@ -502,12 +776,11 @@ document.addEventListener('click', e => {
                 orderModal.style.display = 'flex';
                 renderOrderItems([{ id: productId, size }]);
                 loadUserData();
-            } else {
-                showNotification('Форма замовлення недоступна на цій сторінці', 'error');
             }
         }
     }
 });
+
 
 function renderOrderItems(orderItems) {
     const orderItemsDiv = document.getElementById('orderItems');
@@ -520,17 +793,28 @@ function renderOrderItems(orderItems) {
     }
     let validItems = 0;
     orderItems.forEach((item, index) => {
-        const product = products[item.id];
-        if (!product) return;
+        let product = Object.entries(products).flatMap(([cat, prods]) =>
+            Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
+        ).find(p => p.key === item.id) || (products[item.id] ? { key: item.id, ...products[item.id] } : null);
+        if (!product) {
+            console.error(`Продукт з ID ${item.id} не знайдено`);
+            return;
+        }
         const size = product.sizes.find(s => s.size === item.size);
-        if (!size) return;
+        if (!size) {
+            console.error(`Розмір ${item.size} для продукту ${item.id} не знайдено`);
+            return;
+        }
         validItems++;
         const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
+        const formattedDiscountPrice = discountPrice ? Number(discountPrice).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
+        const formattedOriginalPrice = Number(size.price).toLocaleString('uk-UA');
+
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.dataset.productId = item.id;
         productDiv.innerHTML = `
-            <img src="${product.photo}" alt="${product.name}">
+            <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name}">
             <div class="order-items-content">
                 <div class="order-items-desc">
                     <h3>${product.name}</h3>
@@ -539,10 +823,13 @@ function renderOrderItems(orderItems) {
                 </div>
                 <div class="order-items-bottom">
                     <div class="order-items-price">
-                        <p class="product-price"><span class="sale-price" id="price_${index}">${discountPrice || size.price}</span> грн${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${size.price} грн</del>` : ''}</p>
+                        <p class="product-price"><span class="sale-price" id="price_${index}">${formattedDiscountPrice}</span> грн${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${formattedOriginalPrice} грн</del>` : ''}</p>
                     </div>
                     <div class="sizes"><select class="size-select" onchange="updateOrderItemSize(${index}, this.value)">
-                        ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
+                        ${product.sizes.map(s => {
+                            const formattedPrice = Number(s.price).toLocaleString('uk-UA');
+                            return `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`;
+                        }).join('')}
                     </select></div>
                 </div>
             </div>
@@ -554,7 +841,19 @@ function renderOrderItems(orderItems) {
     });
     if (validItems === 0) {
         orderItemsDiv.innerHTML = '<p>Немає доступних товарів у замовленні</p>';
-        showNotification('Немає доступних товарів у замовленні', 'error');
+        showNotification('Немає доступних товарів у замовлення', 'error');
+    } else {
+        let totalPrice = 0;
+        orderItems.forEach((item, index) => {
+            let product = products[item.id] || Object.entries(products).flatMap(([_, prods]) => Object.values(prods || {})).find(p => p.key === item.id);
+            if (product) {
+                const size = product.sizes.find(s => s.size === item.size);
+                const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
+                totalPrice += parseFloat(discountPrice || size.price);
+            }
+        });
+        const totalPriceElement = document.getElementById('orderTotalPrice');
+        if (totalPriceElement) totalPriceElement.textContent = `Загальна сума: ${Number(totalPrice).toLocaleString('uk-UA')} грн`;
     }
 }
 
@@ -572,7 +871,10 @@ document.getElementById('checkout')?.addEventListener('click', () => {
         showNotification('Кошик порожній', 'warning');
         return;
     }
-    const validCartItems = cart.filter(item => products[item.id] && products[item.id].sizes.some(s => s.size === item.size));
+    const validCartItems = cart.filter(item => {
+        const product = products[item.id] || Object.entries(products).flatMap(([_, prods]) => Object.values(prods || {})).find(p => p.key === item.id);
+        return product && product.sizes.some(s => s.size === item.size);
+    });
     if (!validCartItems.length) {
         showNotification('Кошик містить недоступні товари', 'error');
         return;
@@ -582,8 +884,6 @@ document.getElementById('checkout')?.addEventListener('click', () => {
         orderModal.style.display = 'flex';
         renderOrderItems(validCartItems);
         loadUserData();
-    } else {
-        showNotification('Форма замовлення недоступна на цій сторінці', 'error');
     }
 });
 
@@ -638,7 +938,7 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
                 name: product.name,
                 size: item.size,
                 price: product.onSale && product.discountPrices && product.discountPrices[item.size] ? product.discountPrices[item.size] : size.price,
-                photo: product.photo,
+                photo: (product.photos || [])[0] || product.photo || '', // Бере перше фото
                 availability: product.availability,
                 rooms: product.rooms || [],
                 subSubcategory: product.subSubcategory || null
@@ -954,7 +1254,9 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('productName')?.value.trim() || '';
     const description = document.getElementById('productDescription')?.value.trim() || '';
-    const photo = document.getElementById('productPhoto')?.value.trim() || '';
+    const photos = Array.from(document.querySelectorAll('.productPhotoInput')).map(input => input.value.trim()).filter(url => url);
+    if (photos.length === 0) return showNotification('Додайте хоча б одне фото', 'error');
+    if (photos.some(url => !isValidUrl(url))) return showNotification('Некоректний URL фото. Використовуйте лише зображення (png, jpg, jpeg, gif, webp)', 'error');
     const category = document.getElementById('productCategory')?.value || 'beds';
     const subcategory = document.getElementById('productSubcategory')?.value || '';
     const subSubcategory = document.getElementById('productSubSubcategory')?.value || '';
@@ -970,7 +1272,6 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
     })).filter(s => s.size && s.price > 0);
     if (!name) return showNotification('Введіть назву товару', 'error');
     if (!description) return showNotification('Введіть опис товару', 'error');
-    if (!photo) return showNotification('Введіть URL фото', 'error');
     if (!category) return showNotification('Виберіть категорію', 'error');
     if (!subcategory) return showNotification('Виберіть підкатегорію', 'error');
     if (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving') && !subSubcategory)
@@ -979,7 +1280,7 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
     if (sizes.some(s => s.discountPrice && s.discountPrice >= s.price))
         return showNotification('Акційна ціна має бути меншою за звичайну ціну', 'error');
     const productData = {
-        name, description, photo, category, subcategory,
+        name, description, photos, category, subcategory,
         subSubcategory: subSubcategory || null,
         materials: materialsSelected, colors: colorsSelected,
         sizes: sizes.map(s => ({ size: s.size, price: s.price })),
@@ -1059,7 +1360,10 @@ function renderAdminProducts(category, search) {
     const productList = document.getElementById('productList');
     if (!productList) return;
     productList.innerHTML = '';
-    const filteredProducts = Object.entries(products).filter(([key, product]) =>
+    const allProducts = Object.entries(products).flatMap(([key, prod]) => ({ key, ...prod })).concat(
+        Object.keys(products).filter(key => !Object.values(products[key]).length).map(key => ({ key, ...products[key] }))
+    );
+    const filteredProducts = allProducts.filter(product =>
         (category === 'all' || product.category === category) &&
         (!search || product.name.toLowerCase().includes(search.toLowerCase()))
     );
@@ -1067,11 +1371,11 @@ function renderAdminProducts(category, search) {
         productList.innerHTML = '<p>Немає товарів. Додайте товар через форму.</p>';
         return;
     }
-    filteredProducts.forEach(([key, product]) => {
+    filteredProducts.forEach(product => {
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.innerHTML = `
-            <img src="${product.photo}" alt="${product.name}">
+            <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name}">
             <div class="product-first">
                 <h3>${product.name}</h3>
                 <p>${product.description}</p>
@@ -1083,22 +1387,20 @@ function renderAdminProducts(category, search) {
             <div class="product-second">
                 <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
                 <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
-                <!-- <p>Наявність: ${product.availability ? 'Так' : 'Ні'}</p> -->
                 <p>Хіт продажу: ${product.onClearance ? 'Так' : 'Ні'}</p>
                 <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
                 <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
             </div>
-            
-
             <div class="product-button">
-                <button onclick="editProduct('${key}')"><i class="material-icons">edit</i></button>
-                <button onclick="removeProduct('${key}')"><i class="material-icons">delete</i></button>
+                <button onclick="editProduct('${product.key}')"><i class="material-icons">edit</i></button>
+                <button onclick="removeProduct('${product.key}')"><i class="material-icons">delete</i></button>
             </div>
-
         `;
         productList.appendChild(productDiv);
     });
 }
+
+
 
 window.removeProduct = key => remove(ref(database, 'products/' + key)).then(() => showNotification('Товар видалено', 'success'));
 
@@ -1111,7 +1413,6 @@ window.editProduct = key => {
     const fields = [
         { id: 'editProductName', value: product.name || '' },
         { id: 'editProductDescription', value: product.description || '' },
-        { id: 'editProductPhoto', value: product.photo || '' },
         { id: 'editProductCategory', value: product.category || 'beds' },
         { id: 'editProductSubcategory', value: product.subcategory || '' },
         { id: 'editProductSubSubcategory', value: product.subSubcategory || '' },
@@ -1135,6 +1436,15 @@ window.editProduct = key => {
     if (editSizes) {
         editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="number" class="edit-price-input" value="${s.price}"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" value="${product.onSale && product.discountPrices && product.discountPrices[s.size] || ''}"><button class="remove-size"><i class="material-icons">delete</i></button></div>`).join('');
     }
+    const editPhotosContainer = document.getElementById('editPhotosContainer');
+    if (editPhotosContainer) {
+        editPhotosContainer.innerHTML = ''; // Очистити
+        (product.photos || [product.photo] || []).forEach(url => {
+            const input = document.createElement('input');
+            input.type = 'text'; input.value = url; input.className = 'productPhotoInput';
+            editPhotosContainer.appendChild(input);
+        });
+    }
     const editModal = document.getElementById('editModal');
     if (editModal) {
         editModal.dataset.key = key;
@@ -1150,6 +1460,10 @@ window.editProduct = key => {
     }
 };
 
+function isValidUrl(url) {
+    return /^https?:\/\/.*\.(png|jpg|jpeg|gif|webp)$/i.test(url);
+}
+
 document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const editModal = document.getElementById('editModal');
@@ -1158,7 +1472,9 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
     if (!key || !products[key]) return showNotification('Помилка: товар не знайдено', 'error');
     const name = document.getElementById('editProductName')?.value.trim() || '';
     const description = document.getElementById('editProductDescription')?.value.trim() || '';
-    const photo = document.getElementById('editProductPhoto')?.value.trim() || '';
+    const photos = Array.from(document.querySelectorAll('#editPhotosContainer .productPhotoInput')).map(input => input.value.trim()).filter(url => url);
+    if (photos.length === 0) return showNotification('Додайте хоча б одне фото', 'error');
+    if (photos.some(url => !isValidUrl(url))) return showNotification('Некоректний URL фото. Використовуйте лише зображення (png, jpg, jpeg, gif, webp)', 'error');
     const category = document.getElementById('editProductCategory')?.value || 'beds';
     const subcategory = document.getElementById('editProductSubcategory')?.value || '';
     const subSubcategory = document.getElementById('editProductSubSubcategory')?.value || '';
@@ -1176,7 +1492,6 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
     })).filter(s => s.size && s.price > 0);
     if (!name) return showNotification('Введіть назву товару', 'error');
     if (!description) return showNotification('Введіть опис товару', 'error');
-    if (!photo) return showNotification('Введіть URL фото', 'error');
     if (!category) return showNotification('Виберіть категорію', 'error');
     if (!subcategory) return showNotification('Виберіть підкатегорію', 'error');
     if (category === 'wardrobes' && (subcategory === 'sliding_wardrobes' || subcategory === 'sliding_wardrobes_with_carving') && !subSubcategory)
@@ -1185,7 +1500,7 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
     if (onSale && sizes.some(s => s.discountPrice && s.discountPrice >= s.price))
         return showNotification('Акційна ціна має бути меншою за звичайну ціну', 'error');
     const productData = {
-        name, description, photo, category, subcategory,
+        name, description, photos, category, subcategory,
         subSubcategory: subSubcategory || null,
         materials: materialsSelected, colors: colorsSelected,
         sizes: sizes.map(s => ({ size: s.size, price: s.price })),
@@ -1282,9 +1597,11 @@ function applyPromos() {
     document.querySelectorAll('.product').forEach(product => {
         const name = product.querySelector('h3')?.textContent;
         if (!name) return;
-        const productKey = Object.keys(products).find(key => products[key].name === name);
-        if (!productKey) return;
-        const discountPrices = products[productKey].onSale && products[productKey].discountPrices ? products[productKey].discountPrices : {};
+        const productEntry = Object.entries(products).flatMap(([cat, prods]) => 
+            Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
+        ).find(p => p.name === name);
+        if (!productEntry) return;
+        const discountPrices = productEntry.onSale && productEntry.discountPrices ? productEntry.discountPrices : {};
         const priceSpan = product.querySelector('span[id^="price_"]');
         const sizeSelect = product.querySelector('.size-select');
         const selectedSize = sizeSelect ? sizeSelect.value : products[productKey].sizes[0].size;
@@ -1330,8 +1647,8 @@ function tryRenderContent() {
 
 onValue(ref(database, 'products'), (snapshot) => {
     products = snapshot.val() || {};
-    productsLoaded = true;
-    tryRenderContent();
+    console.log('Products from Firebase:', products); // Додайте для діагностики
+    renderContent(currentFilters); // Викликати напряму
 });
 
 onValue(ref(database, 'promos'), (snapshot) => {
@@ -1532,3 +1849,24 @@ if (document.readyState === 'loading') {
 window.addEventListener('storage', (e) => {
     if (e.key === 'cart') renderCart();
 });
+
+
+
+
+
+
+
+document.getElementById('addPhotoBtn')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'productPhotoInput'; input.placeholder = 'URL фото';
+    document.getElementById('photosContainer').appendChild(input);
+});
+
+document.getElementById('addEditPhotoBtn')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'productPhotoInput'; input.placeholder = 'URL фото';
+    document.getElementById('editPhotosContainer').appendChild(input);
+});
+
+
+
