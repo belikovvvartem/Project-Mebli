@@ -16,7 +16,7 @@ var mySwiper = new Swiper ('.swiper-container', {
         if (!searchBox.classList.contains("open")) {
           searchBox.style.display = "none";
         }
-      }, 300); // після анімації ховаємо
+      }, 300);
     } else {
       searchBox.style.display = "block";
       setTimeout(() => searchBox.classList.add("open"), 10);
@@ -28,13 +28,11 @@ var mySwiper = new Swiper ('.swiper-container', {
   const accordionHeader = document.querySelector(".accordion-header");
   const accordionContent = document.querySelector(".accordion-content");
 
-  // Відкриття/закриття меню
   menuBtn.addEventListener("click", () => {
     const isOpen = menuOverlay.classList.toggle("open");
     menuBtn.style.transform = isOpen ? "rotate(90deg)" : "rotate(0deg)";
   });
 
-  // Закриття при кліку на фон
   menuOverlay.addEventListener("click", (e) => {
     if (e.target === menuOverlay) {
       menuOverlay.classList.remove("open");
@@ -42,8 +40,8 @@ var mySwiper = new Swiper ('.swiper-container', {
     }
   });
 
-  // Акордеон
   accordionHeader.addEventListener("click", () => {
     const isOpen = accordionHeader.classList.toggle("active");
     accordionContent.style.maxHeight = isOpen ? accordionContent.scrollHeight + "px" : "0";
   });
+

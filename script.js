@@ -318,13 +318,12 @@ function renderContent(filters) {
         } else {
             filteredProducts.sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
             if (containerId === 'saleProducts' || containerId === 'clearanceProducts') {
-                // Фільтруємо лише акційні/хітові товари та беремо 4 найновіші
                 filteredProducts = filteredProducts
                     .filter(([_, product]) => 
                         (containerId === 'saleProducts' && product.onSale) || 
                         (containerId === 'clearanceProducts' && product.onClearance)
                     )
-                    .slice(0, 4); // Ліміт 4 найновіші
+                    .slice(0, 4);
             }
         }
 
@@ -344,7 +343,6 @@ function renderContent(filters) {
 
 
 function renderSingleProduct(productId) {
-    console.log('renderSingleProduct called with ID:', productId);
     let product = null;
 
     if (products[productId]) {
@@ -355,13 +353,11 @@ function renderSingleProduct(productId) {
         ).find(p => p.key === productId);
     }
 
-    console.log('Found product:', product);
     if (!product) {
         showNotification('Продукт не знайдено', 'error');
         return;
     }
     const container = document.getElementById('productDetails');
-    console.log('Container found:', container);
     if (!container) {
         showNotification('Контейнер для продукту не знайдено', 'error');
         return;
@@ -392,7 +388,7 @@ function renderSingleProduct(productId) {
         <div class="breadcrumb">
             ${breadcrumbPath.join(' > ')}
         </div>
-        <div class="product-container-top" onclick="window.location.href='product.html?id=${productId}'" style="cursor: pointer;">
+        <div class="product-container-top" style="cursor: pointer;">
             ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
             ${product.onSale ? '<span class="promo">Акція</span>' : ''}
             <div class="product-image-slider">
@@ -426,8 +422,6 @@ function renderSingleProduct(productId) {
             </div>
         </div>
     `;
-    console.log('Photos used:', product.photos || [product.photo] || []);
-    console.log('Discount prices:', discountPrices);
 
     if (typeof Swiper !== 'undefined') {
         new Swiper('.product-image-slider', {
@@ -447,7 +441,6 @@ function renderSingleProduct(productId) {
 
 function renderProductDetails(product) {
     const container = document.getElementById('productDetails');
-    console.log('Container found:', container);
     if (!container) {
         showNotification('Контейнер для продукту не знайдено', 'error');
         return;
@@ -494,8 +487,6 @@ function renderProductDetails(product) {
             </div>
         </div>
     `;
-    console.log('Photos used:', product.photos || [product.photo] || []);
-    console.log('Discount prices:', discountPrices);
 
     if (typeof Swiper !== 'undefined') {
         new Swiper('.product-image-slider', {
@@ -552,14 +543,12 @@ function renderProductCard(container, key, product, sectionId) {
             </div>
         </div>
     `;
-    // Виключаємо перенаправлення для кнопок і селекту
     const clickableArea = productDiv.querySelector('.product-container-top');
     clickableArea.addEventListener('click', (e) => {
         if (e.target.tagName !== 'BUTTON' && !e.target.classList.contains('size-select')) {
             window.location.href = `product.html?id=${key}`;
         }
     });
-    // Додаємо обробник для оновлення ціни при зміні розміру
     const sizeSelect = productDiv.querySelector('.size-select');
     sizeSelect.addEventListener('change', (e) => {
         const selectedOption = e.target.options[e.target.selectedIndex];
@@ -580,7 +569,6 @@ function renderProductCard(container, key, product, sectionId) {
 }
 
 window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
-    console.log('updatePrice called with:', { priceId, newPrice, selectedSize, productId });
     const priceElement = document.getElementById(priceId);
     const originalPriceElement = document.getElementById(`original_price_${productId}`);
     if (!priceElement) {
@@ -588,9 +576,7 @@ window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
         return;
     }
 
-    // Форматування нової ціни
     const formattedNewPrice = Number(newPrice.replace(/\s/g, '')).toLocaleString('uk-UA');
-    console.log('Formatted new price:', formattedNewPrice); // Діагностика
     priceElement.textContent = `${formattedNewPrice}`;
     let product = products[productId];
     if (!product) {
@@ -604,24 +590,17 @@ window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
         return;
     }
 
-    console.log('Product data:', product);
-    console.log('Discount prices:', product.discountPrices);
-    console.log('Selected size:', selectedSize);
 
     const originalPrice = product.sizes.find(s => s.size === selectedSize)?.price || '';
     if (product.onSale && product.discountPrices && product.discountPrices[selectedSize]) {
-        console.log('Discount price exists for size:', selectedSize);
         if (originalPriceElement) {
-            // Форматування старої ціни
             const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
-            console.log('Formatted original price:', formattedOriginalPrice); // Діагностика
             originalPriceElement.textContent = `${formattedOriginalPrice} грн`;
         } else {
             const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
             priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice} грн</del>`);
         }
     } else if (originalPriceElement) {
-        console.log('Removing original price element');
         originalPriceElement.remove();
     }
 };
@@ -938,7 +917,7 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
                 name: product.name,
                 size: item.size,
                 price: product.onSale && product.discountPrices && product.discountPrices[item.size] ? product.discountPrices[item.size] : size.price,
-                photo: (product.photos || [])[0] || product.photo || '', // Бере перше фото
+                photo: (product.photos || [])[0] || product.photo || '', 
                 availability: product.availability,
                 rooms: product.rooms || [],
                 subSubcategory: product.subSubcategory || null
@@ -1097,10 +1076,8 @@ function renderSubcategories(category, selectedSubcategory) {
                 document.querySelectorAll('#subcategoryList li').forEach(item => item.classList.remove('selected'));
                 li.classList.add('selected');
                 currentFilters.subcategory = sub === 'all' ? null : sub;
-                // Скидаємо subSubcategory, якщо підкатегорія не підтримує підпідкатегорії або це "Всі товари"
                 if (!wardrobeSubSubs[sub] || sub === 'all') {
                     currentFilters.subSubcategory = null;
-                    // Оновлюємо URL, щоб видалити subSubcategory
                     const url = new URL(window.location);
                     url.searchParams.delete('subSubcategory');
                     window.history.pushState({}, '', url);
@@ -1116,7 +1093,6 @@ function renderSubcategories(category, selectedSubcategory) {
                     subLi.addEventListener('click', (e) => {
                         e.stopPropagation();
                         currentFilters.subSubcategory = subSub;
-                        // Оновлюємо URL з новим subSubcategory
                         const url = new URL(window.location);
                         url.searchParams.set('subSubcategory', subSub);
                         window.history.pushState({}, '', url);
@@ -1438,7 +1414,7 @@ window.editProduct = key => {
     }
     const editPhotosContainer = document.getElementById('editPhotosContainer');
     if (editPhotosContainer) {
-        editPhotosContainer.innerHTML = ''; // Очистити
+        editPhotosContainer.innerHTML = ''; 
         (product.photos || [product.photo] || []).forEach(url => {
             const input = document.createElement('input');
             input.type = 'text'; input.value = url; input.className = 'productPhotoInput';
@@ -1647,8 +1623,7 @@ function tryRenderContent() {
 
 onValue(ref(database, 'products'), (snapshot) => {
     products = snapshot.val() || {};
-    console.log('Products from Firebase:', products); // Додайте для діагностики
-    renderContent(currentFilters); // Викликати напряму
+    renderContent(currentFilters); 
 });
 
 onValue(ref(database, 'promos'), (snapshot) => {
@@ -1738,18 +1713,16 @@ document.addEventListener('DOMContentLoaded', () => {
     searchBars.forEach(searchBar => {
         const handleSearch = () => {
             const query = searchBar.value.trim();
-            console.log('Search triggered:', query); // Для діагностики
             currentFilters.search = query ? query.toLowerCase() : null;
 
-            // Перенаправлення на room.html для всіх сторінок, крім room.html
             if (!window.location.pathname.includes('room.html')) {
                 if (query) {
-                    window.location.href = `room.html?search=${query}`; // Без encodeURIComponent
+                    window.location.href = `room.html?search=${query}`; 
                 }
             } else {
                 const url = new URL(window.location);
                 if (query) {
-                    url.searchParams.set('search', query); // Без encodeURIComponent
+                    url.searchParams.set('search', query); 
                 } else {
                     url.searchParams.delete('search');
                 }
@@ -1760,19 +1733,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         searchBar.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                console.log('Enter pressed on:', searchBar); // Для діагностики
                 handleSearch();
             }
         });
 
         searchBar.addEventListener('input', () => {
             const query = searchBar.value.trim();
-            console.log('Input changed:', query); // Для діагностики
             currentFilters.search = query ? query.toLowerCase() : null;
             if (window.location.pathname.includes('room.html')) {
                 const url = new URL(window.location);
                 if (query) {
-                    url.searchParams.set('search', query); // Без encodeURIComponent
+                    url.searchParams.set('search', query); 
                 } else {
                     url.searchParams.delete('search');
                 }
@@ -1786,7 +1757,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchQuery = urlParams.get('search');
             if (searchQuery) {
                 currentFilters.search = searchQuery.toLowerCase();
-                searchBar.value = searchQuery; // Використовуємо некодований запит
+                searchBar.value = searchQuery; 
                 renderContent(currentFilters);
             }
         }
@@ -1799,18 +1770,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const searchBar = container ? container.querySelector('.searchBar') : null;
 
             if (searchBar) {
-                console.log('Button clicked, associated input:', searchBar.value); // Для діагностики
                 const query = searchBar.value.trim();
                 currentFilters.search = query ? query.toLowerCase() : null;
 
                 if (!window.location.pathname.includes('room.html')) {
                     if (query) {
-                        window.location.href = `room.html?search=${query}`; // Без encodeURIComponent
+                        window.location.href = `room.html?search=${query}`; 
                     }
                 } else {
                     const url = new URL(window.location);
                     if (query) {
-                        url.searchParams.set('search', query); // Без encodeURIComponent
+                        url.searchParams.set('search', query); 
                     } else {
                         url.searchParams.delete('search');
                     }

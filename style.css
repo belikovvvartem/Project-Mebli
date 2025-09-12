@@ -1704,13 +1704,13 @@ main>section {
       #menuOverlay {
         position: fixed;
         display: block;
-        top: 83px; /* висота хедера */
+        top: 83px;
         left: 0;
         width: 100%;
         height: calc(100% - 50px);
         background: rgba(0, 0, 0, 0.3);
         opacity: 0;
-        pointer-events: none; /* щоб не ловило кліки, коли закрите */
+        pointer-events: none;
         transition: opacity 0.3s ease;
         z-index: 50;
       }
@@ -2208,6 +2208,14 @@ main>section {
       }
       .product-html #productDetails .swiper-button-next, .product-html #productDetails .swiper-button-prev {
         display: none;
+    }
+
+    .swiper-button-prev, .swiper-button-next {
+        top: 40%;
+    }
+
+    .swiper-button-prev img, .swiper-button-next img {
+        width: 30px;
     }
 }
 
