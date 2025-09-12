@@ -52,10 +52,10 @@ header {
 .logo {
     display: flex;
     align-items: center;
-    gap: 15px;
     color: var(--background-light);
     text-decoration: none;
-    font-size: 25px;
+    font-size: 22px;
+    width: 20%;
 }
 
 main {
@@ -221,7 +221,7 @@ main>section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 60%;
+    width: 100%;
         background: var(--card-background);
         padding: 15px;
         border-radius: 12px;
@@ -236,7 +236,7 @@ main>section {
     color: var(--card-background);
     padding: 10px 22px;
     border: none;
-    border-radius: 25px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     font-size: 12px;
@@ -324,7 +324,7 @@ main>section {
     width: 100%;
     padding: 12px;
     border: none;
-    border-radius: 25px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.95em;
@@ -378,11 +378,11 @@ main>section {
 
 #productList button {
     background: var(--hover-blue);
-    border-radius: 25px 25px 0 0;
+    border-radius: 10px 10px 0 0;
 }
 
 #productList button:last-child {
-    border-radius: 0 0 25px 25px;
+    border-radius: 0 0 10px 10px;
 }
 
 #bannerList button:last-child:hover,
@@ -649,10 +649,14 @@ main>section {
     .admin-html header {
         flex-wrap: wrap;
         padding: 15px;
-        height: 320px;
+        height: 380px;
         gap: 10px;
         font-size: 12px;
         position: relative;
+    }
+
+    .logo {
+        width: 50%;
     }
 
     .admin-html header #logout {
@@ -770,11 +774,11 @@ main>section {
     }
 
     #productList button {
-        border-radius: 25px 0 0 25px;
+        border-radius: 10px 0 0 10px;
     }
 
     #productList button:last-child {
-        border-radius: 0 25px 25px 0;
+        border-radius: 0 10px 10px 0;
     }
 
     .admin-html .modal-content {
@@ -885,7 +889,7 @@ main>section {
     background: var(--primary-blue);
     color: var(--card-background);
     border: none;
-    border-radius: 25px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.95em;
@@ -1030,7 +1034,7 @@ main>section {
     color: var(--card-background);
     border: none;
     padding: 14px;
-    border-radius: 25px;
+    border-radius: 10px;
     cursor: pointer;
     font-weight: 600;
     font-size: 1em;
@@ -1214,4 +1218,25 @@ main>section {
         top: 10px;
         right: 15px;
     }
+}
+
+.form-group {
+    position: relative;
+    width: 100%;
+}
+
+#addPhotoBtn, #addEditPhotoBtn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--success-green);
+    height: 50px;
+    color: var(--background-light);
+    border: none;
+    width: 50px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 18px;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
