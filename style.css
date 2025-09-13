@@ -1867,6 +1867,7 @@ main>section {
         align-items: center;
         flex-wrap: wrap;
         gap: 8px;
+        overflow-x: hidden;
     }
 
     .swiper-slide a {
