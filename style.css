@@ -1593,6 +1593,7 @@ main>section {
 @media (max-width: 575px) {
     body {
         width: 100%;
+        overflow-x: hidden;
     }
 
     main {
