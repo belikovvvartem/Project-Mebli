@@ -1237,6 +1237,10 @@ main>section {
     flex-wrap: wrap;
 }
 
+.product-container-top p {
+    white-space: pre-wrap;
+}
+
 #subcategoryList {
     list-style: none;
     padding: 0;

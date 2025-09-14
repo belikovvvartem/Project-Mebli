@@ -523,7 +523,7 @@ function renderProductCard(container, key, product, sectionId) {
             ${product.onSale ? '<span class="promo">Акція</span>' : ''}
             <img src="${(product.photos || [])[0] || product.photo}" alt="${product.name}" class="product-img">
             <h3>${product.name}</h3>
-            <p>${product.description}</p> 
+            <!-- <p>${product.description}</p> -->
         </div>
         <div class="product-container-bottom">
             <div class="sizes">
@@ -659,7 +659,7 @@ function renderCart() {
             <div class="order-items-content">
                 <div class="order-items-desc">
                     <h3>${product.name || ''}</h3>
-                    <p>${product.description || ''}</p>
+                    <!-- <p>${product.description || ''}</p> -->
                 </div>
                 <div class="order-items-bottom">
                     <div class="order-items-price">
@@ -797,7 +797,7 @@ function renderOrderItems(orderItems) {
             <div class="order-items-content">
                 <div class="order-items-desc">
                     <h3>${product.name}</h3>
-                    <p>${product.description}</p>
+                    <!-- <p>${product.description}</p> -->
                     ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
                 </div>
                 <div class="order-items-bottom">
@@ -1266,25 +1266,46 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
     };
     push(ref(database, 'products'), productData)
         .then(() => {
-            ['productName', 'productDescription', 'productPhoto', 'productSubcategory', 'productSubSubcategory'].forEach(id => {
+            // Очистка полів форми
+            ['productName', 'productDescription'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            ['productCategory'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = 'beds';
-            });
+            // Скидання категорій
+            const productCategory = document.getElementById('productCategory');
+            if (productCategory) {
+                productCategory.value = ''; // Скидаємо до порожнього значення
+            }
+            const productSubcategory = document.getElementById('productSubcategory');
+            if (productSubcategory) {
+                productSubcategory.value = ''; // Скидаємо до порожнього значення
+            }
+            const productSubSubcategory = document.getElementById('productSubSubcategory');
+            if (productSubSubcategory) {
+                productSubSubcategory.value = ''; // Скидаємо до порожнього значення
+                productSubSubcategory.style.display = 'none'; // Приховуємо поле
+            }
+            // Оновлення списку підкатегорій
+            updateSubcategoryOptions();
+            // Очистка матеріалів і кольорів
             ['productMaterials', 'productColors'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.selectedIndex = -1;
             });
+            // Очистка прапорця наявності
             ['availability'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.checked = false;
             });
+            // Очистка чекбоксів для кімнат
             document.querySelectorAll('#rooms input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+            // Очистка розмірів
             document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button></div>';
-            document.getElementById('productSubSubcategory').style.display = 'none';
+            // Очистка контейнера для фотографій
+            const photosContainer = document.getElementById('photosContainer');
+            if (photosContainer) {
+                photosContainer.innerHTML = '<input type="text" class="productPhotoInput" placeholder="URL фото (основне)" required>';
+            }
             showNotification('Товар додано успішно', 'success');
             renderAdminProducts('all', '');
         })
