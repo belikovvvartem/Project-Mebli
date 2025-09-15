@@ -945,7 +945,12 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
             localStorage.removeItem('cart');
             showNotification('Замовлення успішно оформлено', 'success');
         })
-        .catch(err => showNotification('Помилка при оформленні замовлення', 'error'))
+        .catch(err => {
+            let message = 'Помилка при оформленні замовлення';
+            if (err.message.includes('NetworkError')) message = 'Проблема з мережею. Перевірте підключення.';
+            else if (err.message.includes('HTTP error')) message = `Помилка сервера: ${err.message}`;
+            showNotification(message, 'error');
+        })
         .finally(() => {
             submitButton.disabled = false;
             submitButton.textContent = 'Оформити';
@@ -1262,54 +1267,89 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
         sizes: sizes.map(s => ({ size: s.size, price: s.price })),
         availability, rooms,
         onSale: sizes.some(s => s.discountPrice),
-        discountPrices: sizes.reduce((acc, s) => (s.discountPrice ? { ...acc, [s.size]: s.discountPrice } : acc), {})
+        discountPrices: sizes.reduce((acc, s) => (s.discountPrice ? { ...acc, [s.size]: s.discountPrice } : acc), {}),
+        createdAt: Date.now() 
     };
     push(ref(database, 'products'), productData)
         .then(() => {
-            // Очистка полів форми
             ['productName', 'productDescription'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            // Скидання категорій
             const productCategory = document.getElementById('productCategory');
             if (productCategory) {
-                productCategory.value = ''; // Скидаємо до порожнього значення
+                productCategory.value = ''; 
             }
             const productSubcategory = document.getElementById('productSubcategory');
             if (productSubcategory) {
-                productSubcategory.value = ''; // Скидаємо до порожнього значення
+                productSubcategory.value = ''; 
             }
             const productSubSubcategory = document.getElementById('productSubSubcategory');
             if (productSubSubcategory) {
-                productSubSubcategory.value = ''; // Скидаємо до порожнього значення
-                productSubSubcategory.style.display = 'none'; // Приховуємо поле
+                productSubSubcategory.value = '';
+                productSubSubcategory.style.display = 'none'; 
             }
-            // Оновлення списку підкатегорій
             updateSubcategoryOptions();
-            // Очистка матеріалів і кольорів
             ['productMaterials', 'productColors'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.selectedIndex = -1;
             });
-            // Очистка прапорця наявності
             ['availability'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.checked = false;
             });
-            // Очистка чекбоксів для кімнат
             document.querySelectorAll('#rooms input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
-            // Очистка розмірів
             document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button></div>';
-            // Очистка контейнера для фотографій
             const photosContainer = document.getElementById('photosContainer');
             if (photosContainer) {
-                photosContainer.innerHTML = '<input type="text" class="productPhotoInput" placeholder="URL фото (основне)" required>';
+                photosContainer.innerHTML = '';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'productPhotoInput';
+                input.placeholder = 'URL фото (основне)';
+                input.required = true;
+                photosContainer.appendChild(input);
             }
             showNotification('Товар додано успішно', 'success');
             renderAdminProducts('all', '');
         })
         .catch(error => showNotification('Помилка додавання товару: ' + error.message, 'error'));
+});
+
+
+
+document.getElementById('addPhotoBtn')?.addEventListener('click', () => {
+    const photosContainer = document.getElementById('photosContainer');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'productPhotoInput';
+    input.placeholder = 'URL фото';
+    photosContainer.appendChild(input);
+});
+
+document.getElementById('productName')?.addEventListener('focus', () => {
+    const photosContainer = document.getElementById('photosContainer');
+    if (photosContainer) {
+        photosContainer.innerHTML = '';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'productPhotoInput';
+        input.placeholder = 'URL фото (основне)';
+        input.required = true;
+        photosContainer.appendChild(input);
+    }
+});
+
+document.addEventListener('input', (e) => {
+    if (e.target.classList.contains('productPhotoInput')) {
+        const url = e.target.value.trim();
+        if (url && !isValidUrl(url)) {
+            e.target.style.border = '1px solid red';
+            showNotification('Некоректний URL фото. Використовуйте лише зображення (png, jpg, jpeg, gif, webp)', 'warning');
+        } else {
+            e.target.style.border = '';
+        }
+    }
 });
 
 document.getElementById('samePrice')?.addEventListener('click', () => {
@@ -1594,30 +1634,33 @@ function applyPromos() {
     document.querySelectorAll('.product').forEach(product => {
         const name = product.querySelector('h3')?.textContent;
         if (!name) return;
-        const productEntry = Object.entries(products).flatMap(([cat, prods]) => 
+        const productEntry = Object.entries(products).flatMap(([cat, prods]) =>
             Object.entries(prods || {}).map(([key, prod]) => ({ key, ...prod }))
         ).find(p => p.name === name);
         if (!productEntry) return;
+        const productKey = productEntry.key;
         const discountPrices = productEntry.onSale && productEntry.discountPrices ? productEntry.discountPrices : {};
-        const priceSpan = product.querySelector('span[id^="price_"]');
+        const priceSpan = product.querySelector(`span[id^="price_${productKey}"]`);
         const sizeSelect = product.querySelector('.size-select');
-        const selectedSize = sizeSelect ? sizeSelect.value : products[productKey].sizes[0].size;
+        const selectedSize = sizeSelect ? sizeSelect.value : productEntry.sizes[0].size;
         if (priceSpan) {
-            const salePrice = discountPrices[selectedSize] || products[productKey].sizes.find(s => s.size === selectedSize)?.price || '';
-            priceSpan.textContent = salePrice;
+            const salePrice = discountPrices[selectedSize] || productEntry.sizes.find(s => s.size === selectedSize)?.price || '';
+            priceSpan.textContent = Number(salePrice).toLocaleString('uk-UA');
             const priceContainer = priceSpan.parentElement;
             const originalPriceElement = priceContainer.querySelector(`del[id="original_price_${productKey}"]`);
-            const originalPrice = products[productKey].sizes.find(s => s.size === selectedSize)?.price || '';
+            const originalPrice = productEntry.sizes.find(s => s.size === selectedSize)?.price || '';
             if (discountPrices[selectedSize] && !originalPriceElement) {
-                priceSpan.insertAdjacentHTML('afterend', `<del id="original_price_${productKey}">${originalPrice} грн</del>`);
+                priceSpan.insertAdjacentHTML('afterend', `<del id="original_price_${productKey}">${Number(originalPrice).toLocaleString('uk-UA')} грн</del>`);
             } else if (!discountPrices[selectedSize] && originalPriceElement) {
                 originalPriceElement.remove();
             } else if (originalPriceElement) {
-                originalPriceElement.textContent = `${originalPrice} грн`;
+                originalPriceElement.textContent = `${Number(originalPrice).toLocaleString('uk-UA')} грн`;
             }
         }
     });
 }
+
+
 
 document.getElementById('applyFilters')?.addEventListener('click', () => {
     const subcategory = document.getElementById('subcategory')?.value || null;
@@ -1839,18 +1882,6 @@ if (document.readyState === 'loading') {
 
 window.addEventListener('storage', (e) => {
     if (e.key === 'cart') renderCart();
-});
-
-
-
-
-
-
-
-document.getElementById('addPhotoBtn')?.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.type = 'text'; input.className = 'productPhotoInput'; input.placeholder = 'URL фото';
-    document.getElementById('photosContainer').appendChild(input);
 });
 
 document.getElementById('addEditPhotoBtn')?.addEventListener('click', () => {
