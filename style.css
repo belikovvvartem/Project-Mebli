@@ -2398,10 +2398,9 @@ main>section {
     margin-top: 10px;
 }
 
-
-
-
-
+.product-html {
+    overflow-x: hidden;
+}
 
 .breadcrumb {
     font-size: 14px;
