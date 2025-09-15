@@ -2398,7 +2398,7 @@ main>section {
     margin-top: 10px;
 }
 
-.product-html {
+.product-html .swiper-container {
     overflow-x: hidden;
 }
 
