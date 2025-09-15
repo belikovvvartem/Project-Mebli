@@ -388,37 +388,39 @@ function renderSingleProduct(productId) {
         <div class="breadcrumb">
             ${breadcrumbPath.join(' > ')}
         </div>
-        <div class="product-container-top" style="cursor: pointer;">
-            ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
-            ${product.onSale ? '<span class="promo">Акція</span>' : ''}
-            <div class="product-image-slider">
-                <div class="swiper-wrapper">
-                    ${(product.photos || [product.photo] || []).map(url => `<div class="swiper-slide"><div class="product-image-container"><img src="${url}" alt="${product.name}" class="product-image"></div></div>`).join('')}
+        <div class="product-html-product">
+            <div class="product-container-top" style="cursor: pointer;">
+                ${product.onClearance ? '<span class="promo clearance">Хіт продажу</span>' : ''}
+                ${product.onSale ? '<span class="promo">Акція</span>' : ''}
+                <div class="product-image-slider">
+                    <div class="swiper-wrapper">
+                        ${(product.photos || [product.photo] || []).map(url => `<div class="swiper-slide"><div class="product-image-container"><img src="${url}" alt="${product.name}" class="product-image"></div></div>`).join('')}
+                    </div>
+                    <div class="swiper-pagination"></div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
                 </div>
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-button-next"></div>
             </div>
-            <h3>${product.name}</h3>
-            <p>${product.description}</p>
-        </div>
-        <div class="product-container-bottom">
-            <div class="sizes">
-                <select class="size-select" data-product-id="${productId}" onchange="updatePrice('price_${productId}', this.options[this.selectedIndex].dataset.price, this.value, '${productId}')">
-                    ${product.sizes.map((size, index) => {
-                        const discount = discountPrices[size.size] || null;
-                        const formattedDiscount = discount ? Number(discount).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
-                        const formattedOriginal = Number(size.price).toLocaleString('uk-UA');
-                        return `<option value="${size.size}" data-price="${discount || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`;
-                    }).join('')}
-                </select>
-            </div>
-            <div class="order-items-price">
-                <p class="product-price"><span class="sale-price" id="price_${productId}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice} грн</del>` : ''}</p>
-            </div>
-            <div class="product-button-order">
-                <button class="addToCart" data-id="${productId}"><i class="material-icons">shopping_cart</i></button>
-                <button class="buyNow" data-id="${productId}">Замовити</button>
+            <div class="product-container-bottom">
+                <h3>${product.name}</h3>
+                <p>${product.description}</p>
+                <div class="sizes">
+                    <select class="size-select" data-product-id="${productId}" onchange="updatePrice('price_${productId}', this.options[this.selectedIndex].dataset.price, this.value, '${productId}')">
+                        ${product.sizes.map((size, index) => {
+                            const discount = discountPrices[size.size] || null;
+                            const formattedDiscount = discount ? Number(discount).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
+                            const formattedOriginal = Number(size.price).toLocaleString('uk-UA');
+                            return `<option value="${size.size}" data-price="${discount || size.price}" data-original-price="${size.price}" ${index === 0 ? 'selected' : ''}>Розмір: ${size.size}</option>`;
+                        }).join('')}
+                    </select>
+                </div>
+                <div class="order-items-price">
+                    <p class="product-price"><span class="sale-price" id="price_${productId}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice} грн</del>` : ''}</p>
+                </div>
+                <div class="product-button-order">
+                    <button class="addToCart" data-id="${productId}"><i class="material-icons">shopping_cart</i></button>
+                    <button class="buyNow" data-id="${productId}">Замовити</button>
+                </div>
             </div>
         </div>
     `;
