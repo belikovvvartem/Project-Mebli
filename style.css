@@ -1243,8 +1243,8 @@ main>section {
     flex-wrap: wrap;
 }
 
-.product-container-top p {
-    white-space: pre-wrap;
+.product-container-bottom p {
+    white-space: pre-wrap !important;
 }
 
 #subcategoryList {
