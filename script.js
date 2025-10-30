@@ -104,6 +104,13 @@ function updateBannerSlider() {
     showSlide(0);
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const slides = document.querySelector('.slides');
+    if (slides && Object.keys(banners).length === 0) {
+      slides.innerHTML = '<div class="banner-spinner"></div>';
+    }
+  });
+
 function showSlide(index) {
     const slides = document.querySelector('.slides');
     const dots = document.querySelectorAll('.dot');
@@ -260,13 +267,12 @@ function renderContent(filters) {
     ['mainProducts', 'roomProducts', 'saleProducts', 'clearanceProducts'].forEach(containerId => {
         const container = document.getElementById(containerId);
         if (!container) return;
-        container.innerHTML = '';
+
         let filteredProducts = Object.entries(products).filter(([key, product]) => {
             const effectivePrice = product.onSale && product.discountPrices && product.discountPrices[product.sizes[0].size] 
                 ? product.discountPrices[product.sizes[0].size] 
                 : product.sizes[0].price;
-            const subSubcategoryMatch = !filters.subSubcategory || 
-                (product.subcategory === filters.subcategory && product.subSubcategory === filters.subSubcategory);
+            const subSubcategoryMatch = !filters.subSubcategory || product.subSubcategory === filters.subSubcategory;
             return (filters.category === 'all' || product.category === filters.category) &&
                 (!filters.subcategory || product.subcategory === filters.subcategory) &&
                 subSubcategoryMatch &&
@@ -327,6 +333,7 @@ function renderContent(filters) {
             }
         }
 
+        container.innerHTML = ''; // Очищаємо контейнер, зберігаючи спінер із HTML
         filteredProducts.forEach(([key, product]) => {
             if (containerId === 'mainProducts' ||
                 (containerId === 'roomProducts' && (filters.category === 'all' || product.category === filters.category)) ||
@@ -335,11 +342,9 @@ function renderContent(filters) {
                 renderProductCard(container, key, product, containerId);
             }
         });
+        container.classList.add('loaded'); // Ховаємо спінер після рендерингу
     });
 }
-
-
-
 
 
 function renderSingleProduct(productId) {
@@ -1057,61 +1062,99 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function renderSubcategories(category, selectedSubcategory) {
     const subcategoryList = document.getElementById('subcategoryList');
-    const subcategorySelect = document.getElementById('subcategory');
-    if (!subcategoryList && !subcategorySelect) return;
-    if (subcategoryList) {
-        subcategoryList.innerHTML = '';
-        const subs = category === 'all' ? ['all'] : {
-            beds: ['all', 'soft_beds', 'wooden_beds', 'bedroom_sets', 'dressers', 'nightstands'],
-            sofas: ['all', 'corner', 'straight', 'armchairs'],
-            wardrobes: ['all', 'sliding_wardrobes', 'sliding_wardrobes_with_carving', 'art_matting', 'tv_wardrobes'],
-            tables: ['all', 'wooden', 'metal', 'coffee'],
-            chairs: ['all', 'wooden', 'soft'],
-            mattresses: ['all', 'standard']
-        }[category] || ['all'];
-        const wardrobeSubSubs = {
-            sliding_wardrobes: ['2door', '3door', '4door'],
-            sliding_wardrobes_with_carving: ['2door', '3door', '4door']
-        };
-        subs.forEach(sub => {
+    if (!subcategoryList) return;
+    subcategoryList.innerHTML = '';
+
+    // Статичний список підкатегорій для кожної категорії
+    const defaultSubcategories = {
+        beds: ['all', 'soft_beds', 'wooden_beds', 'bedroom_sets', 'dressers', 'nightstands'],
+        sofas: ['all', 'corner', 'straight', 'armchairs'],
+        wardrobes: ['all', 'sliding_wardrobes', 'sliding_wardrobes_with_carving', 'art_matting', 'tv_wardrobes'],
+        tables: ['all', 'wooden', 'metal', 'coffee'],
+        chairs: ['all', 'wooden', 'soft'],
+        mattresses: ['all', 'standard']
+    };
+
+    // Отримуємо підкатегорії з Firebase або використовуємо статичний список
+    const subcategoriesForCategory = subcategories[category] && subcategories[category].length 
+        ? subcategories[category] 
+        : defaultSubcategories[category] || ['all'];
+
+    // Додаємо опцію "Всі товари"
+    const allLi = document.createElement('li');
+    allLi.textContent = 'Всі товари';
+    allLi.dataset.subcategory = 'all';
+    allLi.addEventListener('click', () => {
+        currentFilters.subcategory = null;
+        currentFilters.subSubcategory = null;
+        window.history.pushState({}, '', `room.html?category=${category}`);
+        renderContent(currentFilters);
+        renderSubcategories(category, null);
+    });
+    if (!selectedSubcategory) allLi.classList.add('selected');
+    subcategoryList.appendChild(allLi);
+
+    // Додаємо підкатегорії
+    subcategoriesForCategory
+        .filter(sub => sub !== 'all')
+        .forEach(sub => {
             const li = document.createElement('li');
             li.textContent = subcategoryTranslations[sub] || sub;
             li.dataset.subcategory = sub;
-            if (sub === selectedSubcategory || (!selectedSubcategory && sub === 'all')) li.classList.add('selected');
-            li.addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.querySelectorAll('#subcategoryList li').forEach(item => item.classList.remove('selected'));
-                li.classList.add('selected');
-                currentFilters.subcategory = sub === 'all' ? null : sub;
-                if (!wardrobeSubSubs[sub] || sub === 'all') {
+            li.addEventListener('click', () => {
+                currentFilters.subcategory = sub;
+                currentFilters.subSubcategory = null;
+                const url = new URL(window.location);
+                url.searchParams.set('category', category);
+                url.searchParams.set('subcategory', sub);
+                url.searchParams.delete('subSubcategory');
+                window.history.pushState({}, '', url);
+                renderContent(currentFilters);
+                renderSubcategories(category, sub);
+            });
+            if (selectedSubcategory === sub) li.classList.add('selected');
+            subcategoryList.appendChild(li);
+
+            // Додаємо під-підкатегорії для вибраної підкатегорії
+            if (['sliding_wardrobes', 'sliding_wardrobes_with_carving'].includes(sub) && selectedSubcategory === sub) {
+                const doorOptions = ['2door', '3door', '4door'];
+                const subSubcategoryList = document.createElement('ul');
+                subSubcategoryList.className = 'sub-subcategory-list';
+
+                // Додаємо опцію "Всі двері"
+                const allDoorsLi = document.createElement('li');
+                allDoorsLi.textContent = 'Всі двері';
+                allDoorsLi.dataset.subSubcategory = 'all';
+                allDoorsLi.addEventListener('click', () => {
                     currentFilters.subSubcategory = null;
                     const url = new URL(window.location);
                     url.searchParams.delete('subSubcategory');
                     window.history.pushState({}, '', url);
-                }
-                renderContent(currentFilters);
-            });
-            if (wardrobeSubSubs[sub]) {
-                const ul = document.createElement('ul');
-                ul.className = 'sub-subcategories';
-                wardrobeSubSubs[sub].forEach(subSub => {
-                    const subLi = document.createElement('li');
-                    subLi.textContent = subcategoryTranslations[subSub] || subSub;
-                    subLi.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        currentFilters.subSubcategory = subSub;
+                    renderContent(currentFilters);
+                    renderSubcategories(category, selectedSubcategory);
+                });
+                if (!currentFilters.subSubcategory) allDoorsLi.classList.add('selected');
+                subSubcategoryList.appendChild(allDoorsLi);
+
+                doorOptions.forEach(door => {
+                    const doorLi = document.createElement('li');
+                    doorLi.textContent = subcategoryTranslations[door] || door;
+                    doorLi.dataset.subSubcategory = door;
+                    doorLi.addEventListener('click', () => {
+                        currentFilters.subSubcategory = door;
                         const url = new URL(window.location);
-                        url.searchParams.set('subSubcategory', subSub);
+                        url.searchParams.set('subSubcategory', door);
                         window.history.pushState({}, '', url);
                         renderContent(currentFilters);
                     });
-                    ul.appendChild(subLi);
+                    if (currentFilters.subSubcategory === door) doorLi.classList.add('selected');
+                    subSubcategoryList.appendChild(doorLi);
                 });
-                li.appendChild(ul);
+
+                // Вставляємо subSubcategoryList одразу після відповідного li
+                li.insertAdjacentElement('afterend', subSubcategoryList);
             }
-            subcategoryList.appendChild(li);
         });
-    }
 }
 
 onValue(ref(database, 'banners'), (snapshot) => {
