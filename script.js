@@ -1439,48 +1439,66 @@ document.getElementById('productFilter')?.addEventListener('change', () => {
 });
 
 function renderAdminProducts(category, search) {
-    const productList = document.getElementById('productList');
-    if (!productList) return;
-    productList.innerHTML = '';
-    const allProducts = Object.entries(products).flatMap(([key, prod]) => ({ key, ...prod })).concat(
-        Object.keys(products).filter(key => !Object.values(products[key]).length).map(key => ({ key, ...products[key] }))
-    );
+    const container = document.getElementById('adminCategorySelect');
+    if (!container) return;
+
+    container.innerHTML = ''; // Очищаємо ТІЛЬКИ товари
+
+    const allProducts = Object.entries(products).flatMap(([key, prod]) => ({ key, ...prod }));
+
     const filteredProducts = allProducts.filter(product =>
         (category === 'all' || product.category === category) &&
         (!search || product.name.toLowerCase().includes(search.toLowerCase()))
     );
+
+    // Сортування: від нових до старих
+    filteredProducts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     if (!filteredProducts.length) {
-        productList.innerHTML = '<p>Немає товарів. Додайте товар через форму.</p>';
+        container.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">Немає товарів</p>';
         return;
     }
+
     filteredProducts.forEach(product => {
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.innerHTML = `
-            <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name}">
-            <div class="product-first">
-                <h3>${product.name}</h3>
-                <p>${product.description}</p>
-                <p>Категорія: ${categoryTranslations[product.category] || product.category}</p>
-                <p>Підкатегорія: ${subcategoryTranslations[product.subcategory] || product.subcategory}</p>
-                ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
-                <p>Матеріали: ${(product.materials && product.materials.length ? product.materials.join(', ') : 'Немає')}</p>
-            </div>
-            <div class="product-second">
-                <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
-                <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
-                <p>Хіт продажу: ${product.onClearance ? 'Так' : 'Ні'}</p>
-                <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
-                <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
-            </div>
-            <div class="product-button">
-                <button onclick="editProduct('${product.key}')"><i class="material-icons">edit</i></button>
-                <button onclick="removeProduct('${product.key}')"><i class="material-icons">delete</i></button>
-            </div>
-        `;
-        productList.appendChild(productDiv);
+        <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name}">
+        <div class="product-first">
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+            <p>Категорія: ${categoryTranslations[product.category] || product.category}</p>
+            <p>Підкатегорія: ${subcategoryTranslations[product.subcategory] || product.subcategory}</p>
+            ${product.subSubcategory ? `<p>Кількість дверей: ${subcategoryTranslations[product.subSubcategory] || product.subSubcategory}</p>` : ''}
+            <p>Матеріали: ${(product.materials && product.materials.length ? product.materials.join(', ') : 'Немає')}</p>
+        </div>
+        <div class="product-second">
+            <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
+            <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
+            <p>Хіт продажу: ${product.onClearance ? 'Так' : 'Ні'}</p>
+            <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
+            <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
+        </div>
+        <div class="product-button">
+            <button onclick="editProduct('${product.key}')"><i class="material-icons">edit</i></button>
+            <button onclick="removeProduct('${product.key}')"><i class="material-icons">delete</i></button>
+        </div>
+    `;
+        container.appendChild(productDiv);
     });
 }
+
+document.getElementById('adminSearchBar')?.addEventListener('input', () => {
+    const search = document.getElementById('adminSearchBar').value.trim().toLowerCase();
+    const category = document.getElementById('productFilter').value;
+    renderAdminProducts(category, search);
+});
+
+document.getElementById('productFilter')?.addEventListener('change', () => {
+    const search = document.getElementById('adminSearchBar').value.trim().toLowerCase();
+    const category = document.getElementById('productFilter').value;
+    renderAdminProducts(category, search);
+});
 
 
 

@@ -106,17 +106,19 @@
         </section>
 
         <section id="productList" class="tab-content">
-            <input type="text" id="adminSearchBar" placeholder="Пошук товарів..."> 
-
-            <select id="productFilter">
-                <option value="all">Усі</option>
-                <option value="beds">🛏 Ліжка</option>
-                <option value="sofas">🛋 Дивани</option>
-                <option value="wardrobes">🗄️ Шафи</option>
-                <option value="tables">🖥 Столи</option>
-                <option value="chairs">💺 Стільці</option>
-                <option value="mattresses">🛌 Матраци</option>
-            </select>
+            <div class="admin-controls">
+                <input type="text" id="adminSearchBar" placeholder="Пошук товарів...">
+                <select id="productFilter">
+                    <option value="all">Усі</option>
+                    <option value="beds">Ліжка</option>
+                    <option value="sofas">Дивани</option>
+                    <option value="wardrobes">Шафи</option>
+                    <option value="tables">Столи</option>
+                    <option value="chairs">Стільці</option>
+                    <option value="mattresses">Матраци</option>
+                </select>
+            </div>
+        
             <div id="adminCategorySelect" class="products"></div>
         </section>
 

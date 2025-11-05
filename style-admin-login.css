@@ -1240,3 +1240,63 @@ main>section {
     font-size: 18px;
     transition: background 0.2s ease, transform 0.2s ease;
 }
+
+#adminCategorySelect {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.admin-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0 5px;
+}
+
+#adminSearchBar {
+    flex: 1;
+    min-width: 250px;
+    padding: 14px 18px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+#adminSearchBar:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    outline: none;
+}
+
+#productFilter {
+    padding: 14px 18px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    background: white;
+    min-width: 180px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+#productFilter:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    outline: none;
+}
+
+@media (max-width: 768px) {
+    .admin-controls {
+        flex-direction: column;
+    }
+    #adminSearchBar, #productFilter {
+        min-width: 100%;
+    }
+}
