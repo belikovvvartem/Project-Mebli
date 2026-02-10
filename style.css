@@ -1257,10 +1257,9 @@ main>section {
 .contact-and-times {
     display: flex;
     flex-direction: column;
-    justify-content: end;
-    height: 50px;
-    margin-top: auto;
+    justify-content: start;
     margin-left: 25px;
+    margin-top: 2px;
 }
 
 
@@ -1270,10 +1269,11 @@ main>section {
 
 
 .contact-and-times a {
-    font-size: 18px;
+    font-size: 25px;
     color: var(--text-black);
     text-decoration: none;
     font-weight: 700;
+    margin-top: auto;
 }
 
 .contact-and-times a:last-child {}
