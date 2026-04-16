@@ -1300,3 +1300,26 @@ main>section {
         min-width: 100%;
     }
 }
+/* Load More Button */
+.load-more-btn {
+    display: block;
+    margin: 24px auto;
+    padding: 14px 40px;
+    background: var(--primary-blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 4px 12px var(--shadow-light);
+}
+.load-more-btn:hover {
+    background: var(--hover-blue);
+    transform: translateY(-2px);
+}
+.load-more-btn:active {
+    transform: translateY(0);
+}

@@ -12,6 +12,16 @@ let products = {}, banners = {}, promos = {}, colors = [], materials = [], subca
 let currentFilters = { category: 'all', subcategory: null, subSubcategory: null, priceMin: null, priceMax: null, availability: null, color: null, material: null, room: null, sale: null, clearance: null, search: null };
 let isInitialLoad = true;
 
+// Pagination for roomProducts
+const ROOM_PAGE_SIZE = 10;
+let roomProductsAll = [];
+let roomProductsOffset = 0;
+
+// Pagination for adminProducts
+const ADMIN_PAGE_SIZE = 15;
+let adminProductsAll = [];
+let adminProductsOffset = 0;
+
 const categoryTranslations = {
     beds: 'Ліжка', sofas: 'Дивани', wardrobes: 'Шафи', tables: 'Столи', chairs: 'Стільці', mattresses: 'Матраци'
 };
@@ -262,43 +272,67 @@ document.querySelectorAll('.category-menu ul li[data-filter]').forEach(li =>
     li.addEventListener('click', () => window.location.href = `room.html?${li.dataset.filter}=true`)
 );
 
+function filterProducts(filters) {
+    return Object.entries(products).filter(([key, product]) => {
+        const effectivePrice = product.onSale && product.discountPrices && product.discountPrices[product.sizes[0].size]
+            ? product.discountPrices[product.sizes[0].size]
+            : product.sizes[0].price;
+        const subSubcategoryMatch = !filters.subSubcategory || product.subSubcategory === filters.subSubcategory;
+        return (filters.category === 'all' || product.category === filters.category) &&
+            (!filters.subcategory || product.subcategory === filters.subcategory) &&
+            subSubcategoryMatch &&
+            (!filters.priceMin || effectivePrice >= filters.priceMin) &&
+            (!filters.priceMax || effectivePrice <= filters.priceMax) &&
+            (filters.availability === null || product.availability === filters.availability) &&
+            (!filters.color || (product.colors && product.colors.includes(filters.color))) &&
+            (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
+            (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
+            (!filters.sale || product.onSale) &&
+            (!filters.clearance || product.onClearance) &&
+            (!filters.search || (
+                product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+                (product.description && product.description.toLowerCase().includes(filters.search.toLowerCase())) ||
+                (product.category && product.category.toLowerCase().includes(filters.search.toLowerCase())) ||
+                (product.subcategory && product.subcategory.toLowerCase().includes(filters.search.toLowerCase())) ||
+                (product.subSubcategory && product.subSubcategory.toLowerCase().includes(filters.search.toLowerCase())) ||
+                (product.colors && product.colors.some(color => color.toLowerCase().includes(filters.search.toLowerCase()))) ||
+                (product.materials && product.materials.some(material => material.toLowerCase().includes(filters.search.toLowerCase()))) ||
+                (product.rooms && product.rooms.some(room => room.toLowerCase().includes(filters.search.toLowerCase()))) ||
+                (product.sizes && product.sizes.some(size =>
+                    size.size.toLowerCase().includes(filters.search.toLowerCase()) ||
+                    size.price.toString().includes(filters.search.toLowerCase())
+                ))
+            ));
+    });
+}
+
+function renderLoadMoreButton(container, total) {
+    let btn = document.getElementById('loadMoreBtn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'loadMoreBtn';
+        btn.className = 'load-more-btn';
+        btn.textContent = 'Завантажити ще';
+        container.parentNode.insertBefore(btn, container.nextSibling);
+        btn.addEventListener('click', () => {
+            roomProductsOffset += ROOM_PAGE_SIZE;
+            const nextBatch = roomProductsAll.slice(roomProductsOffset, roomProductsOffset + ROOM_PAGE_SIZE);
+            nextBatch.forEach(([key, product]) => renderProductCard(container, key, product, 'roomProducts'));
+            if (roomProductsOffset + ROOM_PAGE_SIZE >= total) {
+                btn.style.display = 'none';
+            }
+        });
+    }
+    btn.style.display = roomProductsOffset + ROOM_PAGE_SIZE < total ? 'block' : 'none';
+}
+
 function renderContent(filters) {
     if (Object.keys(products).length === 0) return;
     ['mainProducts', 'roomProducts', 'saleProducts', 'clearanceProducts'].forEach(containerId => {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        let filteredProducts = Object.entries(products).filter(([key, product]) => {
-            const effectivePrice = product.onSale && product.discountPrices && product.discountPrices[product.sizes[0].size] 
-                ? product.discountPrices[product.sizes[0].size] 
-                : product.sizes[0].price;
-            const subSubcategoryMatch = !filters.subSubcategory || product.subSubcategory === filters.subSubcategory;
-            return (filters.category === 'all' || product.category === filters.category) &&
-                (!filters.subcategory || product.subcategory === filters.subcategory) &&
-                subSubcategoryMatch &&
-                (!filters.priceMin || effectivePrice >= filters.priceMin) &&
-                (!filters.priceMax || effectivePrice <= filters.priceMax) &&
-                (filters.availability === null || product.availability === filters.availability) &&
-                (!filters.color || (product.colors && product.colors.includes(filters.color))) &&
-                (!filters.material || (product.materials && product.materials.includes(filters.material))) &&
-                (!filters.room || (product.rooms && product.rooms.includes(filters.room))) &&
-                (!filters.sale || product.onSale) &&
-                (!filters.clearance || product.onClearance) &&
-                (!filters.search || (
-                    product.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-                    (product.description && product.description.toLowerCase().includes(filters.search.toLowerCase())) ||
-                    (product.category && product.category.toLowerCase().includes(filters.search.toLowerCase())) ||
-                    (product.subcategory && product.subcategory.toLowerCase().includes(filters.search.toLowerCase())) ||
-                    (product.subSubcategory && product.subSubcategory.toLowerCase().includes(filters.search.toLowerCase())) ||
-                    (product.colors && product.colors.some(color => color.toLowerCase().includes(filters.search.toLowerCase()))) ||
-                    (product.materials && product.materials.some(material => material.toLowerCase().includes(filters.search.toLowerCase()))) ||
-                    (product.rooms && product.rooms.some(room => room.toLowerCase().includes(filters.search.toLowerCase()))) ||
-                    (product.sizes && product.sizes.some(size => 
-                        size.size.toLowerCase().includes(filters.search.toLowerCase()) || 
-                        size.price.toString().includes(filters.search.toLowerCase())
-                    ))
-                ));
-        });
+        let filteredProducts = filterProducts(filters);
 
         if (containerId === 'roomProducts' && filters.category === 'all') {
             const categories = ['beds', 'sofas', 'wardrobes', 'tables', 'chairs', 'mattresses'];
@@ -325,24 +359,34 @@ function renderContent(filters) {
             filteredProducts.sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
             if (containerId === 'saleProducts' || containerId === 'clearanceProducts') {
                 filteredProducts = filteredProducts
-                    .filter(([_, product]) => 
-                        (containerId === 'saleProducts' && product.onSale) || 
+                    .filter(([_, product]) =>
+                        (containerId === 'saleProducts' && product.onSale) ||
                         (containerId === 'clearanceProducts' && product.onClearance)
                     )
                     .slice(0, 4);
             }
         }
 
-        container.innerHTML = ''; // Очищаємо контейнер, зберігаючи спінер із HTML
-        filteredProducts.forEach(([key, product]) => {
-            if (containerId === 'mainProducts' ||
-                (containerId === 'roomProducts' && (filters.category === 'all' || product.category === filters.category)) ||
-                (containerId === 'saleProducts' && product.onSale) ||
-                (containerId === 'clearanceProducts' && product.onClearance)) {
-                renderProductCard(container, key, product, containerId);
-            }
-        });
-        container.classList.add('loaded'); // Ховаємо спінер після рендерингу
+        container.innerHTML = '';
+
+        if (containerId === 'roomProducts') {
+            // Reset pagination
+            roomProductsAll = filteredProducts;
+            roomProductsOffset = 0;
+            const firstBatch = roomProductsAll.slice(0, ROOM_PAGE_SIZE);
+            firstBatch.forEach(([key, product]) => renderProductCard(container, key, product, 'roomProducts'));
+            renderLoadMoreButton(container, roomProductsAll.length);
+        } else {
+            filteredProducts.forEach(([key, product]) => {
+                if (containerId === 'mainProducts' ||
+                    (containerId === 'saleProducts' && product.onSale) ||
+                    (containerId === 'clearanceProducts' && product.onClearance)) {
+                    renderProductCard(container, key, product, containerId);
+                }
+            });
+        }
+
+        container.classList.add('loaded');
     });
 }
 
@@ -1438,31 +1482,10 @@ document.getElementById('productFilter')?.addEventListener('change', () => {
     renderAdminProducts(category, search);
 });
 
-function renderAdminProducts(category, search) {
-    const container = document.getElementById('adminCategorySelect');
-    if (!container) return;
-
-    container.innerHTML = ''; // Очищаємо ТІЛЬКИ товари
-
-    const allProducts = Object.entries(products).flatMap(([key, prod]) => ({ key, ...prod }));
-
-    const filteredProducts = allProducts.filter(product =>
-        (category === 'all' || product.category === category) &&
-        (!search || product.name.toLowerCase().includes(search.toLowerCase()))
-    );
-
-    // Сортування: від нових до старих
-    filteredProducts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    if (!filteredProducts.length) {
-        container.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">Немає товарів</p>';
-        return;
-    }
-
-    filteredProducts.forEach(product => {
-        const productDiv = document.createElement('div');
-        productDiv.classList.add('product');
-        productDiv.innerHTML = `
+function renderAdminProductCard(container, product) {
+    const productDiv = document.createElement('div');
+    productDiv.classList.add('product');
+    productDiv.innerHTML = `
         <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name}">
         <div class="product-first">
             <h3>${product.name}</h3>
@@ -1484,8 +1507,59 @@ function renderAdminProducts(category, search) {
             <button onclick="removeProduct('${product.key}')"><i class="material-icons">delete</i></button>
         </div>
     `;
-        container.appendChild(productDiv);
-    });
+    container.appendChild(productDiv);
+}
+
+function renderAdminLoadMoreButton(container, total) {
+    let btn = document.getElementById('adminLoadMoreBtn');
+    if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'adminLoadMoreBtn';
+        btn.className = 'load-more-btn';
+        btn.textContent = 'Завантажити ще';
+        container.parentNode.insertBefore(btn, container.nextSibling);
+        btn.addEventListener('click', () => {
+            adminProductsOffset += ADMIN_PAGE_SIZE;
+            const nextBatch = adminProductsAll.slice(adminProductsOffset, adminProductsOffset + ADMIN_PAGE_SIZE);
+            nextBatch.forEach(product => renderAdminProductCard(container, product));
+            if (adminProductsOffset + ADMIN_PAGE_SIZE >= total) {
+                btn.style.display = 'none';
+            }
+        });
+    }
+    btn.style.display = adminProductsOffset + ADMIN_PAGE_SIZE < total ? 'block' : 'none';
+}
+
+function renderAdminProducts(category, search) {
+    const container = document.getElementById('adminCategorySelect');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const allProducts = Object.entries(products).flatMap(([key, prod]) => ({ key, ...prod }));
+
+    const filteredProducts = allProducts.filter(product =>
+        (category === 'all' || product.category === category) &&
+        (!search || product.name.toLowerCase().includes(search.toLowerCase()))
+    );
+
+    // Сортування: від нових до старих
+    filteredProducts.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    if (!filteredProducts.length) {
+        container.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: #666;">Немає товарів</p>';
+        const btn = document.getElementById('adminLoadMoreBtn');
+        if (btn) btn.style.display = 'none';
+        return;
+    }
+
+    // Reset pagination
+    adminProductsAll = filteredProducts;
+    adminProductsOffset = 0;
+
+    const firstBatch = adminProductsAll.slice(0, ADMIN_PAGE_SIZE);
+    firstBatch.forEach(product => renderAdminProductCard(container, product));
+    renderAdminLoadMoreButton(container, adminProductsAll.length);
 }
 
 document.getElementById('adminSearchBar')?.addEventListener('input', () => {
@@ -1952,6 +2026,3 @@ document.getElementById('addEditPhotoBtn')?.addEventListener('click', () => {
     input.type = 'text'; input.className = 'productPhotoInput'; input.placeholder = 'URL фото';
     document.getElementById('editPhotosContainer').appendChild(input);
 });
-
-
-
