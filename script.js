@@ -8,7 +8,22 @@ const auth = getAuth();
 const database = getDatabase();
 
 let products = {}, banners = {}, promos = {}, colors = [], materials = [], subcategories = {};
-let currentFilters = { category: 'all', subcategory: null, subSubcategory: null, priceMin: null, priceMax: null, availability: null, color: null, material: null, room: null, sale: null, clearance: null, search: null };
+// Читаємо URL параметри одразу — до initializeData, щоб renderContent мав правильні фільтри
+const _urlParams = new URLSearchParams(window.location.search);
+let currentFilters = {
+    category:       _urlParams.get('category') || 'all',
+    subcategory:    _urlParams.get('subcategory') || null,
+    subSubcategory: _urlParams.get('subSubcategory') || null,
+    priceMin:       null,
+    priceMax:       null,
+    availability:   null,
+    color:          null,
+    material:       null,
+    room:           _urlParams.get('room') || null,
+    sale:           _urlParams.get('sale') === 'true' || null,
+    clearance:      _urlParams.get('clearance') === 'true' || null,
+    search:         _urlParams.get('search') ? _urlParams.get('search').toLowerCase() : null,
+};
 let isInitialLoad = true;
 
 // Pagination for roomProducts
@@ -46,12 +61,14 @@ const roomTranslations = {
 // ─── CACHE SYSTEM ──────────────────────────────────────────────────────────────
 // TTL: products = 5 хв, банери = 10 хв, кольори/матеріали/підкатегорії = 30 хв
 const CACHE_TTL = {
-    products:      5  * 60 * 1000,
-    banners:       10 * 60 * 1000,
-    colors:        30 * 60 * 1000,
-    materials:     30 * 60 * 1000,
-    subcategories: 30 * 60 * 1000,
-    promos:        10 * 60 * 1000,
+    products:           30 * 60 * 1000, 
+    banners:            60 * 60 * 1000,  
+    colors:             24 * 60 * 60 * 1000,  
+    materials:          24 * 60 * 60 * 1000,  
+    subcategories:      24 * 60 * 60 * 1000,  
+    promos:             30 * 60 * 1000,  
+    featured_sale:      30 * 60 * 1000,  
+    featured_clearance: 30 * 60 * 1000, 
 };
 
 function getCached(key) {
@@ -91,6 +108,26 @@ async function fetchOrCache(key, dbRef) {
     return data;
 }
 // ─── END CACHE SYSTEM ──────────────────────────────────────────────────────────
+
+// ─── FEATURED SYNC ─────────────────────────────────────────────────────────────
+function syncFeatured(productId, productData) {
+    const preview = {
+        name: productData.name,
+        photo: (productData.photos || [])[0] || productData.photo || '',
+        category: productData.category,
+        sizes: productData.sizes,
+        discountPrices: productData.discountPrices || {},
+        onSale: productData.onSale || false,
+        onClearance: productData.onClearance || false,
+        availability: productData.availability || false,
+        createdAt: productData.createdAt || Date.now()
+    };
+    const updates = {};
+    updates[`featured/sale/${productId}`] = productData.onSale ? preview : null;
+    updates[`featured/clearance/${productId}`] = productData.onClearance ? preview : null;
+    return update(ref(database), updates);
+}
+// ─── END FEATURED SYNC ─────────────────────────────────────────────────────────
 
 // ─── LAZY LOADING ──────────────────────────────────────────────────────────────
 let lazyObserver = null;
@@ -170,15 +207,15 @@ async function initializeData() {
                 });
             }
         });
-        onValue(ref(database, 'colors'), (snap) => {
+        get(ref(database, 'colors')).then(snap => {
             colors = Object.values(snap.val() || []);
             updateColorSelects();
         });
-        onValue(ref(database, 'materials'), (snap) => {
+        get(ref(database, 'materials')).then(snap => {
             materials = Object.values(snap.val() || []);
             updateMaterialSelects();
         });
-        onValue(ref(database, 'subcategories'), (snap) => {
+        get(ref(database, 'subcategories')).then(snap => {
             subcategories = snap.val() || {};
             updateSubcategorySelects();
         });
@@ -221,15 +258,49 @@ async function initializeData() {
         updateBannerSlider();
 
         promos = await fetchOrCache('promos', ref(database, 'promos'));
+
+        // Головна сторінка: читаємо тільки featured — НЕ всі товари
+        const [featuredSale, featuredClearance] = await Promise.all([
+            fetchOrCache('featured_sale', ref(database, 'featured/sale')),
+            fetchOrCache('featured_clearance', ref(database, 'featured/clearance'))
+        ]);
+
+        const saleContainer = document.getElementById('saleProducts');
+        const clearanceContainer = document.getElementById('clearanceProducts');
+
+        if (saleContainer) {
+            saleContainer.innerHTML = '';
+            const saleItems = Object.entries(featuredSale || {})
+                .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0))
+                .slice(0, 4);
+            if (saleItems.length === 0) {
+                saleContainer.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;">Немає акційних товарів</p>';
+            } else {
+                saleItems.forEach(([key, product]) => renderProductCard(saleContainer, key, product, 'saleProducts'));
+            }
+            saleContainer.classList.add('loaded');
+        }
+
+        if (clearanceContainer) {
+            clearanceContainer.innerHTML = '';
+            const clearanceItems = Object.entries(featuredClearance || {})
+                .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0))
+                .slice(0, 4);
+            if (clearanceItems.length === 0) {
+                clearanceContainer.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;">Немає хітів продажів</p>';
+            } else {
+                clearanceItems.forEach(([key, product]) => renderProductCard(clearanceContainer, key, product, 'clearanceProducts'));
+            }
+            clearanceContainer.classList.add('loaded');
+        }
+
+        lazyLoadImages();
+        return; // виходимо — всі products НЕ завантажуємо на головній
     }
 
-    // Товари потрібні скрізь
+    // Товари потрібні для room.html
     products = await fetchOrCache('products', ref(database, 'products'));
     renderContent(currentFilters);
-
-    if (!isRoom && isInitialLoad) {
-        applyPromos();
-    }
 
     // Фільтри (кольори, матеріали, підкатегорії) потрібні лише на room.html
     if (isRoom) {
@@ -1133,16 +1204,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     });
     if (document.getElementById('mainCategories')) renderCategories();
-    const urlParams = new URLSearchParams(window.location.search);
-    currentFilters.category = urlParams.get('category') || 'all';
-    currentFilters.subcategory = urlParams.get('subcategory') || null;
-    currentFilters.subSubcategory = urlParams.get('subSubcategory') || null;
-    currentFilters.sale = urlParams.get('sale') === 'true' || null;
-    currentFilters.clearance = urlParams.get('clearance') === 'true' || null;
-    currentFilters.room = urlParams.get('room') || null;
+    // currentFilters вже заповнено з URL на старті скрипта
     if (window.location.pathname.includes('room.html') && currentFilters.room) {
         const roomSelect = document.getElementById('room');
-        if (roomSelect) { roomSelect.value = currentFilters.room; renderContent(currentFilters); }
+        if (roomSelect) roomSelect.value = currentFilters.room;
     }
     if (document.getElementById('cartBtn')) {
         document.getElementById('cartBtn').addEventListener('click', () => {
@@ -1430,8 +1495,11 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
         createdAt: Date.now()
     };
     push(ref(database, 'products'), productData)
-        .then(() => {
-            invalidateCache('products'); // інвалідуємо кеш після запису
+        .then((newRef) => {
+            invalidateCache('products');
+            invalidateCache('featured_sale');
+            invalidateCache('featured_clearance');
+            syncFeatured(newRef.key, productData);
             ['productName', 'productDescription'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -1833,6 +1901,12 @@ document.getElementById('productFilter')?.addEventListener('change', () => {
 
 window.removeProduct = key => remove(ref(database, 'products/' + key)).then(() => {
     invalidateCache('products');
+    invalidateCache('featured_sale');
+    invalidateCache('featured_clearance');
+    const cleanupUpdates = {};
+    cleanupUpdates[`featured/sale/${key}`] = null;
+    cleanupUpdates[`featured/clearance/${key}`] = null;
+    update(ref(database), cleanupUpdates);
     showNotification('Товар видалено', 'success');
 });
 
@@ -1939,7 +2013,9 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
     update(ref(database, 'products/' + key), productData)
         .then(() => {
             invalidateCache('products');
-            editModal.style.display = 'none';
+            invalidateCache('featured_sale');
+            invalidateCache('featured_clearance');
+            syncFeatured(key, productData);
             showNotification('Товар успішно оновлено', 'success');
             renderAdminProducts('all', '');
         })
