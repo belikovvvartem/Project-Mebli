@@ -1,9 +1,9 @@
 export const firebaseConfig = {
-    apiKey: "AIzaSyCiHLrGnPv1kRQ4SdX0qAdsVWLYGdASERc",
-    authDomain: "premium-d5066.firebaseapp.com",
-    projectId: "premium-d5066",
-    storageBucket: "premium-d5066.firebasestorage.app",
-    messagingSenderId: "408653526535",
-    appId: "1:408653526535:web:0a0c2a04fda12a09a6dca2",
-    measurementId: "G-71LHFB8FK3"
-};
+    apiKey: "AIzaSyB7oAJfQ1gA0Ax5A4bDejvNkIBC6Pm0i3E",
+    authDomain: "omelyan-mebli.firebaseapp.com",
+    projectId: "omelyan-mebli",
+    storageBucket: "omelyan-mebli.firebasestorage.app",
+    messagingSenderId: "641735622345",
+    appId: "1:641735622345:web:533cbfce51c7745505d718",
+    measurementId: "G-650E2HSR4H"
+  };

@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { firebaseConfig } from './firebaseConfig.js';
 
 const app = initializeApp(firebaseConfig);
@@ -158,6 +158,62 @@ function lazyLoadImages() {
 initLazyObserver();
 // ─── END LAZY LOADING ──────────────────────────────────────────────────────────
 
+// ─── ADMIN DATA LOADER (одноразові get() замість onValue) ─────────────────────
+async function loadAdminData() {
+    const [productsSnap, bannersSnap, promosSnap, colorsSnap, materialsSnap, subcatsSnap] = await Promise.all([
+        get(ref(database, 'products')),
+        get(ref(database, 'banners')),
+        get(ref(database, 'promos')),
+        get(ref(database, 'colors')),
+        get(ref(database, 'materials')),
+        get(ref(database, 'subcategories'))
+    ]);
+
+    products = productsSnap.val() || {};
+    setCache('products', products);
+    renderAdminProducts('all', '');
+
+    banners = bannersSnap.val() || {};
+    updateBannerSlider();
+    const bannerList = document.getElementById('bannerList');
+    if (bannerList) {
+        bannerList.innerHTML = '';
+        Object.entries(banners).forEach(([key, banner]) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<img src="${banner.url}" alt="Banner"><button onclick="removeBanner('${key}')"><i class="material-icons">delete</i></button>`;
+            bannerList.appendChild(li);
+        });
+    }
+
+    promos = promosSnap.val() || {};
+    const promoList = document.getElementById('promoList');
+    if (promoList) {
+        promoList.innerHTML = '';
+        Object.entries(promos).forEach(([key, promo]) => {
+            const li = document.createElement('li');
+            li.textContent = `${promo.name}`;
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Видалити';
+            deleteBtn.onclick = () => remove(ref(database, 'promos/' + key)).then(() => {
+                showNotification('Акцію видалено', 'success');
+                loadAdminData();
+            });
+            li.appendChild(deleteBtn);
+            promoList.appendChild(li);
+        });
+    }
+
+    colors = Object.values(colorsSnap.val() || {});
+    updateColorSelects();
+
+    materials = Object.values(materialsSnap.val() || {});
+    updateMaterialSelects();
+
+    subcategories = subcatsSnap.val() || {};
+    updateSubcategorySelects();
+}
+// ─── END ADMIN DATA LOADER ─────────────────────────────────────────────────────
+
 // ─── PAGE-AWARE DATA INIT ──────────────────────────────────────────────────────
 async function initializeData() {
     const path = window.location.pathname;
@@ -168,57 +224,9 @@ async function initializeData() {
 
     if (isLogin) return; // нічого не завантажуємо на сторінці входу
 
-    // ── АДМІН: real-time підписки (тут вони виправдані) ───────────────────────
+    // ── АДМІН: одноразові запити замість real-time підписок ───────────────────
     if (isAdmin) {
-        onValue(ref(database, 'products'), (snap) => {
-            products = snap.val() || {};
-            setCache('products', products); // тримаємо кеш актуальним після змін адміна
-            renderContent(currentFilters);
-            renderAdminProducts('all', '');
-        });
-        onValue(ref(database, 'banners'), (snap) => {
-            banners = snap.val() || {};
-            updateBannerSlider();
-            // Рендер списку банерів для адміна
-            const bannerList = document.getElementById('bannerList');
-            if (bannerList) {
-                bannerList.innerHTML = '';
-                Object.entries(banners).forEach(([key, banner]) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<img src="${banner.url}" alt="Banner"><button onclick="removeBanner('${key}')"><i class="material-icons">delete</i></button>`;
-                    bannerList.appendChild(li);
-                });
-            }
-        });
-        onValue(ref(database, 'promos'), (snap) => {
-            promos = snap.val() || {};
-            applyPromos();
-            const promoList = document.getElementById('promoList');
-            if (promoList) {
-                promoList.innerHTML = '';
-                Object.entries(promos).forEach(([key, promo]) => {
-                    const li = document.createElement('li');
-                    li.textContent = `${promo.name}`;
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = 'Видалити';
-                    deleteBtn.onclick = () => remove(ref(database, 'promos/' + key)).then(() => showNotification('Акцію видалено', 'success'));
-                    li.appendChild(deleteBtn);
-                    promoList.appendChild(li);
-                });
-            }
-        });
-        get(ref(database, 'colors')).then(snap => {
-            colors = Object.values(snap.val() || []);
-            updateColorSelects();
-        });
-        get(ref(database, 'materials')).then(snap => {
-            materials = Object.values(snap.val() || []);
-            updateMaterialSelects();
-        });
-        get(ref(database, 'subcategories')).then(snap => {
-            subcategories = snap.val() || {};
-            updateSubcategorySelects();
-        });
+        await loadAdminData();
         return;
     }
 
@@ -1346,6 +1354,7 @@ function renderSubcategories(category, selectedSubcategory) {
 window.removeBanner = key => remove(ref(database, 'banners/' + key)).then(() => {
     invalidateCache('banners');
     showNotification('Банер видалено', 'success');
+    if (window.location.pathname.includes('admin.html')) loadAdminData();
 });
 
 window.moveBanner = (key, newIndex) => {
@@ -1371,6 +1380,7 @@ document.getElementById('addBanner')?.addEventListener('click', () => {
         document.getElementById('bannerUrl').value = '';
         invalidateCache('banners');
         showNotification('Банер додано', 'success');
+        loadAdminData();
     }).catch(error => showNotification('Помилка додавання банера: ' + error.message, 'error'));
     else showNotification('Введіть URL банера', 'warning');
 });
@@ -1529,7 +1539,7 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
                 photosContainer.appendChild(input);
             }
             showNotification('Товар додано успішно', 'success');
-            renderAdminProducts('all', '');
+            loadAdminData();
         })
         .catch(error => showNotification('Помилка додавання товару: ' + error.message, 'error'));
 });
@@ -1607,6 +1617,7 @@ document.getElementById('savePromo')?.addEventListener('click', () => {
             document.getElementById('promoName').value = '';
             invalidateCache('promos');
             showNotification('Акцію додано', 'success');
+            loadAdminData();
         });
     } else showNotification('Введіть коректну назву акції', 'error');
 });
@@ -1704,6 +1715,7 @@ document.getElementById('addColor')?.addEventListener('click', () => {
             document.getElementById('colorInput').value = '';
             invalidateCache('colors');
             showNotification('Колір додано', 'success');
+            loadAdminData();
         });
     } else showNotification('Колір уже існує або поле порожнє', 'error');
 });
@@ -1715,6 +1727,7 @@ document.getElementById('addMaterial')?.addEventListener('click', () => {
             document.getElementById('materialInput').value = '';
             invalidateCache('materials');
             showNotification('Матеріал додано', 'success');
+            loadAdminData();
         });
     } else showNotification('Матеріал уже існує або поле порожнє', 'error');
 });
@@ -1908,6 +1921,7 @@ window.removeProduct = key => remove(ref(database, 'products/' + key)).then(() =
     cleanupUpdates[`featured/clearance/${key}`] = null;
     update(ref(database), cleanupUpdates);
     showNotification('Товар видалено', 'success');
+    loadAdminData();
 });
 
 window.editProduct = key => {
@@ -2017,7 +2031,7 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
             invalidateCache('featured_clearance');
             syncFeatured(key, productData);
             showNotification('Товар успішно оновлено', 'success');
-            renderAdminProducts('all', '');
+            loadAdminData();
         })
         .catch(error => showNotification('Помилка оновлення товару: ' + error.message, 'error'));
 });
