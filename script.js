@@ -1,7 +1,133 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, get, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { firebaseConfig } from './firebaseConfig.js';
+
+// ─── UNAVAILABLE MODAL STYLES ──────────────────────────────────────────────────
+(function injectUnavailableModalStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        #unavailableModal .modal-content {
+            text-align: center;
+            max-width: 460px;
+            width: 90%;
+            padding: 40px 36px 32px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .unavail-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fef2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            border: 3px solid #ef4444;
+        }
+        .unavail-icon .material-icons {
+            font-size: 40px;
+            color: #ef4444;
+        }
+        .unavail-title {
+            font-family: var(--font-primary);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0 0 10px;
+        }
+        .unavail-text {
+            font-family: var(--font-primary);
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+        .unavail-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 14px;
+            text-align: left;
+        }
+        .unavail-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: #fef2f2;
+            border-left: 3px solid #ef4444;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-family: var(--font-primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .unavail-list li .material-icons {
+            font-size: 16px;
+            color: #ef4444;
+            flex-shrink: 0;
+        }
+        .unavail-subtext {
+            font-family: var(--font-primary);
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            margin-bottom: 28px;
+        }
+        .unavail-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .unavail-btn-catalog {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-blue);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 24px;
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        .unavail-btn-catalog:hover {
+            background: var(--hover-blue);
+            transform: translateY(-2px);
+        }
+        .unavail-btn-close {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            color: var(--text-gray);
+            border: 2px solid var(--border-light);
+            border-radius: 10px;
+            padding: 13px 24px;
+            font-family: var(--font-primary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        }
+        .unavail-btn-close:hover {
+            border-color: var(--error-red);
+            color: var(--error-red);
+            transform: translateY(-2px);
+        }
+    `;
+    document.head.appendChild(style);
+})();
+// ─── END UNAVAILABLE MODAL STYLES ─────────────────────────────────────────────
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
@@ -158,62 +284,6 @@ function lazyLoadImages() {
 initLazyObserver();
 // ─── END LAZY LOADING ──────────────────────────────────────────────────────────
 
-// ─── ADMIN DATA LOADER (одноразові get() замість onValue) ─────────────────────
-async function loadAdminData() {
-    const [productsSnap, bannersSnap, promosSnap, colorsSnap, materialsSnap, subcatsSnap] = await Promise.all([
-        get(ref(database, 'products')),
-        get(ref(database, 'banners')),
-        get(ref(database, 'promos')),
-        get(ref(database, 'colors')),
-        get(ref(database, 'materials')),
-        get(ref(database, 'subcategories'))
-    ]);
-
-    products = productsSnap.val() || {};
-    setCache('products', products);
-    renderAdminProducts('all', '');
-
-    banners = bannersSnap.val() || {};
-    updateBannerSlider();
-    const bannerList = document.getElementById('bannerList');
-    if (bannerList) {
-        bannerList.innerHTML = '';
-        Object.entries(banners).forEach(([key, banner]) => {
-            const li = document.createElement('li');
-            li.innerHTML = `<img src="${banner.url}" alt="Banner"><button onclick="removeBanner('${key}')"><i class="material-icons">delete</i></button>`;
-            bannerList.appendChild(li);
-        });
-    }
-
-    promos = promosSnap.val() || {};
-    const promoList = document.getElementById('promoList');
-    if (promoList) {
-        promoList.innerHTML = '';
-        Object.entries(promos).forEach(([key, promo]) => {
-            const li = document.createElement('li');
-            li.textContent = `${promo.name}`;
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Видалити';
-            deleteBtn.onclick = () => remove(ref(database, 'promos/' + key)).then(() => {
-                showNotification('Акцію видалено', 'success');
-                loadAdminData();
-            });
-            li.appendChild(deleteBtn);
-            promoList.appendChild(li);
-        });
-    }
-
-    colors = Object.values(colorsSnap.val() || {});
-    updateColorSelects();
-
-    materials = Object.values(materialsSnap.val() || {});
-    updateMaterialSelects();
-
-    subcategories = subcatsSnap.val() || {};
-    updateSubcategorySelects();
-}
-// ─── END ADMIN DATA LOADER ─────────────────────────────────────────────────────
-
 // ─── PAGE-AWARE DATA INIT ──────────────────────────────────────────────────────
 async function initializeData() {
     const path = window.location.pathname;
@@ -224,9 +294,57 @@ async function initializeData() {
 
     if (isLogin) return; // нічого не завантажуємо на сторінці входу
 
-    // ── АДМІН: одноразові запити замість real-time підписок ───────────────────
+    // ── АДМІН: real-time підписки (тут вони виправдані) ───────────────────────
     if (isAdmin) {
-        await loadAdminData();
+        onValue(ref(database, 'products'), (snap) => {
+            products = snap.val() || {};
+            setCache('products', products); // тримаємо кеш актуальним після змін адміна
+            renderContent(currentFilters);
+            renderAdminProducts('all', '');
+        });
+        onValue(ref(database, 'banners'), (snap) => {
+            banners = snap.val() || {};
+            updateBannerSlider();
+            // Рендер списку банерів для адміна
+            const bannerList = document.getElementById('bannerList');
+            if (bannerList) {
+                bannerList.innerHTML = '';
+                Object.entries(banners).forEach(([key, banner]) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<img src="${banner.url}" alt="Banner"><button onclick="removeBanner('${key}')"><i class="material-icons">delete</i></button>`;
+                    bannerList.appendChild(li);
+                });
+            }
+        });
+        onValue(ref(database, 'promos'), (snap) => {
+            promos = snap.val() || {};
+            applyPromos();
+            const promoList = document.getElementById('promoList');
+            if (promoList) {
+                promoList.innerHTML = '';
+                Object.entries(promos).forEach(([key, promo]) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${promo.name}`;
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Видалити';
+                    deleteBtn.onclick = () => remove(ref(database, 'promos/' + key)).then(() => showNotification('Акцію видалено', 'success'));
+                    li.appendChild(deleteBtn);
+                    promoList.appendChild(li);
+                });
+            }
+        });
+        get(ref(database, 'colors')).then(snap => {
+            colors = Object.values(snap.val() || []);
+            updateColorSelects();
+        });
+        get(ref(database, 'materials')).then(snap => {
+            materials = Object.values(snap.val() || []);
+            updateMaterialSelects();
+        });
+        get(ref(database, 'subcategories')).then(snap => {
+            subcategories = snap.val() || {};
+            updateSubcategorySelects();
+        });
         return;
     }
 
@@ -890,6 +1008,56 @@ document.getElementById('searchBar')?.addEventListener('input', e => {
     lazyLoadImages();
 });
 
+// ─── UNAVAILABLE PRODUCTS MODAL ───────────────────────────────────────────────
+function showUnavailableModal(removedNames) {
+    const existing = document.getElementById('unavailableModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'unavailableModal';
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" id="unavailableClose">&times;</span>
+            <div class="unavail-icon">
+                <i class="material-icons">remove_shopping_cart</i>
+            </div>
+            <h2 class="unavail-title">Вибачте!</h2>
+            <p class="unavail-text">
+                ${removedNames.length === 1
+                    ? `Товар <strong>"${removedNames[0]}"</strong> більше недоступний і був видалений з вашого кошика.`
+                    : `Наступні товари більше недоступні та були видалені з вашого кошика:`
+                }
+            </p>
+            ${removedNames.length > 1 ? `
+            <ul class="unavail-list">
+                ${removedNames.map(n => `
+                    <li><i class="material-icons">close</i> ${n}</li>
+                `).join('')}
+            </ul>` : ''}
+            <p class="unavail-subtext">Будь ласка, оберіть інший товар із нашого каталогу.</p>
+            <div class="unavail-buttons">
+                <button class="unavail-btn-catalog" onclick="window.location.href='room.html'">
+                    <i class="material-icons">store</i> До каталогу
+                </button>
+                <button class="unavail-btn-close" id="unavailableCloseBtn">
+                    <i class="material-icons">close</i> Закрити
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const close = () => { modal.style.display = 'none'; modal.remove(); };
+    document.getElementById('unavailableClose').addEventListener('click', close);
+    document.getElementById('unavailableCloseBtn').addEventListener('click', close);
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+}
+// ─── END UNAVAILABLE PRODUCTS MODAL ───────────────────────────────────────────
+
 function renderCart() {
     const cartItems = document.getElementById('cartItems');
     const totalPriceElement = document.getElementById('cartTotalPrice');
@@ -973,9 +1141,50 @@ window.updateCartSize = (index, size) => {
     renderCart();
 };
 
-document.getElementById('cartBtn')?.addEventListener('click', () => {
+document.getElementById('cartBtn')?.addEventListener('click', async () => {
     const modal = document.getElementById('cartModal');
-    if (modal) { modal.style.display = 'flex'; renderCart(); }
+    if (!modal) return;
+
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (cart.length > 0) {
+        const checks = await Promise.all(
+            cart.map(item => get(ref(database, `products/${item.id}`)))
+        );
+
+        const removedNames = [];
+        const validCart = cart.filter((item, i) => {
+            if (!checks[i].exists()) {
+                // Отримуємо назву з кешу або з поточного стану products
+                const cached = getCached('products');
+                const name = (cached && cached[item.id]?.name)
+                    || products[item.id]?.name
+                    || 'Невідомий товар';
+                removedNames.push(name);
+
+                // Видаляємо картку товару з усіх місць на сторінці
+                document.querySelectorAll('.product').forEach(card => {
+                    if (card.querySelector(`[data-id="${item.id}"]`)) card.remove();
+                });
+
+                return false;
+            }
+            return true;
+        });
+
+        if (removedNames.length > 0) {
+            localStorage.setItem('cart', JSON.stringify(validCart));
+            // Оновлюємо лічильник кошика
+            const cartCountEl = document.getElementById('cartCount')
+                || document.getElementById('cartStatus')
+                || document.querySelector('.cart-count');
+            if (cartCountEl) cartCountEl.textContent = validCart.length > 0 ? String(validCart.length) : '';
+            showUnavailableModal(removedNames);
+            return; // спочатку показуємо модалку, кошик не відкриваємо
+        }
+    }
+
+    modal.style.display = 'flex';
+    renderCart();
 });
 
 document.querySelectorAll('.modal .close').forEach(close =>
@@ -1354,7 +1563,6 @@ function renderSubcategories(category, selectedSubcategory) {
 window.removeBanner = key => remove(ref(database, 'banners/' + key)).then(() => {
     invalidateCache('banners');
     showNotification('Банер видалено', 'success');
-    if (window.location.pathname.includes('admin.html')) loadAdminData();
 });
 
 window.moveBanner = (key, newIndex) => {
@@ -1380,7 +1588,6 @@ document.getElementById('addBanner')?.addEventListener('click', () => {
         document.getElementById('bannerUrl').value = '';
         invalidateCache('banners');
         showNotification('Банер додано', 'success');
-        loadAdminData();
     }).catch(error => showNotification('Помилка додавання банера: ' + error.message, 'error'));
     else showNotification('Введіть URL банера', 'warning');
 });
@@ -1539,7 +1746,7 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
                 photosContainer.appendChild(input);
             }
             showNotification('Товар додано успішно', 'success');
-            loadAdminData();
+            renderAdminProducts('all', '');
         })
         .catch(error => showNotification('Помилка додавання товару: ' + error.message, 'error'));
 });
@@ -1617,7 +1824,6 @@ document.getElementById('savePromo')?.addEventListener('click', () => {
             document.getElementById('promoName').value = '';
             invalidateCache('promos');
             showNotification('Акцію додано', 'success');
-            loadAdminData();
         });
     } else showNotification('Введіть коректну назву акції', 'error');
 });
@@ -1715,7 +1921,6 @@ document.getElementById('addColor')?.addEventListener('click', () => {
             document.getElementById('colorInput').value = '';
             invalidateCache('colors');
             showNotification('Колір додано', 'success');
-            loadAdminData();
         });
     } else showNotification('Колір уже існує або поле порожнє', 'error');
 });
@@ -1727,7 +1932,6 @@ document.getElementById('addMaterial')?.addEventListener('click', () => {
             document.getElementById('materialInput').value = '';
             invalidateCache('materials');
             showNotification('Матеріал додано', 'success');
-            loadAdminData();
         });
     } else showNotification('Матеріал уже існує або поле порожнє', 'error');
 });
@@ -1921,7 +2125,6 @@ window.removeProduct = key => remove(ref(database, 'products/' + key)).then(() =
     cleanupUpdates[`featured/clearance/${key}`] = null;
     update(ref(database), cleanupUpdates);
     showNotification('Товар видалено', 'success');
-    loadAdminData();
 });
 
 window.editProduct = key => {
@@ -2031,7 +2234,7 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
             invalidateCache('featured_clearance');
             syncFeatured(key, productData);
             showNotification('Товар успішно оновлено', 'success');
-            loadAdminData();
+            renderAdminProducts('all', '');
         })
         .catch(error => showNotification('Помилка оновлення товару: ' + error.message, 'error'));
 });
