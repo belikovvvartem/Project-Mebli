@@ -3,7 +3,41 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getDatabase, ref, get, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { firebaseConfig } from './firebaseConfig.js';
 
-// ─── UNAVAILABLE MODAL STYLES ──────────────────────────────────────────────────
+// ─── CART COUNT BADGE STYLES ───────────────────────────────────────────────────
+(function injectCartCountStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        #cartCount {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 999px;
+            line-height: 1;
+            margin-left: 4px;
+            vertical-align: middle;
+            box-shadow: 0 1px 4px rgba(239,68,68,0.45);
+            transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease;
+            transform: scale(1);
+        }
+        #cartCount:empty {
+            display: none;
+        }
+        #cartCount.bump {
+            transform: scale(1.35);
+        }
+    `;
+    document.head.appendChild(style);
+})();
+// ─── END CART COUNT BADGE STYLES ──────────────────────────────────────────────
+
+
 (function injectUnavailableModalStyles() {
     const style = document.createElement('style');
     style.textContent = `
@@ -421,6 +455,8 @@ async function initializeData() {
         }
 
         lazyLoadImages();
+        // ✅ Зберігаємо featured-товари у products, щоб кнопки "Замовити" і "Додати в кошик" працювали
+        Object.assign(products, featuredSale || {}, featuredClearance || {});
         return; // виходимо — всі products НЕ завантажуємо на головній
     }
 
@@ -452,6 +488,7 @@ async function initializeData() {
 }
 
 initializeData();
+document.addEventListener('DOMContentLoaded', updateCartCount);
 // ─── END PAGE-AWARE DATA INIT ──────────────────────────────────────────────────
 
 function showNotification(message, type = 'success') {
@@ -1058,18 +1095,28 @@ function showUnavailableModal(removedNames) {
 }
 // ─── END UNAVAILABLE PRODUCTS MODAL ───────────────────────────────────────────
 
+function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const cartCountEl = document.getElementById('cartCount') || document.getElementById('cartStatus') || document.querySelector('.cart-count');
+    if (cartCountEl) {
+        cartCountEl.textContent = cart.length > 0 ? String(cart.length) : '';
+        // анімація "bump" при зміні
+        cartCountEl.classList.remove('bump');
+        void cartCountEl.offsetWidth; // reflow щоб анімація перезапустилась
+        if (cart.length > 0) cartCountEl.classList.add('bump');
+        setTimeout(() => cartCountEl.classList.remove('bump'), 300);
+    }
+}
+
 function renderCart() {
     const cartItems = document.getElementById('cartItems');
     const totalPriceElement = document.getElementById('cartTotalPrice');
-    const cartCountEl = document.getElementById('cartCount') || document.getElementById('cartStatus') || document.querySelector('.cart-count');
 
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    if (cartCountEl) {
-        cartCountEl.textContent = cart.length > 0 ? String(cart.length) : '';
-    }
+    updateCartCount();
 
     if (!cartItems || !totalPriceElement) return;
 
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     cartItems.innerHTML = '';
     let totalPrice = 0;
 
@@ -1130,6 +1177,7 @@ window.removeFromCart = (index) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     cart.splice(index, 1);
     localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
     renderCart();
     showNotification('Товар видалено з кошика', 'success');
 };
@@ -1150,6 +1198,13 @@ document.getElementById('cartBtn')?.addEventListener('click', async () => {
         const checks = await Promise.all(
             cart.map(item => get(ref(database, `products/${item.id}`)))
         );
+
+        // Завантажуємо в products ті товари яких там ще немає (наприклад на головній сторінці)
+        checks.forEach((snap, i) => {
+            if (snap.exists() && !products[cart[i].id]) {
+                products[cart[i].id] = snap.val();
+            }
+        });
 
         const removedNames = [];
         const validCart = cart.filter((item, i) => {
@@ -1173,11 +1228,7 @@ document.getElementById('cartBtn')?.addEventListener('click', async () => {
 
         if (removedNames.length > 0) {
             localStorage.setItem('cart', JSON.stringify(validCart));
-            // Оновлюємо лічильник кошика
-            const cartCountEl = document.getElementById('cartCount')
-                || document.getElementById('cartStatus')
-                || document.querySelector('.cart-count');
-            if (cartCountEl) cartCountEl.textContent = validCart.length > 0 ? String(validCart.length) : '';
+            updateCartCount();
             showUnavailableModal(removedNames);
             return; // спочатку показуємо модалку, кошик не відкриваємо
         }
@@ -1209,6 +1260,7 @@ document.addEventListener('click', e => {
             if (!cart.some(item => item.id === productId && item.size === size)) {
                 cart.push({ id: productId, size });
                 localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartCount();
                 renderCart();
                 showNotification('Товар додано до кошика', 'success');
             }
