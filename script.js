@@ -1,9 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getDatabase, ref, get, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { getFirebaseConfig } from './firebaseConfig.js';
-
-const firebaseConfig = await getFirebaseConfig();
+import { firebaseConfig } from './firebaseConfig.js';
 
 (function injectCartCountStyles() {
     const style = document.createElement('style');
