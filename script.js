@@ -3,7 +3,6 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 import { getDatabase, ref, get, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { firebaseConfig } from './firebaseConfig.js';
 
-// ─── CART COUNT BADGE STYLES ───────────────────────────────────────────────────
 (function injectCartCountStyles() {
     const style = document.createElement('style');
     style.textContent = `
@@ -35,7 +34,6 @@ import { firebaseConfig } from './firebaseConfig.js';
     `;
     document.head.appendChild(style);
 })();
-// ─── END CART COUNT BADGE STYLES ──────────────────────────────────────────────
 
 
 (function injectUnavailableModalStyles() {
@@ -161,14 +159,263 @@ import { firebaseConfig } from './firebaseConfig.js';
     `;
     document.head.appendChild(style);
 })();
-// ─── END UNAVAILABLE MODAL STYLES ─────────────────────────────────────────────
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const database = getDatabase();
 
+const CurrencyManager = (() => {
+    const RATE_KEY = 'nbu_usd_rate';
+    const RATE_DATE_KEY = 'nbu_usd_rate_date';
+    const CURRENCY_KEY = 'selected_currency';
+    const RATE_TTL_MS = 24 * 60 * 60 * 1000;
+
+    const SYMBOLS = { UAH: '₴', USD: '$' };
+
+    let state = {
+        currency: localStorage.getItem(CURRENCY_KEY) || 'UAH',
+        rate: parseFloat(localStorage.getItem(RATE_KEY)) || null,
+        rateDate: localStorage.getItem(RATE_DATE_KEY) || null,
+    };
+
+    const listeners = [];
+
+    function onChange(cb) { listeners.push(cb); }
+
+    function notify() { listeners.forEach(cb => { try { cb(state.currency); } catch (e) { console.error(e); } }); }
+
+    function isRateFresh() {
+        const ts = parseInt(localStorage.getItem(RATE_DATE_KEY + '_ts'), 10);
+        return state.rate && ts && (Date.now() - ts) < RATE_TTL_MS;
+    }
+
+    async function fetchRate() {
+        try {
+            const res = await fetch('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=usd&json');
+            if (!res.ok) throw new Error('NBU API error: ' + res.status);
+            const data = await res.json();
+            const entry = Array.isArray(data) ? data[0] : null;
+            if (!entry || !entry.rate) throw new Error('NBU API: некоректна відповідь');
+            state.rate = entry.rate;
+            state.rateDate = new Date().toLocaleDateString('uk-UA');
+            localStorage.setItem(RATE_KEY, String(state.rate));
+            localStorage.setItem(RATE_DATE_KEY, state.rateDate);
+            localStorage.setItem(RATE_DATE_KEY + '_ts', String(Date.now()));
+            return true;
+        } catch (e) {
+            console.warn('Не вдалося отримати курс НБУ, використовуємо кеш:', e.message);
+            return false;
+        }
+    }
+
+    async function init() {
+        if (!isRateFresh()) {
+            await fetchRate();
+            if (!state.rate) state.currency = 'UAH';
+        }
+        renderSwitcher();
+        updateSwitcherUI();
+    }
+
+    function getCurrency() { return state.currency; }
+
+    function setCurrency(currency) {
+        if (currency === state.currency) return;
+        if (currency === 'USD' && !state.rate) {
+            console.warn('Курс USD недоступний, перемикання неможливе');
+            return;
+        }
+        state.currency = currency;
+        localStorage.setItem(CURRENCY_KEY, currency);
+        updateSwitcherUI();
+        notify();
+    }
+
+    function convert(uah) {
+        const value = Number(uah) || 0;
+        if (state.currency === 'USD' && state.rate) {
+            const usd = value / state.rate;
+            return usd < 1 ? Math.round(usd * 100) / 100 : Math.round(usd);
+        }
+        return Math.round(value);
+    }
+
+    function format(uah) {
+        const value = Number(uah) || 0;
+        if (state.currency === 'USD' && state.rate) {
+            const usd = value / state.rate;
+            if (usd < 1) {
+                return '$' + usd.toFixed(2);
+            }
+            return '$' + Math.round(usd).toLocaleString('uk-UA');
+        }
+        return Math.round(value).toLocaleString('uk-UA') + ' ' + SYMBOLS.UAH;
+    }
+
+    function formatNumber(uah) {
+        const value = Number(uah) || 0;
+        if (state.currency === 'USD' && state.rate) {
+            const usd = value / state.rate;
+            if (usd < 1) return usd.toFixed(2);
+            return Math.round(usd).toLocaleString('uk-UA');
+        }
+        return Math.round(value).toLocaleString('uk-UA');
+    }
+
+    function getRateInfo() {
+        return { currency: state.currency, rate: state.rate, rateDate: state.rateDate };
+    }
+
+    function makeSwitcherWrap(className) {
+        const wrap = document.createElement('div');
+        wrap.className = 'currency-switcher' + (className ? ' ' + className : '');
+        wrap.innerHTML = `
+            <button type="button" class="currency-option" data-currency="UAH">₴ UAH</button>
+            <button type="button" class="currency-option" data-currency="USD">$ USD</button>
+        `;
+        wrap.querySelectorAll('.currency-option').forEach(btn => {
+            btn.addEventListener('click', () => setCurrency(btn.dataset.currency));
+        });
+        return wrap;
+    }
+
+    function renderSwitcher() {
+        document.querySelectorAll('.currency-switcher').forEach(el => el.remove());
+        document.querySelectorAll('.cart-currency-wrap').forEach(el => {
+            const parent = el.parentNode;
+            while (el.firstChild) parent.insertBefore(el.firstChild, el);
+            el.remove();
+        });
+
+        const cartBtn = document.querySelector('#cartBtn');
+        if (cartBtn) {
+            const wrap = document.createElement('div');
+            wrap.className = 'cart-currency-wrap';
+            cartBtn.parentNode.insertBefore(wrap, cartBtn);
+            wrap.appendChild(cartBtn);
+            wrap.appendChild(makeSwitcherWrap('currency-switcher--desktop'));
+        }
+
+        const sideMenu = document.querySelector('#sideMenu');
+        if (sideMenu) {
+            const mobileWrap = makeSwitcherWrap('currency-switcher--mobile');
+            const contacts = sideMenu.querySelector('.contacts');
+            if (contacts) {
+                contacts.after(mobileWrap);
+            } else {
+                sideMenu.appendChild(mobileWrap);
+            }
+        }
+    }
+
+    function updateSwitcherUI() {
+        document.querySelectorAll('.currency-switcher').forEach(wrap => {
+            wrap.classList.toggle('usd-active', state.currency === 'USD');
+            wrap.querySelectorAll('.currency-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.currency === state.currency);
+                if (btn.dataset.currency === 'USD') btn.disabled = !state.rate;
+            });
+        });
+    }
+
+    (function injectSwitcherStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            .currency-switcher {
+                display: inline-flex;
+                align-items: center;
+                background: #eaf1fd;
+                border: 1px solid #dbe7fb;
+                border-radius: 999px;
+                padding: 4px;
+                position: relative;
+                gap: 0;
+                margin: 0 14px;
+                flex-shrink: 0;
+                box-shadow: inset 0 1px 2px rgba(30, 58, 138, 0.06);
+            }
+            .currency-switcher .currency-option {
+                position: relative;
+                z-index: 2;
+                flex: 1;
+                text-align: center;
+                border: none;
+                background: transparent;
+                font-family: var(--font-primary, inherit);
+                font-size: 13px;
+                font-weight: 700;
+                letter-spacing: 0.2px;
+                padding: 7px 16px;
+                border-radius: 999px;
+                cursor: pointer;
+                color: var(--dark-blue, #1e3a8a);
+                opacity: 0.55;
+                transition: color 0.25s ease, opacity 0.25s ease;
+                white-space: nowrap;
+            }
+            .currency-switcher .currency-option.active {
+                color: #fff;
+                opacity: 1;
+            }
+            .currency-switcher::before {
+                content: '';
+                position: absolute;
+                top: 4px;
+                left: 4px;
+                width: calc(50% - 4px);
+                height: calc(100% - 8px);
+                background: linear-gradient(135deg, var(--primary-blue, #3b82f6), var(--dark-blue, #1e3a8a));
+                border-radius: 999px;
+                box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 1;
+            }
+            .currency-switcher.usd-active::before {
+                transform: translateX(100%);
+            }
+            .currency-switcher .currency-option:disabled {
+                opacity: 0.25;
+                cursor: not-allowed;
+            }
+            .currency-switcher .currency-option:not(:disabled):hover {
+                opacity: 0.85;
+            }
+            .currency-switcher .currency-option.active:hover {
+                opacity: 1;
+            }
+            /* Обгортка кошик + перемикач на десктопі */
+            .cart-currency-wrap {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px;
+            }
+            /* Desktop: під кошиком */
+            .currency-switcher--desktop {
+                display: inline-flex;
+                margin: 0;
+            }
+            /* Mobile: у боковому меню */
+            .currency-switcher--mobile {
+                display: none;
+                margin: 16px auto 8px;
+                justify-content: center;
+            }
+            @media (max-width: 900px) {
+                .currency-switcher--desktop { display: none !important; }
+                .currency-switcher--mobile  { display: inline-flex; }
+                .cart-currency-wrap { flex-direction: row; gap: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    })();
+
+    return { init, getCurrency, setCurrency, convert, format, formatNumber, getRateInfo, onChange };
+})();
+window.CurrencyManager = CurrencyManager;
+
 let products = {}, banners = {}, promos = {}, colors = [], materials = [], subcategories = {};
-// Читаємо URL параметри одразу — до initializeData, щоб renderContent мав правильні фільтри
+let currentProductId = null; 
 const _urlParams = new URLSearchParams(window.location.search);
 let currentFilters = {
     category:       _urlParams.get('category') || 'all',
@@ -186,12 +433,10 @@ let currentFilters = {
 };
 let isInitialLoad = true;
 
-// Pagination for roomProducts
 const ROOM_PAGE_SIZE = 10;
 let roomProductsAll = [];
 let roomProductsOffset = 0;
 
-// Pagination for adminProducts
 const ADMIN_PAGE_SIZE = 15;
 let adminProductsAll = [];
 let adminProductsOffset = 0;
@@ -218,8 +463,6 @@ const roomTranslations = {
     office: 'Офіс'
 };
 
-// ─── CACHE SYSTEM ──────────────────────────────────────────────────────────────
-// TTL: products = 5 хв, банери = 10 хв, кольори/матеріали/підкатегорії = 30 хв
 const CACHE_TTL = {
     products:           30 * 60 * 1000, 
     banners:            60 * 60 * 1000,  
@@ -249,12 +492,10 @@ function setCache(key, data) {
     try {
         localStorage.setItem(`fbcache_${key}`, JSON.stringify({ data, ts: Date.now() }));
     } catch (e) {
-        // localStorage може бути переповнений — ігноруємо
         console.warn('Cache write failed:', e);
     }
 }
 
-// Очищає кеш конкретного ключа (викликати після запису в Firebase)
 function invalidateCache(key) {
     try { localStorage.removeItem(`fbcache_${key}`); } catch {}
 }
@@ -267,9 +508,6 @@ async function fetchOrCache(key, dbRef) {
     setCache(key, data);
     return data;
 }
-// ─── END CACHE SYSTEM ──────────────────────────────────────────────────────────
-
-// ─── FEATURED SYNC ─────────────────────────────────────────────────────────────
 function syncFeatured(productId, productData) {
     const preview = {
         name: productData.name,
@@ -287,9 +525,6 @@ function syncFeatured(productId, productData) {
     updates[`featured/clearance/${productId}`] = productData.onClearance ? preview : null;
     return update(ref(database), updates);
 }
-// ─── END FEATURED SYNC ─────────────────────────────────────────────────────────
-
-// ─── LAZY LOADING ──────────────────────────────────────────────────────────────
 let lazyObserver = null;
 
 function initLazyObserver() {
@@ -316,9 +551,37 @@ function lazyLoadImages() {
 }
 
 initLazyObserver();
-// ─── END LAZY LOADING ──────────────────────────────────────────────────────────
+(function updateFooterYear() {
+    const currentYear = new Date().getFullYear();
+    document.querySelectorAll('.rights').forEach(el => {
+        el.textContent = el.textContent.replace(/\b\d{4}\b/, currentYear);
+    });
+})();
+function refreshCurrencyDisplay() {
+    const cartModal = document.getElementById('cartModal');
+    const orderModal = document.getElementById('orderModal');
 
-// ─── PAGE-AWARE DATA INIT ──────────────────────────────────────────────────────
+    if (document.getElementById('mainProducts') || document.getElementById('roomProducts') ||
+        document.getElementById('saleProducts') || document.getElementById('clearanceProducts')) {
+        renderContent(currentFilters);
+    }
+    if (document.getElementById('productDetails') && currentProductId) {
+        renderSingleProduct(currentProductId);
+    }
+    if (cartModal && cartModal.style.display === 'flex') {
+        renderCart();
+    }
+    if (orderModal && orderModal.style.display === 'flex') {
+        const orderItems = Array.from(document.querySelectorAll('#orderItems .product')).map(product => ({
+            id: product.dataset.productId,
+            size: product.querySelector('.size-select')?.value
+        })).filter(item => item.id && item.size);
+        if (orderItems.length) renderOrderItems(orderItems);
+    }
+}
+
+CurrencyManager.onChange(() => refreshCurrencyDisplay());
+CurrencyManager.init();
 async function initializeData() {
     const path = window.location.pathname;
     const isAdmin   = path.includes('admin.html');
@@ -326,20 +589,18 @@ async function initializeData() {
     const isRoom    = path.includes('room.html');
     const isLogin   = path.includes('login.html');
 
-    if (isLogin) return; // нічого не завантажуємо на сторінці входу
+    if (isLogin) return; 
 
-    // ── АДМІН: real-time підписки (тут вони виправдані) ───────────────────────
     if (isAdmin) {
         onValue(ref(database, 'products'), (snap) => {
             products = snap.val() || {};
-            setCache('products', products); // тримаємо кеш актуальним після змін адміна
+            setCache('products', products);
             renderContent(currentFilters);
             renderAdminProducts('all', '');
         });
         onValue(ref(database, 'banners'), (snap) => {
             banners = snap.val() || {};
             updateBannerSlider();
-            // Рендер списку банерів для адміна
             const bannerList = document.getElementById('bannerList');
             if (bannerList) {
                 bannerList.innerHTML = '';
@@ -382,13 +643,11 @@ async function initializeData() {
         return;
     }
 
-    // ── СТОРІНКА ПРОДУКТУ: завантажуємо лише один товар ──────────────────────
     if (isProduct) {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
         if (!productId) { showNotification('ID продукту не вказано', 'error'); return; }
 
-        // Спробуємо взяти з кешу всіх товарів
         const cachedProducts = getCached('products');
         if (cachedProducts && cachedProducts[productId]) {
             products = cachedProducts;
@@ -396,7 +655,6 @@ async function initializeData() {
             return;
         }
 
-        // Завантажуємо лише один товар — у рази менше трафіку!
         try {
             const snap = await get(ref(database, `products/${productId}`));
             if (snap.exists()) {
@@ -411,15 +669,12 @@ async function initializeData() {
         return;
     }
 
-    // ── ГОЛОВНА / КІМНАТА: get() + кеш ────────────────────────────────────────
-    // Банери лише на головній (де є слайдер)
     if (!isRoom) {
         banners = await fetchOrCache('banners', ref(database, 'banners'));
         updateBannerSlider();
 
         promos = await fetchOrCache('promos', ref(database, 'promos'));
 
-        // Головна сторінка: читаємо тільки featured — НЕ всі товари
         const [featuredSale, featuredClearance] = await Promise.all([
             fetchOrCache('featured_sale', ref(database, 'featured/sale')),
             fetchOrCache('featured_clearance', ref(database, 'featured/clearance'))
@@ -455,16 +710,13 @@ async function initializeData() {
         }
 
         lazyLoadImages();
-        // ✅ Зберігаємо featured-товари у products, щоб кнопки "Замовити" і "Додати в кошик" працювали
         Object.assign(products, featuredSale || {}, featuredClearance || {});
-        return; // виходимо — всі products НЕ завантажуємо на головній
+        return; 
     }
 
-    // Товари потрібні для room.html
     products = await fetchOrCache('products', ref(database, 'products'));
     renderContent(currentFilters);
 
-    // Фільтри (кольори, матеріали, підкатегорії) потрібні лише на room.html
     if (isRoom) {
         promos = await fetchOrCache('promos', ref(database, 'promos'));
         applyPromos();
@@ -489,7 +741,6 @@ async function initializeData() {
 
 initializeData();
 document.addEventListener('DOMContentLoaded', updateCartCount);
-// ─── END PAGE-AWARE DATA INIT ──────────────────────────────────────────────────
 
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
@@ -658,8 +909,6 @@ function renderCategories() {
 document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
 
-    // product.html — дані завантажуються через initializeData() вище
-    // (дублікат onValue прибрано)
 });
 
 document.querySelectorAll('#roomCategories li').forEach(li =>
@@ -715,7 +964,7 @@ function renderLoadMoreButton(container, total) {
             roomProductsOffset += ROOM_PAGE_SIZE;
             const nextBatch = roomProductsAll.slice(roomProductsOffset, roomProductsOffset + ROOM_PAGE_SIZE);
             nextBatch.forEach(([key, product]) => renderProductCard(container, key, product, 'roomProducts'));
-            lazyLoadImages(); // lazy для нових карток
+            lazyLoadImages(); 
             if (roomProductsOffset + ROOM_PAGE_SIZE >= total) btn.style.display = 'none';
         });
     }
@@ -784,11 +1033,11 @@ function renderContent(filters) {
         container.classList.add('loaded');
     });
 
-    // Активуємо lazy loading після рендеру
     lazyLoadImages();
 }
 
 function renderSingleProduct(productId) {
+    currentProductId = productId;
     let product = null;
 
     if (products[productId]) {
@@ -812,10 +1061,8 @@ function renderSingleProduct(productId) {
     const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
     const originalPrice = product.sizes[0].price;
     const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
-    const formattedSalePrice = Number(salePrice).toLocaleString('uk-UA');
-    const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
-
-    const categoryName = categoryTranslations[product.category] || product.category;
+    const formattedSalePrice = CurrencyManager.format(salePrice);
+    const formattedOriginalPrice = CurrencyManager.format(originalPrice);
     const subcategoryName = product.subcategory ? subcategoryTranslations[product.subcategory] || product.subcategory : null;
     const subSubcategoryName = product.subSubcategory ? subcategoryTranslations[product.subSubcategory] || product.subSubcategory : null;
     const breadcrumbPath = [];
@@ -859,7 +1106,7 @@ function renderSingleProduct(productId) {
                     </select>
                 </div>
                 <div class="order-items-price">
-                    <p class="product-price"><span class="sale-price" id="price_${productId}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice} грн</del>` : ''}</p>
+                    <p class="product-price"><span class="sale-price" id="price_${productId}">${formattedSalePrice}</span>${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${productId}">${formattedOriginalPrice}</del>` : ''}</p>
                 </div>
                 <div class="product-button-order">
                     <button class="addToCart" data-id="${productId}"><i class="material-icons">shopping_cart</i></button>
@@ -894,8 +1141,8 @@ function renderProductDetails(product) {
     const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
     const originalPrice = product.sizes[0].price;
     const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
-    const formattedSalePrice = Number(salePrice).toLocaleString('uk-UA');
-    const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+    const formattedSalePrice = CurrencyManager.format(salePrice);
+    const formattedOriginalPrice = CurrencyManager.format(originalPrice);
 
     container.innerHTML = `
         <div class="product-container-top">
@@ -922,7 +1169,7 @@ function renderProductDetails(product) {
                 </select>
             </div>
             <div class="order-items-price">
-                <p class="product-price"><span class="sale-price" id="price_${product.key}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${product.key}">${formattedOriginalPrice} грн</del>` : ''}</p>
+                <p class="product-price"><span class="sale-price" id="price_${product.key}">${formattedSalePrice}</span>${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${product.key}">${formattedOriginalPrice}</del>` : ''}</p>
             </div>
             <div class="product-button-order">
                 <button class="addToCart" data-id="${product.key}"><i class="material-icons">shopping_cart</i></button>
@@ -946,15 +1193,14 @@ function renderProductDetails(product) {
     }
 }
 
-// ── КАРТКА ТОВАРУ з lazy loading ───────────────────────────────────────────────
 function renderProductCard(container, key, product, sectionId) {
     const productDiv = document.createElement('div');
     productDiv.classList.add('product');
     const discountPrices = product.onSale && product.discountPrices ? product.discountPrices : {};
     const originalPrice = product.sizes[0].price;
     const salePrice = discountPrices[product.sizes[0].size] || originalPrice;
-    const formattedSalePrice = Number(salePrice).toLocaleString('uk-UA');
-    const formattedOriginalPrice = Number(originalPrice).toLocaleString('uk-UA');
+    const formattedSalePrice = CurrencyManager.format(salePrice);
+    const formattedOriginalPrice = CurrencyManager.format(originalPrice);
 
     const photoUrl = (product.photos || [])[0] || product.photo || '';
 
@@ -974,7 +1220,7 @@ function renderProductCard(container, key, product, sectionId) {
                     }).join('')}
                 </select>
             </div>
-            <p class="product-price"><span class="sale-price" id="price_${key}">${formattedSalePrice}</span> грн${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${key}">${formattedOriginalPrice} грн</del>` : ''}</p>
+            <p class="product-price"><span class="sale-price" id="price_${key}">${formattedSalePrice}</span>${discountPrices[product.sizes[0].size] ? `<del class="original-price" id="original_price_${key}">${formattedOriginalPrice}</del>` : ''}</p>
             <div class="product-button-order">
                 <button class="addToCart" data-id="${key}"><i class="material-icons">shopping_cart</i></button>
                 <button class="buyNow" data-id="${key}">Замовити</button>
@@ -994,13 +1240,13 @@ function renderProductCard(container, key, product, sectionId) {
         const origPrice = selectedOption.dataset['original-price'] || selectedOption.dataset.originalPrice;
         const priceElement = productDiv.querySelector(`#price_${key}`);
         const originalPriceElement = productDiv.querySelector(`#original_price_${key}`);
-        if (priceElement) priceElement.textContent = Number(newPrice).toLocaleString('uk-UA');
+        if (priceElement) priceElement.textContent = CurrencyManager.format(newPrice);
         if (product.onSale && originalPriceElement) {
-            originalPriceElement.textContent = `${Number(origPrice).toLocaleString('uk-UA')} грн`;
+            originalPriceElement.textContent = CurrencyManager.format(origPrice);
         } else if (!product.onSale && originalPriceElement) {
             originalPriceElement.remove();
         } else if (product.onSale && !originalPriceElement) {
-            priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${key}">${Number(origPrice).toLocaleString('uk-UA')} грн</del>`);
+            priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${key}">${CurrencyManager.format(origPrice)}</del>`);
         }
     });
     container.appendChild(productDiv);
@@ -1011,8 +1257,8 @@ window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
     const originalPriceElement = document.getElementById(`original_price_${productId}`);
     if (!priceElement) { console.error('Price element not found:', priceId); return; }
 
-    const formattedNewPrice = Number(newPrice.replace(/\s/g, '')).toLocaleString('uk-UA');
-    priceElement.textContent = `${formattedNewPrice}`;
+    const rawUah = Number(String(newPrice).replace(/\s/g, ''));
+    priceElement.textContent = CurrencyManager.format(rawUah);
     let product = products[productId];
     if (!product) {
         product = Object.entries(products).flatMap(([cat, prods]) =>
@@ -1024,9 +1270,9 @@ window.updatePrice = (priceId, newPrice, selectedSize, productId) => {
     const originalPrice = product.sizes.find(s => s.size === selectedSize)?.price || '';
     if (product.onSale && product.discountPrices && product.discountPrices[selectedSize]) {
         if (originalPriceElement) {
-            originalPriceElement.textContent = `${Number(originalPrice).toLocaleString('uk-UA')} грн`;
+            originalPriceElement.textContent = CurrencyManager.format(originalPrice);
         } else {
-            priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${productId}">${Number(originalPrice).toLocaleString('uk-UA')} грн</del>`);
+            priceElement.insertAdjacentHTML('afterend', `<del class="original-price" id="original_price_${productId}">${CurrencyManager.format(originalPrice)}</del>`);
         }
     } else if (originalPriceElement) {
         originalPriceElement.remove();
@@ -1045,7 +1291,6 @@ document.getElementById('searchBar')?.addEventListener('input', e => {
     lazyLoadImages();
 });
 
-// ─── UNAVAILABLE PRODUCTS MODAL ───────────────────────────────────────────────
 function showUnavailableModal(removedNames) {
     const existing = document.getElementById('unavailableModal');
     if (existing) existing.remove();
@@ -1093,16 +1338,14 @@ function showUnavailableModal(removedNames) {
     document.getElementById('unavailableCloseBtn').addEventListener('click', close);
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
 }
-// ─── END UNAVAILABLE PRODUCTS MODAL ───────────────────────────────────────────
 
 function updateCartCount() {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const cartCountEl = document.getElementById('cartCount') || document.getElementById('cartStatus') || document.querySelector('.cart-count');
     if (cartCountEl) {
         cartCountEl.textContent = cart.length > 0 ? String(cart.length) : '';
-        // анімація "bump" при зміні
         cartCountEl.classList.remove('bump');
-        void cartCountEl.offsetWidth; // reflow щоб анімація перезапустилась
+        void cartCountEl.offsetWidth; 
         if (cart.length > 0) cartCountEl.classList.add('bump');
         setTimeout(() => cartCountEl.classList.remove('bump'), 300);
     }
@@ -1140,8 +1383,8 @@ function renderCart() {
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
         productDiv.dataset.productId = item.id;
-        const formattedDiscountPrice = discountPrice ? Number(discountPrice).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
-        const formattedOriginalPrice = Number(size.price).toLocaleString('uk-UA');
+        const formattedDiscountPrice = CurrencyManager.format(discountPrice || size.price);
+        const formattedOriginalPrice = CurrencyManager.format(size.price);
 
         productDiv.innerHTML = `
             <img src="${(product.photos || [])[0] || product.photo || ''}" alt="${product.name || ''}">
@@ -1152,8 +1395,8 @@ function renderCart() {
                 <div class="order-items-bottom">
                     <div class="order-items-price">
                         <p class="product-price">
-                            <span class="sale-price" id="price_${index}">${formattedDiscountPrice}</span> грн
-                            ${product.onSale ? `<del class="original-price" id="original_price_${item.id}_${index}">${formattedOriginalPrice} грн</del>` : ''}
+                            <span class="sale-price" id="price_${index}">${formattedDiscountPrice}</span>
+                            ${product.onSale ? `<del class="original-price" id="original_price_${item.id}_${index}">${formattedOriginalPrice}</del>` : ''}
                         </p>
                     </div>
                     <div class="sizes">
@@ -1169,8 +1412,7 @@ function renderCart() {
         cartItems.appendChild(productDiv);
     });
 
-    const formattedTotalPrice = Number(totalPrice).toLocaleString('uk-UA');
-    totalPriceElement.textContent = `Загальна ціна: ${formattedTotalPrice} грн`;
+    totalPriceElement.textContent = `Загальна ціна: ${CurrencyManager.format(totalPrice)}`;
 }
 
 window.removeFromCart = (index) => {
@@ -1199,7 +1441,6 @@ document.getElementById('cartBtn')?.addEventListener('click', async () => {
             cart.map(item => get(ref(database, `products/${item.id}`)))
         );
 
-        // Завантажуємо в products ті товари яких там ще немає (наприклад на головній сторінці)
         checks.forEach((snap, i) => {
             if (snap.exists() && !products[cart[i].id]) {
                 products[cart[i].id] = snap.val();
@@ -1209,14 +1450,12 @@ document.getElementById('cartBtn')?.addEventListener('click', async () => {
         const removedNames = [];
         const validCart = cart.filter((item, i) => {
             if (!checks[i].exists()) {
-                // Отримуємо назву з кешу або з поточного стану products
                 const cached = getCached('products');
                 const name = (cached && cached[item.id]?.name)
                     || products[item.id]?.name
                     || 'Невідомий товар';
                 removedNames.push(name);
 
-                // Видаляємо картку товару з усіх місць на сторінці
                 document.querySelectorAll('.product').forEach(card => {
                     if (card.querySelector(`[data-id="${item.id}"]`)) card.remove();
                 });
@@ -1230,7 +1469,7 @@ document.getElementById('cartBtn')?.addEventListener('click', async () => {
             localStorage.setItem('cart', JSON.stringify(validCart));
             updateCartCount();
             showUnavailableModal(removedNames);
-            return; // спочатку показуємо модалку, кошик не відкриваємо
+            return; 
         }
     }
 
@@ -1297,8 +1536,8 @@ function renderOrderItems(orderItems) {
         if (!size) { console.error(`Розмір ${item.size} для продукту ${item.id} не знайдено`); return; }
         validItems++;
         const discountPrice = product.onSale && product.discountPrices ? product.discountPrices[item.size] : null;
-        const formattedDiscountPrice = discountPrice ? Number(discountPrice).toLocaleString('uk-UA') : Number(size.price).toLocaleString('uk-UA');
-        const formattedOriginalPrice = Number(size.price).toLocaleString('uk-UA');
+        const formattedDiscountPrice = CurrencyManager.format(discountPrice || size.price);
+        const formattedOriginalPrice = CurrencyManager.format(size.price);
 
         const productDiv = document.createElement('div');
         productDiv.classList.add('product');
@@ -1312,7 +1551,7 @@ function renderOrderItems(orderItems) {
                 </div>
                 <div class="order-items-bottom">
                     <div class="order-items-price">
-                        <p class="product-price"><span class="sale-price" id="price_${index}">${formattedDiscountPrice}</span> грн${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${formattedOriginalPrice} грн</del>` : ''}</p>
+                        <p class="product-price"><span class="sale-price" id="price_${index}">${formattedDiscountPrice}</span>${discountPrice ? `<del class="original-price" id="original_price_${item.id}_${index}">${formattedOriginalPrice}</del>` : ''}</p>
                     </div>
                     <div class="sizes"><select class="size-select" onchange="updateOrderItemSize(${index}, this.value)">
                         ${product.sizes.map(s => `<option value="${s.size}" data-price="${product.onSale && product.discountPrices && product.discountPrices[s.size] ? product.discountPrices[s.size] : s.price}" data-original-price="${s.price}" ${s.size === item.size ? 'selected' : ''}>Розмір: ${s.size}</option>`).join('')}
@@ -1339,7 +1578,7 @@ function renderOrderItems(orderItems) {
             }
         });
         const totalPriceElement = document.getElementById('orderTotalPrice');
-        if (totalPriceElement) totalPriceElement.textContent = `Загальна сума: ${Number(totalPrice).toLocaleString('uk-UA')} грн`;
+        if (totalPriceElement) totalPriceElement.textContent = CurrencyManager.format(totalPrice);
     }
 }
 
@@ -1399,8 +1638,12 @@ document.getElementById('orderForm')?.addEventListener('submit', e => {
         showNotification('Заповніть усі поля адреси', 'error');
         submitButton.disabled = false; submitButton.textContent = 'Оформити'; return;
     }
+    const rateInfo = CurrencyManager.getRateInfo();
     const order = {
         name, phone, country, region, city, comment,
+        currency: rateInfo.currency,
+        rate: rateInfo.rate || null,
+        rateDate: rateInfo.rateDate || null,
         products: orderItems.map(item => {
             const product = products[item.id];
             const size = product.sizes.find(s => s.size === item.size);
@@ -1473,7 +1716,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     });
     if (document.getElementById('mainCategories')) renderCategories();
-    // currentFilters вже заповнено з URL на старті скрипта
     if (window.location.pathname.includes('room.html') && currentFilters.room) {
         const roomSelect = document.getElementById('room');
         if (roomSelect) roomSelect.value = currentFilters.room;

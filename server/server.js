@@ -33,6 +33,35 @@ function escapeMarkdown(text) {
     return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
 }
 
+function formatUah(value) {
+    return `${Number(value).toLocaleString('uk-UA')} ₴`;
+}
+
+function formatItemPrice(uahPrice, currency, rate) {
+    if (currency === 'USD' && rate) {
+        const usd = Math.round(Number(uahPrice) / rate);
+        return `≈ $${usd.toLocaleString('uk-UA')} (${formatUah(uahPrice)})`;
+    }
+    return formatUah(uahPrice);
+}
+
+function formatOrderTotalBlock(totalUah, currency, rate, rateDate) {
+    if (currency === 'USD' && rate) {
+        const usd = Math.round(totalUah / rate);
+        return [
+            `≈ $${usd.toLocaleString('uk-UA')}`,
+            `(${formatUah(totalUah)})`,
+            ``,
+            `Курс НБУ:`,
+            `1 USD = ${Number(rate).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн`,
+            ``,
+            `Дата курсу:`,
+            `${rateDate || 'невідома'}`
+        ].join('\n');
+    }
+    return formatUah(totalUah);
+}
+
 function sanitizeUrl(url) {
     try {
         new URL(url);
@@ -46,12 +75,14 @@ function sanitizeUrl(url) {
 app.post('/sendOrder', async (req, res) => {
     try {
         console.log('Received order:', JSON.stringify(req.body, null, 2));
-        const { name, phone, country, region, city, comment, products } = req.body;
+        const { name, phone, country, region, city, comment, products, currency, rate, rateDate } = req.body;
 
         if (!name || !phone || !country || !region || !city || !products || !Array.isArray(products)) {
             console.error('Invalid order data:', req.body);
             return res.status(400).json({ error: 'Invalid order data' });
         }
+
+        const orderCurrency = currency === 'USD' && rate ? 'USD' : 'UAH';
 
         const escapedName = escapeMarkdown(name);
         const escapedPhone = escapeMarkdown(phone);
@@ -60,13 +91,16 @@ app.post('/sendOrder', async (req, res) => {
         const escapedCity = escapeMarkdown(city);
         const escapedComment = comment ? escapeMarkdown(comment) : 'Немає';
 
+        let totalUah = 0;
+
         const productList = products.map(p => {
             if (!p.name || !p.size || !p.price || !p.photo) {
                 throw new Error('Invalid product data');
             }
+            totalUah += Number(p.price) || 0;
             const escapedProductName = escapeMarkdown(p.name);
             const escapedSize = escapeMarkdown(p.size);
-            const escapedPrice = escapeMarkdown(p.price.toString());
+            const escapedPrice = escapeMarkdown(formatItemPrice(p.price, orderCurrency, rate));
             const sanitizedPhoto = sanitizeUrl(p.photo);
             const photoLink = sanitizedPhoto ? `[Фото](${sanitizedPhoto})` : 'Фото недоступне';
             return `
@@ -76,6 +110,8 @@ app.post('/sendOrder', async (req, res) => {
   🖼 ${photoLink}
 `;
         }).join('');
+
+        const escapedTotalBlock = escapeMarkdown(formatOrderTotalBlock(totalUah, orderCurrency, rate, rateDate));
 
         const message = `
 🆕 НОВЕ ЗАМОВЛЕННЯ
@@ -87,6 +123,8 @@ app.post('/sendOrder', async (req, res) => {
 📝 Коментар: ${escapedComment}
 🛒 Товари:
 ${productList}
+💰 Ціна:
+${escapedTotalBlock}
         `;
 
         console.log('Message to send:', message);
@@ -138,4 +176,3 @@ app.get('/health', (req, res) => {
 app.listen(port, () => {
     console.log(`Сервер запущено на порту ${port}`);
 });
-
