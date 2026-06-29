@@ -1,1 +1,9 @@
-{}
+{
+    "analyticsId": null,
+    "buildCommand": null,
+    "devCommand": null,
+    "framework": null,
+    "speedInsights": {
+      "enabled": false
+    }
+  }
