@@ -30,36 +30,38 @@ try {
 }
 
 function escapeMarkdown(text) {
-    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+    return text.replace(/([_*`[\]])/g, '\\$1');
 }
 
 function formatUah(value) {
     return `${Number(value).toLocaleString('uk-UA')} ₴`;
 }
 
-function formatItemPrice(uahPrice, currency, rate) {
+function formatItemPrice(uahPrice, currency, rate, rateDate) {
     if (currency === 'USD' && rate) {
         const usd = Math.round(Number(uahPrice) / rate);
-        return `≈ $${usd.toLocaleString('uk-UA')} (${formatUah(uahPrice)})`;
+        return `≈ $${usd.toLocaleString('uk-UA')} (${Number(uahPrice).toLocaleString('uk-UA')}грн)${rateDate ? `(${rateDate})` : ''}`;
     }
     return formatUah(uahPrice);
 }
 
-function formatOrderTotalBlock(totalUah, currency, rate, rateDate) {
+function formatOrderTotalBlock(totalUah, currency, rate) {
     if (currency === 'USD' && rate) {
         const usd = Math.round(totalUah / rate);
-        return [
-            `≈ $${usd.toLocaleString('uk-UA')}`,
-            `(${formatUah(totalUah)})`,
-            ``,
-            `Курс НБУ:`,
-            `1 USD = ${Number(rate).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} грн`,
-            ``,
-            `Дата курсу:`,
-            `${rateDate || 'невідома'}`
-        ].join('\n');
+        return `≈ $${usd.toLocaleString('uk-UA')} (${formatUah(totalUah)})`;
     }
     return formatUah(totalUah);
+}
+
+function formatRateInfoMessage(currency, rate, rateDate) {
+    if (currency !== 'USD' || !rate) return null;
+    const rateStr = Number(rate).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return [
+        `💱 Розраховано за курсом НБУ`,
+        ``,
+        `1 USD = ${rateStr} грн`,
+        `Дата курсу: ${rateDate || 'невідома'}`
+    ].join('\n');
 }
 
 function sanitizeUrl(url) {
@@ -100,7 +102,7 @@ app.post('/sendOrder', async (req, res) => {
             totalUah += Number(p.price) || 0;
             const escapedProductName = escapeMarkdown(p.name);
             const escapedSize = escapeMarkdown(p.size);
-            const escapedPrice = escapeMarkdown(formatItemPrice(p.price, orderCurrency, rate));
+            const escapedPrice = escapeMarkdown(formatItemPrice(p.price, orderCurrency, rate, rateDate));
             const sanitizedPhoto = sanitizeUrl(p.photo);
             const photoLink = sanitizedPhoto ? `[Фото](${sanitizedPhoto})` : 'Фото недоступне';
             return `
@@ -111,9 +113,9 @@ app.post('/sendOrder', async (req, res) => {
 `;
         }).join('');
 
-        const escapedTotalBlock = escapeMarkdown(formatOrderTotalBlock(totalUah, orderCurrency, rate, rateDate));
+        const escapedTotalBlock = escapeMarkdown(formatOrderTotalBlock(totalUah, orderCurrency, rate));
 
-        const message = `
+        const orderMessage = `
 🆕 НОВЕ ЗАМОВЛЕННЯ
 👤 Ім'я: ${escapedName}
 📞 Телефон: ${escapedPhone}
@@ -127,7 +129,11 @@ ${productList}
 ${escapedTotalBlock}
         `;
 
-        console.log('Message to send:', message);
+        const rateMessageRaw = formatRateInfoMessage(orderCurrency, rate, rateDate);
+        const rateMessage = rateMessageRaw ? escapeMarkdown(rateMessageRaw) : null;
+
+        console.log('Order message to send:', orderMessage);
+        if (rateMessage) console.log('Rate message to send:', rateMessage);
 
         function splitMessage(message, maxLength = 4000) {
             const parts = [];
@@ -146,17 +152,19 @@ ${escapedTotalBlock}
             return parts;
         }
 
-        const messages = message.length > 4000 ? splitMessage(message, 4000) : [message];
+        const orderParts = orderMessage.length > 4000 ? splitMessage(orderMessage, 4000) : [orderMessage];
+        const allParts = rateMessage ? [...orderParts, rateMessage] : orderParts;
+
         for (const chatId of chatIds) {
-            for (let i = 0; i < messages.length; i++) {
-                const msgPart = messages[i];
+            for (let i = 0; i < allParts.length; i++) {
+                const msgPart = allParts[i];
                 try {
-                    console.log(`Sending order part ${i + 1} to chat ${chatId}`);
+                    console.log(`Sending message part ${i + 1} to chat ${chatId}`);
                     await bot.sendMessage(chatId, msgPart, { parse_mode: 'Markdown' });
-                    console.log(`Order part ${i + 1} successfully sent to chat ${chatId}`);
+                    console.log(`Message part ${i + 1} successfully sent to chat ${chatId}`);
                     await new Promise(resolve => setTimeout(resolve, 100)); 
                 } catch (err) {
-                    console.error(`Failed to send order part ${i + 1} to chat ${chatId}:`, err.message);
+                    console.error(`Failed to send message part ${i + 1} to chat ${chatId}:`, err.message);
                 }
             }
         }

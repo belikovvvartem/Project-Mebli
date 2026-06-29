@@ -825,6 +825,10 @@ main>section {
     text-align: center;
 }
 
+.products-by-room {
+    display: none;
+}
+
 .products-by-room ul {
     list-style: none;
     padding: 0;
