@@ -1,7 +1,1 @@
-{
-    "functions": {
-        "api/firebase-config.js": {
-            "runtime": "edge"
-        }
-    }
-}
+{}
