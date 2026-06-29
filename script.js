@@ -35,6 +35,24 @@ import { firebaseConfig } from './firebaseConfig.js';
     document.head.appendChild(style);
 })();
 
+(function injectAdminNbuRateStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .admin-nbu-rate {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark-blue, #1e3a8a);
+            background: var(--background-light, #f8f9fa);
+            border: 1px solid var(--border-light, #e5e7eb);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: inline-block;
+            margin-top: 12px;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
 
 (function injectUnavailableModalStyles() {
     const style = document.createElement('style');
@@ -211,7 +229,10 @@ const CurrencyManager = (() => {
     async function init() {
         if (!isRateFresh()) {
             await fetchRate();
-            if (!state.rate) state.currency = 'UAH';
+            if (!state.rate && state.currency === 'UAH') {
+                // Курс недоступний — UAH конвертація неможлива, тимчасово показуємо USD
+                console.warn('Курс НБУ недоступний, тимчасово показуємо ціни в USD');
+            }
         }
         renderSwitcher();
         updateSwitcherUI();
@@ -221,8 +242,8 @@ const CurrencyManager = (() => {
 
     function setCurrency(currency) {
         if (currency === state.currency) return;
-        if (currency === 'USD' && !state.rate) {
-            console.warn('Курс USD недоступний, перемикання неможливе');
+        if (currency === 'UAH' && !state.rate) {
+            console.warn('Курс НБУ недоступний, перемикання на гривню неможливе');
             return;
         }
         state.currency = currency;
@@ -231,34 +252,37 @@ const CurrencyManager = (() => {
         notify();
     }
 
-    function convert(uah) {
-        const value = Number(uah) || 0;
-        if (state.currency === 'USD' && state.rate) {
-            const usd = value / state.rate;
-            return usd < 1 ? Math.round(usd * 100) / 100 : Math.round(usd);
+    // ВАЖЛИВО: усі ціни в базі даних і в продукті (product.sizes[].price,
+    // discountPrices, тощо) тепер зберігаються в USD. Ці функції приймають
+    // ціну в USD і відображають її у валюті, вибраній користувачем.
+    function convert(usd) {
+        const value = Number(usd) || 0;
+        if (state.currency === 'UAH' && state.rate) {
+            const uah = value * state.rate;
+            return Math.round(uah);
         }
-        return Math.round(value);
+        return Math.round(value * 100) / 100;
     }
 
-    function format(uah) {
-        const value = Number(uah) || 0;
-        if (state.currency === 'USD' && state.rate) {
-            const usd = value / state.rate;
-            if (usd < 1) {
-                return '$' + usd.toFixed(2);
-            }
-            return '$' + Math.round(usd).toLocaleString('uk-UA');
+    function format(usd) {
+        const value = Number(usd) || 0;
+        if (state.currency === 'UAH' && state.rate) {
+            const uah = value * state.rate;
+            return Math.round(uah).toLocaleString('uk-UA') + ' ' + SYMBOLS.UAH;
         }
-        return Math.round(value).toLocaleString('uk-UA') + ' ' + SYMBOLS.UAH;
+        if (value < 1) {
+            return '$' + value.toFixed(2);
+        }
+        return '$' + Math.round(value).toLocaleString('uk-UA');
     }
 
-    function formatNumber(uah) {
-        const value = Number(uah) || 0;
-        if (state.currency === 'USD' && state.rate) {
-            const usd = value / state.rate;
-            if (usd < 1) return usd.toFixed(2);
-            return Math.round(usd).toLocaleString('uk-UA');
+    function formatNumber(usd) {
+        const value = Number(usd) || 0;
+        if (state.currency === 'UAH' && state.rate) {
+            const uah = value * state.rate;
+            return Math.round(uah).toLocaleString('uk-UA');
         }
+        if (value < 1) return value.toFixed(2);
         return Math.round(value).toLocaleString('uk-UA');
     }
 
@@ -313,7 +337,7 @@ const CurrencyManager = (() => {
             wrap.classList.toggle('usd-active', state.currency === 'USD');
             wrap.querySelectorAll('.currency-option').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.currency === state.currency);
-                if (btn.dataset.currency === 'USD') btn.disabled = !state.rate;
+                if (btn.dataset.currency === 'UAH') btn.disabled = !state.rate;
             });
         });
     }
@@ -581,7 +605,82 @@ function refreshCurrencyDisplay() {
 }
 
 CurrencyManager.onChange(() => refreshCurrencyDisplay());
-CurrencyManager.init();
+CurrencyManager.init().then(() => updateAdminNbuRateDisplay());
+
+function updateAdminNbuRateDisplay() {
+    const el = document.getElementById('adminNbuRate');
+    if (!el) return;
+    const rateInfo = CurrencyManager.getRateInfo();
+    if (rateInfo.rate) {
+        const rateStr = Number(rateInfo.rate).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        el.textContent = `Курс НБУ: 1 USD = ${rateStr} грн${rateInfo.rateDate ? ` (станом на ${rateInfo.rateDate})` : ''}`;
+    } else {
+        el.textContent = 'Курс НБУ: недоступний';
+    }
+}
+document.addEventListener('DOMContentLoaded', updateAdminNbuRateDisplay);
+
+// ===== Адмін-панель: підказка з еквівалентом у гривнях прямо в полі ціни (USD) =====
+// Поки користувач вводить — у полі лише число. Коли він залишає поле (blur),
+// у дужках додається приблизний еквівалент у грн. При наступному фокусі
+// дужки прибираються, щоб не заважати редагуванню та збереженню значення.
+(function setupAdminUahHints() {
+    const PRICE_SELECTORS = '.price-input, .discount-price-input, .edit-price-input, .edit-discount-price-input';
+
+    function stripHint(value) {
+        return value.replace(/\s*\(.*?\)\s*$/, '').trim();
+    }
+
+    function onFocus(input) {
+        input.value = stripHint(input.value);
+    }
+
+    function onBlur(input) {
+        const rawValue = stripHint(input.value);
+        const usdValue = parseFloat(rawValue.replace(',', '.'));
+        const rateInfo = CurrencyManager.getRateInfo();
+        if (!rawValue || isNaN(usdValue) || usdValue <= 0 || !rateInfo.rate) {
+            input.value = rawValue;
+            return;
+        }
+        const uah = Math.round(usdValue * rateInfo.rate);
+        input.value = `${rawValue} (≈ ${uah.toLocaleString('uk-UA')} грн)`;
+    }
+
+    document.addEventListener('focusin', (e) => {
+        const target = e.target;
+        if (target instanceof HTMLInputElement && target.matches(PRICE_SELECTORS)) {
+            onFocus(target);
+        }
+    });
+
+    document.addEventListener('focusout', (e) => {
+        const target = e.target;
+        if (target instanceof HTMLInputElement && target.matches(PRICE_SELECTORS)) {
+            onBlur(target);
+        }
+    });
+
+    // Якщо при відкритті редагування товару поля вже заповнені готовими USD-значеннями,
+    // одразу показуємо підказку в дужках (поле ще не у фокусі).
+    function hintAllFilledFields() {
+        document.querySelectorAll(PRICE_SELECTORS).forEach(input => {
+            if (document.activeElement === input) return;
+            if (input.value && !/\(/.test(input.value)) onBlur(input);
+        });
+    }
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('[onclick^="editProduct"]')) {
+            setTimeout(hintAllFilledFields, 0);
+        }
+    });
+})();
+
+// parseFloat не розуміє "100 (≈ 4500 грн)" — прибираємо дужки перед збереженням у базу.
+function parseUsdPriceInput(value) {
+    const cleaned = String(value || '').replace(/\s*\(.*?\)\s*$/, '').trim().replace(',', '.');
+    return parseFloat(cleaned) || 0;
+}
 async function initializeData() {
     const path = window.location.pathname;
     const isAdmin   = path.includes('admin.html');
@@ -627,14 +726,6 @@ async function initializeData() {
                     promoList.appendChild(li);
                 });
             }
-        });
-        get(ref(database, 'colors')).then(snap => {
-            colors = Object.values(snap.val() || []);
-            updateColorSelects();
-        });
-        get(ref(database, 'materials')).then(snap => {
-            materials = Object.values(snap.val() || []);
-            updateMaterialSelects();
         });
         get(ref(database, 'subcategories')).then(snap => {
             subcategories = snap.val() || {};
@@ -1983,8 +2074,8 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
     const rooms = roomsContainer ? Array.from(roomsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value) : [];
     const sizes = Array.from(document.querySelectorAll('#sizes .size-row')).map(row => ({
         size: row.querySelector('.size-input').value.trim(),
-        price: parseFloat(row.querySelector('.price-input').value) || 0,
-        discountPrice: parseFloat(row.querySelector('.discount-price-input')?.value) || null
+        price: parseUsdPriceInput(row.querySelector('.price-input').value) || 0,
+        discountPrice: parseUsdPriceInput(row.querySelector('.discount-price-input')?.value) || null
     })).filter(s => s.size && s.price > 0);
     if (!name) return showNotification('Введіть назву товару', 'error');
     if (!description) return showNotification('Введіть опис товару', 'error');
@@ -2022,16 +2113,12 @@ document.getElementById('addProductForm')?.addEventListener('submit', (e) => {
             const productSubSubcategory = document.getElementById('productSubSubcategory');
             if (productSubSubcategory) { productSubSubcategory.value = ''; productSubSubcategory.style.display = 'none'; }
             updateSubcategoryOptions();
-            ['productMaterials', 'productColors'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.selectedIndex = -1;
-            });
             ['availability'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.checked = false;
             });
             document.querySelectorAll('#rooms input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
-            document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button></div>';
+            document.getElementById('sizes').innerHTML = '<div class="size-row"><input type="text" class="size-input" placeholder="Розмір"><input type="text" inputmode="decimal" class="price-input" placeholder="Ціна (USD)"><input type="text" inputmode="decimal" class="discount-price-input" placeholder="Акційна ціна (USD, опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button></div>';
             const photosContainer = document.getElementById('photosContainer');
             if (photosContainer) {
                 photosContainer.innerHTML = '';
@@ -2077,7 +2164,7 @@ document.addEventListener('input', (e) => {
 document.getElementById('samePrice')?.addEventListener('click', () => {
     const priceInputs = document.querySelectorAll('#sizes .price-input');
     if (priceInputs.length) {
-        const firstPrice = priceInputs[0].value;
+        const firstPrice = String(priceInputs[0].value || '').replace(/\s*\(.*?\)\s*$/, '').trim();
         priceInputs.forEach(input => input.value = firstPrice);
         showNotification('Ціни вирівняно', 'success');
     }
@@ -2089,7 +2176,7 @@ document.getElementById('addSize')?.addEventListener('click', (e) => {
     if (sizesDiv) {
         const newSizeRow = document.createElement('div');
         newSizeRow.className = 'size-row';
-        newSizeRow.innerHTML = '<input type="text" class="size-input" placeholder="Розмір"><input type="number" class="price-input" placeholder="Ціна"><input type="number" class="discount-price-input" placeholder="Акційна ціна (опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button>';
+        newSizeRow.innerHTML = '<input type="text" class="size-input" placeholder="Розмір"><input type="text" inputmode="decimal" class="price-input" placeholder="Ціна (USD)"><input type="text" inputmode="decimal" class="discount-price-input" placeholder="Акційна ціна (USD, опціонально)"><button class="remove-size"><i class="material-icons">delete</i></button>';
         sizesDiv.appendChild(newSizeRow);
     }
 });
@@ -2137,16 +2224,16 @@ function applyPromos() {
         const selectedSize = sizeSelect ? sizeSelect.value : productEntry.sizes[0].size;
         if (priceSpan) {
             const salePrice = discountPrices[selectedSize] || productEntry.sizes.find(s => s.size === selectedSize)?.price || '';
-            priceSpan.textContent = Number(salePrice).toLocaleString('uk-UA');
+            priceSpan.textContent = CurrencyManager.formatNumber(salePrice);
             const priceContainer = priceSpan.parentElement;
             const originalPriceElement = priceContainer.querySelector(`del[id="original_price_${productKey}"]`);
             const originalPrice = productEntry.sizes.find(s => s.size === selectedSize)?.price || '';
             if (discountPrices[selectedSize] && !originalPriceElement) {
-                priceSpan.insertAdjacentHTML('afterend', `<del id="original_price_${productKey}">${Number(originalPrice).toLocaleString('uk-UA')} грн</del>`);
+                priceSpan.insertAdjacentHTML('afterend', `<del id="original_price_${productKey}">${CurrencyManager.format(originalPrice)}</del>`);
             } else if (!discountPrices[selectedSize] && originalPriceElement) {
                 originalPriceElement.remove();
             } else if (originalPriceElement) {
-                originalPriceElement.textContent = `${Number(originalPrice).toLocaleString('uk-UA')} грн`;
+                originalPriceElement.textContent = CurrencyManager.format(originalPrice);
             }
         }
     });
@@ -2208,27 +2295,8 @@ function updateSubcategorySelects() {
     });
 }
 
-document.getElementById('addColor')?.addEventListener('click', () => {
-    const colorInput = document.getElementById('colorInput')?.value.trim() || '';
-    if (colorInput && !colors.includes(colorInput)) {
-        push(ref(database, 'colors'), colorInput).then(() => {
-            document.getElementById('colorInput').value = '';
-            invalidateCache('colors');
-            showNotification('Колір додано', 'success');
-        });
-    } else showNotification('Колір уже існує або поле порожнє', 'error');
-});
 
-document.getElementById('addMaterial')?.addEventListener('click', () => {
-    const materialInput = document.getElementById('materialInput')?.value.trim() || '';
-    if (materialInput && !materials.includes(materialInput)) {
-        push(ref(database, 'materials'), materialInput).then(() => {
-            document.getElementById('materialInput').value = '';
-            invalidateCache('materials');
-            showNotification('Матеріал додано', 'success');
-        });
-    } else showNotification('Матеріал уже існує або поле порожнє', 'error');
-});
+
 
 document.getElementById('productCategory')?.addEventListener('change', updateSubcategoryOptions);
 document.getElementById('editProductCategory')?.addEventListener('change', updateEditSubcategoryOptions);
@@ -2440,15 +2508,11 @@ window.editProduct = key => {
         if (field.id.includes('Availability') || field.id.includes('OnSale') || field.id.includes('OnClearance')) el.checked = field.value;
         else el.value = field.value;
     });
-    const materialsSelect = document.getElementById('editProductMaterials');
-    if (materialsSelect) Array.from(materialsSelect.options).forEach(opt => opt.selected = product.materials?.includes(opt.value));
-    const colorsSelect = document.getElementById('editProductColors');
-    if (colorsSelect) Array.from(colorsSelect.options).forEach(opt => opt.selected = product.colors?.includes(opt.value));
     const roomsCheckboxes = document.querySelectorAll('#editRooms input[type="checkbox"]');
     roomsCheckboxes.forEach(checkbox => checkbox.checked = product.rooms && product.rooms.includes(checkbox.value));
     const editSizes = document.getElementById('editSizes');
     if (editSizes) {
-        editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="number" class="edit-price-input" value="${s.price}"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" value="${product.onSale && product.discountPrices && product.discountPrices[s.size] || ''}"><button class="remove-size"><i class="material-icons">delete</i></button></div>`).join('');
+        editSizes.innerHTML = product.sizes.map(s => `<div class="size-row"><input type="text" class="edit-size-input" value="${s.size}"><input type="text" inputmode="decimal" class="edit-price-input" value="${s.price}"><input type="text" inputmode="decimal" class="edit-discount-price-input" placeholder="Акційна ціна (USD, опціонально)" value="${product.onSale && product.discountPrices && product.discountPrices[s.size] || ''}"><button class="remove-size"><i class="material-icons">delete</i></button></div>`).join('');
     }
     const editPhotosContainer = document.getElementById('editPhotosContainer');
     if (editPhotosContainer) {
@@ -2501,8 +2565,8 @@ document.getElementById('editProductForm')?.addEventListener('submit', (e) => {
     const rooms = roomsContainer ? Array.from(roomsContainer.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value) : [];
     const sizes = Array.from(document.querySelectorAll('#editSizes .size-row')).map(row => ({
         size: row.querySelector('.edit-size-input').value.trim(),
-        price: parseFloat(row.querySelector('.edit-price-input').value) || 0,
-        discountPrice: parseFloat(row.querySelector('.edit-discount-price-input')?.value) || null
+        price: parseUsdPriceInput(row.querySelector('.edit-price-input').value) || 0,
+        discountPrice: parseUsdPriceInput(row.querySelector('.edit-discount-price-input')?.value) || null
     })).filter(s => s.size && s.price > 0);
     if (!name) return showNotification('Введіть назву товару', 'error');
     if (!description) return showNotification('Введіть опис товару', 'error');
@@ -2551,7 +2615,7 @@ document.getElementById('editAddSize')?.addEventListener('click', (e) => {
     if (editSizes) {
         const newSizeRow = document.createElement('div');
         newSizeRow.className = 'size-row';
-        newSizeRow.innerHTML = '<input type="text" class="edit-size-input" placeholder="Розмір"><input type="number" class="edit-price-input" placeholder="Ціна"><input type="number" class="edit-discount-price-input" placeholder="Акційна ціна (опціонально)" style="display: none;"><button class="remove-size"><i class="material-icons">delete</i></button>';
+        newSizeRow.innerHTML = '<input type="text" class="edit-size-input" placeholder="Розмір"><input type="text" inputmode="decimal" class="edit-price-input" placeholder="Ціна (USD)"><input type="text" inputmode="decimal" class="edit-discount-price-input" placeholder="Акційна ціна (USD, опціонально)" style="display: none;"><button class="remove-size"><i class="material-icons">delete</i></button>';
         editSizes.appendChild(newSizeRow);
         toggleDiscountInput();
     }
@@ -2560,7 +2624,7 @@ document.getElementById('editAddSize')?.addEventListener('click', (e) => {
 document.getElementById('editSamePrice')?.addEventListener('click', () => {
     const priceInputs = document.querySelectorAll('#editSizes .edit-price-input');
     if (priceInputs.length) {
-        const firstPrice = priceInputs[0].value;
+        const firstPrice = String(priceInputs[0].value || '').replace(/\s*\(.*?\)\s*$/, '').trim();
         priceInputs.forEach(input => input.value = firstPrice);
         showNotification('Ціни вирівняно', 'success');
     }

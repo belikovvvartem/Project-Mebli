@@ -28,7 +28,6 @@
 
 
 
-/* General Styles (Applicable to All Pages) */
 body {
     font-family: var(--font-primary);
     margin: 0;
@@ -594,7 +593,6 @@ footer {
     font-size: 18px;
 }
 
-/* Index.html Specific Styles */
 section {
     margin-top: 80px;
 }
@@ -823,10 +821,6 @@ main>section {
     color: var(--text-gray);
     font-size: 14px;
     text-align: center;
-}
-
-.products-by-room {
-    display: none;
 }
 
 .products-by-room ul {
@@ -1113,7 +1107,6 @@ main>section {
     background: #000;
 }
 
-/* Room.html Specific Styles */
 .room-html main {
     display: flex;
     gap: 20px;
@@ -1282,10 +1275,6 @@ main>section {
 
 .contact-and-times a:last-child {}
 
-/* Delivery.html Specific Styles */
-/* No specific styles provided for delivery.html */
-
-/* Addres.html Specific Styles */
 .addres-container {
     display: flex;
     flex-wrap: wrap;
@@ -1319,8 +1308,6 @@ main>section {
     color: var(--text-black);
 }
 
-/* Privacy-policy.html Specific Styles */
-/* No specific styles provided for privacy-policy.html */
 
 
 
@@ -1440,7 +1427,6 @@ main>section {
 
 
 
-/* Animations */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -1492,7 +1478,6 @@ main>section {
 
 
 
-/* Desktop / laptop */
 @media (min-width:992px) and (max-width:1199px) {
     .product-html-product {
         height: auto;
@@ -1511,7 +1496,6 @@ main>section {
 
 }
 
-/* Tablet */
 @media (min-width:768px) and (max-width:991px) {
     body {
         zoom: 0.55;
@@ -1542,7 +1526,6 @@ main>section {
     }
 }
 
-/* Small tablets / large phones */
 @media (min-width:576px) and (max-width:767px) {
     body {
         width: 100%;
@@ -1707,7 +1690,6 @@ main>section {
 
 }
 
-/* Very small phones / narrow displays */
 @media (max-width: 575px) {
     body {
         width: 100%;
@@ -1821,7 +1803,6 @@ main>section {
         transition: transform 0.3s ease;
     }
 
-    /* Фон */
     #menuOverlay {
         position: fixed;
         display: block;
@@ -1836,7 +1817,6 @@ main>section {
         z-index: 50;
     }
 
-    /* Меню */
     #sideMenu {
         position: absolute;
         left: 0;
@@ -1849,7 +1829,6 @@ main>section {
         padding: 20px;
     }
 
-    /* Відкриття */
     #menuOverlay.open {
         opacity: 1;
         pointer-events: auto;
@@ -2522,7 +2501,6 @@ main>section {
         margin-top: -25px;
     }
 }
-/* Load More Button */
 .load-more-btn {
     display: block;
     margin: 24px auto;

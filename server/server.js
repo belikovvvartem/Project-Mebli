@@ -33,28 +33,32 @@ function escapeMarkdown(text) {
     return text.replace(/([_*`[\]])/g, '\\$1');
 }
 
+function formatUsd(value) {
+    return `$${Number(value).toLocaleString('uk-UA')}`;
+}
+
 function formatUah(value) {
     return `${Number(value).toLocaleString('uk-UA')} ₴`;
 }
 
-function formatItemPrice(uahPrice, currency, rate, rateDate) {
-    if (currency === 'USD' && rate) {
-        const usd = Math.round(Number(uahPrice) / rate);
-        return `≈ $${usd.toLocaleString('uk-UA')} (${Number(uahPrice).toLocaleString('uk-UA')}грн)${rateDate ? `(${rateDate})` : ''}`;
+function formatItemPrice(usdPrice, currency, rate, rateDate) {
+    if (currency === 'UAH' && rate) {
+        const uah = Math.round(Number(usdPrice) * rate);
+        return `≈ ${formatUah(uah)} ($${Number(usdPrice).toLocaleString('uk-UA')})${rateDate ? `(${rateDate})` : ''}`;
     }
-    return formatUah(uahPrice);
+    return formatUsd(usdPrice);
 }
 
-function formatOrderTotalBlock(totalUah, currency, rate) {
-    if (currency === 'USD' && rate) {
-        const usd = Math.round(totalUah / rate);
-        return `≈ $${usd.toLocaleString('uk-UA')} (${formatUah(totalUah)})`;
+function formatOrderTotalBlock(totalUsd, currency, rate) {
+    if (currency === 'UAH' && rate) {
+        const uah = Math.round(totalUsd * rate);
+        return `≈ ${formatUah(uah)} (${formatUsd(totalUsd)})`;
     }
-    return formatUah(totalUah);
+    return formatUsd(totalUsd);
 }
 
 function formatRateInfoMessage(currency, rate, rateDate) {
-    if (currency !== 'USD' || !rate) return null;
+    if (currency !== 'UAH' || !rate) return null;
     const rateStr = Number(rate).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return [
         `💱 Розраховано за курсом НБУ`,
@@ -84,7 +88,7 @@ app.post('/sendOrder', async (req, res) => {
             return res.status(400).json({ error: 'Invalid order data' });
         }
 
-        const orderCurrency = currency === 'USD' && rate ? 'USD' : 'UAH';
+        const orderCurrency = currency === 'UAH' && rate ? 'UAH' : 'USD';
 
         const escapedName = escapeMarkdown(name);
         const escapedPhone = escapeMarkdown(phone);
@@ -93,13 +97,13 @@ app.post('/sendOrder', async (req, res) => {
         const escapedCity = escapeMarkdown(city);
         const escapedComment = comment ? escapeMarkdown(comment) : 'Немає';
 
-        let totalUah = 0;
+        let totalUsd = 0;
 
         const productList = products.map(p => {
             if (!p.name || !p.size || !p.price || !p.photo) {
                 throw new Error('Invalid product data');
             }
-            totalUah += Number(p.price) || 0;
+            totalUsd += Number(p.price) || 0;
             const escapedProductName = escapeMarkdown(p.name);
             const escapedSize = escapeMarkdown(p.size);
             const escapedPrice = escapeMarkdown(formatItemPrice(p.price, orderCurrency, rate, rateDate));
@@ -113,7 +117,7 @@ app.post('/sendOrder', async (req, res) => {
 `;
         }).join('');
 
-        const escapedTotalBlock = escapeMarkdown(formatOrderTotalBlock(totalUah, orderCurrency, rate));
+        const escapedTotalBlock = escapeMarkdown(formatOrderTotalBlock(totalUsd, orderCurrency, rate));
 
         const orderMessage = `
 🆕 НОВЕ ЗАМОВЛЕННЯ
