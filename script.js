@@ -46,8 +46,41 @@ import { firebaseConfig } from './firebaseConfig.js';
             border: 1px solid var(--border-light, #e5e7eb);
             border-radius: 8px;
             padding: 10px 16px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             margin-top: 12px;
+        }
+        .admin-nbu-rate-refresh {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: var(--dark-blue, #1e3a8a);
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+        .admin-nbu-rate-refresh:hover {
+            opacity: 0.85;
+        }
+        .admin-nbu-rate-refresh:disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+        .admin-nbu-rate-refresh .material-icons {
+            font-size: 18px;
+        }
+        .admin-nbu-rate-refresh.spinning .material-icons {
+            animation: adminNbuRateSpin 0.8s linear infinite;
+        }
+        @keyframes adminNbuRateSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     `;
     document.head.appendChild(style);
@@ -434,7 +467,7 @@ const CurrencyManager = (() => {
         document.head.appendChild(style);
     })();
 
-    return { init, getCurrency, setCurrency, convert, format, formatNumber, getRateInfo, onChange };
+    return { init, getCurrency, setCurrency, convert, format, formatNumber, getRateInfo, onChange, fetchRate };
 })();
 window.CurrencyManager = CurrencyManager;
 
@@ -611,11 +644,23 @@ function updateAdminNbuRateDisplay() {
     const el = document.getElementById('adminNbuRate');
     if (!el) return;
     const rateInfo = CurrencyManager.getRateInfo();
+    let textHtml;
     if (rateInfo.rate) {
         const rateStr = Number(rateInfo.rate).toLocaleString('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        el.textContent = `Курс НБУ: 1 USD = ${rateStr} грн${rateInfo.rateDate ? ` (станом на ${rateInfo.rateDate})` : ''}`;
+        textHtml = `Курс НБУ: 1 USD = ${rateStr} грн${rateInfo.rateDate ? ` (станом на ${rateInfo.rateDate})` : ''}`;
     } else {
-        el.textContent = 'Курс НБУ: недоступний';
+        textHtml = 'Курс НБУ: недоступний';
+    }
+    el.innerHTML = `<span class="admin-nbu-rate-text">${textHtml}</span> <button type="button" id="refreshNbuRateBtn" class="admin-nbu-rate-refresh" title="Оновити курс"><i class="material-icons">refresh</i></button>`;
+
+    const btn = document.getElementById('refreshNbuRateBtn');
+    if (btn) {
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            btn.classList.add('spinning');
+            await CurrencyManager.fetchRate();
+            updateAdminNbuRateDisplay();
+        });
     }
 }
 document.addEventListener('DOMContentLoaded', updateAdminNbuRateDisplay);
@@ -840,7 +885,7 @@ function showNotification(message, type = 'success') {
     messageDiv.className = `notification-message ${type}`;
     messageDiv.textContent = message;
     notification.appendChild(messageDiv);
-    setTimeout(() => { messageDiv.style.animation = 'slideOut 0.5s ease-in forwards'; setTimeout(() => messageDiv.remove(), 500); }, 3000);
+    setTimeout(() => { messageDiv.style.animation = 'notifyOut 0.4s ease-in forwards'; setTimeout(() => messageDiv.remove(), 400); }, 3000);
 }
 
 function validatePhoneNumber(phone) {
@@ -2414,8 +2459,8 @@ function renderAdminProductCard(container, product) {
             <p>Кольори: ${(product.colors && product.colors.length ? product.colors.join(', ') : 'Немає')}</p>
             <p>Кімнати: ${(product.rooms && product.rooms.length ? product.rooms.map(room => roomTranslations[room] || room).join(', ') : 'Немає')}</p>
             <p>Хіт продажу: ${product.onClearance ? 'Так' : 'Ні'}</p>
-            <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} грн`).join(', ')})` : 'Ні'}</p>
-            <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} грн`).join(', ')}</p>
+            <p>Акція: ${product.onSale ? `Так (${Object.entries(product.discountPrices || {}).map(([size, price]) => `${size}: ${price} $`).join(', ')})` : 'Ні'}</p>
+            <p>Розміри: ${product.sizes.map(s => `${s.size}: ${s.price} $`).join(', ')}</p>
         </div>
         <div class="product-button">
             <button onclick="editProduct('${product.key}')"><i class="material-icons">edit</i></button>
